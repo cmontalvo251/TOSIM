@@ -3,10 +3,8 @@
 'TCOM'  	'Input_Files/Hovering/PayOutIn.TCOM'						!Tether Command Length File  
 'DRIVER'  	'Input_Files/Hovering/Quad.COPTER'						!Driver input file                   
 'TOW'   	'Input_Files/Hovering/LAURA_Big.coef'						!Towed Main Input file               
-'WINGSDIR'      'SimX_Aircraft_Data/Towbody'							!Towed WingsX input file directory 
-'WINGS'		'Towbody.sim'									!Towed WingsX input file                  
 'CS'    	'Input_Files/Hovering/LAURA.CS'							!Control system input file 
-'SIM'   	'Input_Files/Hovering/TOSIM_JOURNAL.SIM'					!Simulation input file  
+'SIM'   	'Input_Files/Hovering/TOSIM.SIM'					!Simulation input file  
 'LOG'   	'Output_Files/TOSIM.LOG'							!Log out file                  
 'SOUT'  	'Output_Files/State.OUT'							!State output file                   
 'MOUT'  	'Output_Files/Misc.OUT'								!Miscellaneous output file                   
