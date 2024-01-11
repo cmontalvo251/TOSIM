@@ -1,9 +1,9 @@
 'ATM'		'Input_Files/Hovering/TOSIM.ATM'						!Atmosphere input file  
 'THR'   	'Input_Files/Hovering/TOSIM.THR'						!Tether input file                   
 'TCOM'  	'Input_Files/Hovering/PayOutIn.TCOM'						!Tether Command Length File  
-'DRIVER'  	'Input_Files/Hovering/Drive.DRIVER'						!Copter input file                   
-'TOW'   	'Input_Files/Hovering/LAURA_Big.coef'						!Towed Main Input file                  
-'WINGSDIR'      'SimX_Aircraft_Data/Towbody/'`							!Towed WingsX input file directory 
+'DRIVER'  	'Input_Files/Hovering/Quad.COPTER'						!Driver input file                   
+'TOW'   	'Input_Files/Hovering/LAURA_Big.coef'						!Towed Main Input file               
+'WINGSDIR'      'SimX_Aircraft_Data/Towbody'							!Towed WingsX input file directory 
 'WINGS'		'Towbody.sim'									!Towed WingsX input file                  
 'CS'    	'Input_Files/Hovering/LAURA.CS'							!Control system input file 
 'SIM'   	'Input_Files/Hovering/TOSIM_JOURNAL.SIM'					!Simulation input file  
