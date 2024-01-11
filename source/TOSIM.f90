@@ -1,6 +1,4 @@
 !!!!!!!!!!!!!!! MODULE TOSIMDATATYPES!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
 module TOSIMDATATYPES
 IMPLICIT NONE
  integer,parameter :: MAXNBEADS = 100              ! Units: 'nd', Desc: 'Maximum Number of Tether Beads'
@@ -17,391 +15,20 @@ IMPLICIT NONE
 
 !!!!!!!!!!!!!!!!!!!!!!ATMOSPHERE STRUCTURE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
- type ATMOSPHERESTRUCTURE
-    integer :: markX = 1                             ! X coordinate Marker in interpolation routine 
-    integer :: markY = 1                             ! Y coordinate Marker in interpolation routine 
-    integer :: markZ = 1                             ! Z coordinate Marker in interpolation routine 
-    integer :: markT = 1                             ! T coordinate Marker in interpolation routine 
-    integer :: markXT = 1                            ! X coordinate Marker in turbulence interpolation routine 
-    integer :: markYT = 1                            ! Y coordinate Marker in turbulence interpolation routine 
-    integer :: markZT = 1                            ! Z coordinate Marker in turbulenceinterpolation routine 
-    integer :: bounds = 0                            ! Flag indicating wether or not you have gone out of WRF bounds
-    integer :: boundflag = 1                         ! Flag indicating wether or not you have gone out of WRF bounds
-    integer :: boundsT = 0                           ! Flag indicating wether or not you have gone out of TURB bounds
-    integer :: boundflagT = 1                        ! Flag indicating wether or not you have gone out of TURB bounds
-    integer :: parameters(5) = 0                     ! Vector of a few parameters 
-    integer :: tcoord(601) = 0                       ! Vector of time
-    integer :: dim = 40                              ! Dimension of Spatial wind data matrices
-    integer :: dimT = 500                            ! Dimension of Turbulence wind data matrices
-    integer :: tlength = 601                         ! Dimension of time vector
-    integer :: OFFON = 0                             ! Units: 'nd', Desc: 'Off/On Switch'
-    integer :: TABSIZE = 0                           ! Units: 'nd', Desc: 'Table Size'
-    integer :: MODNO = 1                             ! Units: 'nd', Desc: 'Model Number'
-    integer :: IP = 1                                ! Units: 'nd', Desc: 'Table Pointer'
-    integer :: DQFLAG = 0                            ! Units: 'nd', Desc: 'Data Quality Flag (0=Data Not Loaded Successfully, 1=Data Loaded Successfully)'
-    integer :: TIMEVARYING = 0                       ! Units: 'nd', Desc: 'Static Wind field or not
-    real*8 :: FREQUENCY = 1                          ! Units: '1/s', Desc: 'frequency of sinusoidal winds
-    real*8 :: TIMEON = 0                             ! Units: 'sec', Desc: 'Time to turn on winds'
-    real*8 :: zcoord(40) = 0                         ! Z coordinates of wind data in z (ft)
-    real*8 :: xcoord(40) = 0                         ! X coordinates of wind data in x (ft)
-    real*8 :: ycoord(40) = 0                         ! Y coordinates of wind data in y (ft)
-    real*8 :: xcoordT(500) = 0                       ! X coordinates of turbulence data in x (ft)
-    real*8 :: ycoordT(500) = 0                       ! Y coordinates of turbulence data in y (ft)
-    !real*8 :: terrain(40,40) = 0                     ! Terrain height in meters
-    !!!REVISIT REVISIT REVIST - Always make sure this is back to normal
-    ! real*8 :: U0(1,1,1),V0(1,1,1),W0(1,1,1)          ! U,V,W velocity at timestep t (ft/s)
-    ! real*8 :: Udt(1,1,1),Vdt(1,1,1),Wdt(1,1,1)       ! U,V,W velocity at timestep t+dt (ft/s)
-    ! real*8 :: UTURB(1,1),VTURB(1,1),WTURB(1,1)       ! U,V,W turbulence at timestep t (ft/s)
-    real*8 :: U0(40,40,40),V0(40,40,40),W0(40,40,40) ! U,V,W velocity at timestep t (ft/s)
-    real*8 :: Udt(40,40,40),Vdt(40,40,40),Wdt(40,40,40) ! U,V,W velocity at timestep t+dt (ft/s)
-    real*8 :: UTURB(500,500),VTURB(500,500),WTURB(500,500) ! U,V,W turbulence at timestep t (ft/s)
-    real*8 :: dx = 0                                 ! X resolution (ft)
-    real*8 :: dxT = 1                                ! XY resolution of turbulence (ft)
-    real*8 :: dyT = 1                                ! XY resolution of turbulence (ft)
-    real*8 :: dy = 0                                 ! X resolution (ft)
-    real*8 :: ztop = 0                               ! Highest altitude to sample from (ft)
-    real*8 :: IWINDSCALE = 1                         ! Scale of WRF winds
-    real*8 :: TURBLEVEL = 1                          ! Scale of Turbulence 
-    real*8 :: Vtrim = 20                             ! Trim velocity of craft flying through winds
-    real*8 :: TIMESTEP = 0.0001                      ! Timestep of Simulation
-    real*8 :: WINDGUST(3) = 0                        ! Vector holding WINDGUST values at current timestep (ft/s)
-    real*8 :: VWAKE(3) = 0                           ! Vector holding wake data values at current timestep (ft/s)
-    real*8 :: WRFX = 0                               ! Wrf winds in x (ft/s)
-    real*8 :: WRFY = 0                               ! Wrf winds in y (ft/s)
-    real*8 :: WRFZ = 0                               ! Wrf winds in z (ft/s)
-    real*8 :: ALT = 0.0                              ! Units: 'ft', Desc: 'Altitude'
-    real*8 :: DEN = 0.002363                         ! Units: 'slug/ft^3', Desc: 'Density'
-    real*8 :: SOS = 1086.336                         ! Units: 'slug/ft^3', Desc: 'Density'
-    real*8 :: WINDSPEED = 0.0                        ! Units: 'ft/s', Desc: 'Wind Speed'
-    real*8 :: WINDDIR = 0.0                          ! Units: 'rad', Desc: 'Wind Direction'
-    real*8 :: WINDELEV = 0.0                         ! Units: 'rad', Desc: 'Wind Elevation'
-    real*8 :: XI = 0.0                               ! Units: 'ft', Desc: 'Inertial X Position'
-    real*8 :: YI = 0.0                               ! Units: 'ft', Desc: 'Inertial Y Position'
-    real*8 :: ZI = 0.0                               ! Units: 'ft', Desc: 'Inertial Z Position'
-    real*8 :: VXWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial I Axis'
-    real*8 :: VYWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial J Axis'
-    real*8 :: VZWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial K Axis'
-    real*8 :: ALTTAB(MAXNALT) = 0.0                  ! Units: 'ft', Desc: 'Density Altitude Table'
-    real*8 :: DENTAB(MAXNALT) = 0.0                  ! Units: 'slug/ft^3', Desc: 'Density Table'
-    real*8 :: VXWINDTAB(MAXNALT) = 0.0               ! Units: 'ft/s', Desc: 'VXWIND Wind Table'
-    real*8 :: VYWINDTAB(MAXNALT) = 0.0               ! Units: 'ft/s', Desc: 'VYWIND Wind Table'
-    real*8 :: VZWINDTAB(MAXNALT) = 0.0               ! Units: 'ft/s', Desc: 'VZWIND Wind Table'
-    real*8 :: xshift = 0                             ! Units: 'ft' , 'Desc: shift in x coordinate for interpolation
-    real*8 :: yshift = 0                             ! Units: 'ft' , 'Desc: shift in y coordinate for interpolation
-    real*8 :: zshift = 0                             ! Units: 'ft' , 'Desc: shift in y coordinate for interpolation
-    real*8 :: xshiftT = 0                            ! Units: 'ft' , 'Desc: shift in x coordinate for interpolation
-    real*8 :: yshiftT = 0                            ! Units: 'ft' , 'Desc: shift in y coordinate for interpolation
-    real*8 :: zshiftT = 0                            ! Units: 'ft' , 'Desc: shift in y coordinate for interpolation
-    real*8 :: PSIOFFSET = 0                          ! Units: 'rad' ,'Desc: used to rotate the dryden and WRF model'
-    real*8 :: XOFFSET = 0                            ! Units: 'ft' ,'Desc: used to offset WRF model
-    real*8 :: YOFFSET = 0                            ! Units: 'ft' ,'Desc: used to offset WRF model
-    real*8 :: WAVESPEED(2) = 0                       ! Units: 'ft/s', Desc: Speed that the static waves propagate to simulate time varying component
-    real*8 :: RANDOMIZE = 0                          ! Units: 'nd', Desc: randomization parameter for wind field. 0.1 = 10 percent gaussian noise
-    character*128 PATH
-    character*256 U0name,V0name,W0name,UTurbname,Vturbname,Wturbname
-    character*256 Udtname,Vdtname,Wdtname
- end type ATMOSPHERESTRUCTURE
+include 'atmospheremodule.f90'
+
+!!!!!!!!!!!!!!!!!!!!!!!!!! DRIVER STRUCTURE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+include 'drivermodule.f90'
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!! TOWED STRUCTURE !!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
- type TOWEDSTRUCTURE
-  integer :: DYNOFFON = 0                          ! Units: 'nd', Desc: 'Dynamics Flag (0=Off, 1=On)'
-  integer :: GRAVOFFON = 0                         ! Units: 'nd', Desc: 'Gravity Flag (0=Off, 1=On)'
-  integer :: AEROFLAG = 0                          ! Units: 'nd', Desc: 'Aerodynamics Flag (0=Off, 1=On)'
-  integer :: SWEEPOFFON = 0                        ! Units: 'nd', Desc: 'Alpha Sweeps Flag (0=Off, 1=On)'
-  integer :: CONTOFFON = 0                         ! Units: 'nd', Desc: 'Contact Flag (0=Off, 1=On)'
-  integer :: DQFLAG = 0                            ! Units: 'nd', Desc: 'Data Quality Flag (0=Data Not Loaded Successfully, 1=Data Loaded Successfully)'
-  integer :: NLSE = 0                              ! Units: 'nd', Desc: 'Number of Lifting Surface Elements'
-  integer :: IP(MAXNLSE) = 1                       ! Units: 'nd', Desc: 'Table Look-up Pointer'
-  integer :: TABSIZE(MAXNLSE) = 1                  ! Units: 'nd', Desc: 'Table Size'
-  integer :: IPROP(2) = 1                          ! Prop table look up pointer
-  integer :: NPROPTAB = 0                          ! Propellor table size
-  integer :: THRUSTMOD = 0                         ! 0 = linear , 1 = table look up
-  integer :: numNodesNLL = 10                     ! 'nd' Number of Non-linear lifting nodes for us in WingsX
-  REAL :: Rde  = 0.                                ! 'nd' Reynolds number in WingsX
-  REAL :: CL0  = 0.                                ! 'nd' Zero-AOA lift coefficient WingsX
-  REAL :: Sw   = 0.                                ! Reference area (ft^2) - WingsX
-  REAL :: bw   = 0.                                ! Reference wingspan (ft) - WingsX
-  REAL :: cw   = 0.                                ! Reference chord (ft) - WingsX
-  REAL :: Vflt = 0.                                ! Reference Flight speed (ft/s) - WingsX
-  REAL :: hx   = 0.                                ! Reference angular momentum (ft) - WingsX
-  REAL :: hy   = 0.                                ! Reference angular momentum (ft) - WingsX
-  REAL :: hz   = 0.                                ! Reference angular momentum (ft) - WingsX
-  real*8 :: C_T_TAB(MAXPROP) = 0                   ! Thrust table
-  real*8 :: OMEGA_TAB(MAXPROP) = 0                 ! Rotational speed table
-  real*8 :: ADVANCERATIO_TAB(MAXPROP) = 0          ! Advance ratio table
-  real*8 :: DELTHRUST_TAB(MAXPROP) = 0             ! control input table
-  real*8 :: SAREA = 0                              ! Reference area of aircraft (m^2)
-  real*8 :: B = 0                                  ! Wingspan of aircraft(ft)
-  real*8 :: C_BAR = 0                              ! Mean chord of aircraft(ft)
-  real*8 :: V_T = 0                                ! Trim velocity of aircraft (ft/s)
-  real*8 :: PD = 0                                 ! propellor diameter (ft)
-  real*8 :: C_L = 0                                ! Lift coefficient (nd)
-  real*8 :: C_L_TABLE(SWEEPTABLE) = 0              ! Lift coefficient Table (nd)
-  real*8 :: C_D_TABLE(SWEEPTABLE) = 0              ! Drag coefficient Table (nd)
-  real*8 :: CXb_TABLE(SWEEPTABLE) = 0              ! Axial Drag coefficient Table (nd)
-  real*8 :: CYb_TABLE(SWEEPTABLE) = 0              ! Lateral Drag coefficient Table (nd)
-  real*8 :: CZb_TABLE(SWEEPTABLE) = 0              ! Normal Drag coefficient Table (nd)
-  real*8 :: Cll_TABLE(SWEEPTABLE) = 0              ! Roll Moment coefficient Table (nd)
-  real*8 :: Cm_TABLE(SWEEPTABLE) = 0               ! Pitch moment coefficient Table (nd)
-  real*8 :: Cn_TABLE(SWEEPTABLE) = 0               ! Yaw moment coefficient Table (nd)
-  real*8 :: AOATABLE(SWEEPTABLE) = 0               ! Angle of attack Table (nd)
-  real*8 :: CXb = 0                                ! Axial coefficient (nd)
-  real*8 :: CYb = 0                                ! Lateral coefficient (nd)
-  real*8 :: CZb = 0                                ! Normal coefficient (nd)
-  real*8 :: Cll = 0                                ! Roll moment coefficient (nd)
-  real*8 :: Cm = 0                                 ! Pitch moment coefficient (nd)
-  real*8 :: Cn = 0                                 ! Yaw moment coefficient (nd)
-  real*8 :: C_D = 0                                ! Drag coefficient (nd)
-  real*8 :: C_L_0 = 0                              ! zero lift slope
-  real*8 :: C_L_ALPHA = 0                          ! lift curve slope
-  real*8 :: C_L_ALPHAHAT = 0                       ! dynamic lift curve slope
-  real*8 :: C_L_UHAT = 0                           ! increase in lift with speed
-  real*8 :: C_L_Q = 0                              ! increase in lift with q
-  real*8 :: C_D_Q = 0                              ! increase in drag with q
-  real*8 :: C_L_DE = 0                             ! increase in lift with elevator
-  real*8 :: C_L_DF = 0                             ! increase in lift with flaps
-  real*8 :: C_L_M = 0                              ! lift with mach no.
-  real*8 :: C_D_DF = 0                             ! drag with flaps
-  real*8 :: C_M_DF = 0                             ! moment with flaps
-  real*8 :: C_Y_BETA = 0                           ! side force w.r.t sideslip
-  real*8 :: C_Y_P = 0                              ! side force w.r.t roll rate
-  real*8 :: C_Y_R = 0                              ! side force w.r.t. yaw rate
-  real*8 :: C_Y_DR = 0                             ! side force w.r.t. rudder
-  real*8 :: C_Y_DA = 0                             ! side force w.r.t. aileron
-  real*8 :: C_D_0 = 0                              ! zero lift drag
-  real*8 :: C_D_ALPHA2 = 0                         ! drag polar
-  real*8 :: C_D_ALPHAHAT = 0                       ! dynamic drag polar
-  real*8 :: C_D_UHAT = 0                           ! increase in drag with speed
-  real*8 :: C_D_DE = 0                             ! inrease in drag with elevator
-  real*8 :: C_D_M = 0                              ! inrease in drag with mach no.
-  real*8 :: C_L_BETA = 0                           ! roll moment w.r.t beta
-  real*8 :: C_L_P = 0                              ! roll moment w.r.t roll rate
-  real*8 :: C_L_R = 0                              ! roll moment w.r.t. yaw rate
-  real*8 :: C_L_DR = 0                             ! roll moment w.r.t. rudder
-  real*8 :: C_L_DA = 0                             ! roll moment w.r.t. aileron
-  real*8 :: C_roll_ALPHA = 0                       ! roll moment w.r.t. angle of attack
-  real*8 :: C_N_ALPHA = 0                          ! yaw moment w.r.t. angle of attack
-  real*8 :: C_M_0 = 0                              ! zero lift moment
-  real*8 :: C_M_ALPHA = 0                          ! pitch moment curve
-  real*8 :: C_M_ALPHAHAT = 0                       ! dynamic moment curve
-  real*8 :: C_M_UHAT = 0                           ! increase in pitch moment w.r.t speed
-  real*8 :: C_M_Q = 0                              ! pitch moment w.r.t. q
-  real*8 :: C_M_DE = 0                             ! pitch moment w.r.t elevator
-  real*8 :: C_M_M = 0                              ! pitch moment w.r.t mach no.
-  real*8 :: C_M_BETA = 0                           ! pitch moment w.r.t beta
-  real*8 :: C_N_BETA = 0                           ! yaw moment w.r.t. beta
-  real*8 :: C_N_P = 0                              ! yaw moment w.r.t. roll rate
-  real*8 :: C_N_R = 0                              ! yaw moment w.r.t. yaw rate
-  real*8 :: C_N_DR = 0                             ! yaw moment w.r.t. rudder
-  real*8 :: C_N_DA = 0                             ! yaw moment w.r.t. aileron
-  real*8 :: C_X_DT = 0                             ! Thrust w.r.t. delthrust
-  real*8 :: C_X_BOX = 0                            ! Box coeff C_X
-  real*8 :: C_Y_BOX = 0                            ! Box coeff C_Y
-  real*8 :: C_Z_BOX = 0                            ! Box coeff C_Z
-  real*8 :: C_L_BOX = 0                            ! Box coeff C_L
-  real*8 :: C_M_BOX = 0                            ! Box coeff C_M
-  real*8 :: C_N_BOX = 0                            ! Box coeff C_N
-  real*8 :: C_L_P_BOX = 0                          ! Box coeff C_L_P
-  real*8 :: C_M_Q_BOX = 0                          ! Box coeff C_M_Q
-  real*8 :: C_N_R_BOX = 0                          ! Box coeff C_N_R
-  real*8 :: AOAREF = 0                             ! Reference Angle of attack
-  real*8 :: MASS = 0.0                             ! Units: 'kg', Desc: 'Mass'
-  real*8 :: WEIGHT = 0.0                           ! Units: 'lbf', Desc: 'Weight'  
-  real*8 :: SLCG = 0.0                             ! Units: 'ft', Desc: 'Stationline of Mass Center'
-  real*8 :: BLCG = 0.0                             ! Units: 'ft', Desc: 'Buttline of Mass Center'
-  real*8 :: WLCG = 0.0                             ! Units: 'ft', Desc: 'Waterline of Mass Center'
-  real*8 :: IXX = 0.0                              ! Units: 'kg m^2', Desc: 'Ixx of Inertia Matrix'
-  real*8 :: IYY = 0.0                              ! Units: 'kg m^2', Desc: 'Iyy of Inertia Matrix'
-  real*8 :: IZZ = 0.0                              ! Units: 'kg m^2', Desc: 'Izz of Inertia Matrix'
-  real*8 :: IXY = 0.0                              ! Units: 'kg m^2', Desc: 'Ixy of Inertia Matrix'
-  real*8 :: IXZ = 0.0                              ! Units: 'kg m^2', Desc: 'Ixz of Inertia Matrix'
-  real*8 :: IYZ = 0.0                              ! Units: 'kg m^2', Desc: 'Iyz of Inertia Matrix'
-  real*8 :: IXXI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Ixx Inverse of Inertia Matrix'
-  real*8 :: IYYI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Iyy Inverse of Inertia Matrix'
-  real*8 :: IZZI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Izz Inverse of Inertia Matrix'
-  real*8 :: IXYI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Ixy Inverse of Inertia Matrix'
-  real*8 :: IXZI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Ixz Inverse of Inertia Matrix'
-  real*8 :: IYZI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Iyz Inverse of Inertia Matrix'
-  real*8 :: TIA(3,3) = 0.0                         ! Units: 'nd', Desc: 'Aircraft to Inertial Frame Transformation Matrix'
-  real*8 :: TAI(3,3) = 0.0                         ! Units: 'nd', Desc: 'Inertial to Aircraft Frame Transformation Matrix'
-  real*8 :: ELEVATOR = 0                           ! Units: 'rad', Desc: Elevator Command
-  real*8 :: RUDDER = 0                             ! Units: 'rad', Desc: RUDDER Command
-  real*8 :: AILERON = 0                            ! Units: 'rad', Desc: AILERON Commandn
-  real*8 :: FLAPS = 0                              ! Units: 'rad', Desc: FLAP Command
-  real*8 :: DELTHRUST = 0                          ! Units: 'rad', Desc: DELTHRUST Command (Total Thrust = Cxdt*DELTHRUST + T0)
-  real*8 :: ELEVTRIM  = 0                          ! Units: 'nd', Desc: Stall in airfoil parameters
-  real*8 :: CLMAX = 0                              ! Units: 'nd', Desc: Stall in airfoil parameters
-  real*8 :: AOAMAX = 0                             ! Units: 'nd', Desc: Stall in airfoil parameters
-  real*8 :: AOALINEARMAX = 0                       ! Units: 'nd', Desc: Stall in airfoil parameters
-  real*8 :: CLASTALLMAX = 0                        ! Units: 'nd', Desc: Stall in airfoil parameters
-  real*8 :: CLMIN = 0                              ! Units: 'nd', Desc: Stall in airfoil parameters
-  real*8 :: AOAMIN = 0                             ! Units: 'nd', Desc: Stall in airfoil parameters
-  real*8 :: AOALINEARMIN = 0                       ! Units: 'nd', Desc: Stall in airfoil parameters
-  real*8 :: CLASTALLMIN = 0                        ! Units: 'nd', Desc: Stall in airfoil parameters
-  real*8 :: T0 = 0                                 ! Units: 'nd', Desc: Stall in airfoil parameters
-  real*8 :: TPRIME = 0                             ! Units: 'nd', Desc: Stall in airfoil parameters
-  real*8 :: TDBLPRIME = 0                          ! Units: 'nd', Desc: Stall in airfoil parameters
-  real*8 :: DENEXP = 0                             ! Units: 'nd', Desc: Stall in airfoil parameters ! Throttle = (T0 + TPRIME*V + TDBLPRIME*V^2)*(RHO/RHO_SEA_LEVEL)^DENEXP
-  real*8 :: TOFFSET = 0                            ! Units: 'nd', Desc: Stall in airfoil parameters 
-  real*8 :: TSLOPE = 0                             ! Units: 'nd', Desc: Stall in airfoil parameters 
-  real*8 :: SLLSE(MAXNLSE) = 0.0                   ! Units: 'ft', Desc: 'Stationline of Lifting Surface Element'
-  real*8 :: BLLSE(MAXNLSE) = 0.0                   ! Units: 'ft', Desc: 'Waterline of Lifting Surface Element'
-  real*8 :: WLLSE(MAXNLSE) = 0.0                   ! Units: 'ft', Desc: 'Buttline of Lifting Surface Element'
-  real*8 :: AREALSE(MAXNLSE) = 0.0                 ! Units: 'ft', Desc: 'Lifting Surface Element Reference Area'
-  real*8 :: ALPHALSE(MAXNLSE) = 0.0                ! Units: 'rad', Desc: 'Aerodynamic Angle of Attack of Lifting Surface Element'
-  real*8 :: PHILSE(MAXNLSE) = 0.0                  ! Units: 'rad', Desc: 'Phi Orientation Angle of Lifting Surface Element'
-  real*8 :: GAMLSE(MAXNLSE) = 0.0                  ! Units: 'rad', Desc: 'Gamma Orientation Angle of Lifting Surface Element'
-  real*8 :: DELTALSE(MAXNLSE) = 0.0                ! Units: 'rad', Desc: 'Delta Orientation Angle of Lifting Surface Element'
-  real*8 :: FXLSE(MAXNLSE) = 0.0                   ! Units: 'nd', Desc: 'Fx Force of Lifting Surface Element in Aircraft Reference Frame'
-  real*8 :: FYLSE(MAXNLSE) = 0.0                   ! Units: 'nd', Desc: 'Fy Force of Lifting Surface Element in Aircraft Reference Frame'
-  real*8 :: FZLSE(MAXNLSE) = 0.0                   ! Units: 'nd', Desc: 'Fz Force of Lifting Surface Element in Aircraft Reference Frame'
-  real*8 :: MXLSE(MAXNLSE) = 0.0                   ! Units: 'nd', Desc: 'Mx Moment of Lifting Surface Element in Aircraft Reference Frame'
-  real*8 :: MYLSE(MAXNLSE) = 0.0                   ! Units: 'nd', Desc: 'My Moment of Lifting Surface Element in Aircraft Reference Frame'
-  real*8 :: MZLSE(MAXNLSE) = 0.0                   ! Units: 'nd', Desc: 'Mz Moment of Lifting Surface Element in Aircraft Reference Frame'
-  real*8 :: ALPHALSETAB(MAXNLSE,MAXNAOA) = 0.0     ! Units: 'rad', Desc: 'Aerodynamic Angle of Attack Table for Lifting Surface Element'
-  real*8 :: CLLSETAB(MAXNLSE,MAXNAOA) = 0.0        ! Units: 'rad', Desc: 'Lift Coefficient Table for Lifting Surface Element'
-  real*8 :: CDLSETAB(MAXNLSE,MAXNAOA) = 0.0        ! Units: 'rad', Desc: 'Drag Coefficient Table for Lifting Surface Element'
-  real*8 :: FXGRAV = 0.0                           ! Units: 'lbf', Desc: 'X Gravity Forces in Body Frame'
-  real*8 :: FYGRAV = 0.0                           ! Units: 'lbf', Desc: 'Y Gravity Forces in Body Frame'
-  real*8 :: FZGRAV = 0.0                           ! Units: 'lbf', Desc: 'Z Gravity Forces in Body Frame'
-  real*8 :: MXGRAV = 0.0                           ! Units: 'N m', Desc: 'X Gravity Moment About CG in Body Frame'
-  real*8 :: MYGRAV = 0.0                           ! Units: 'N m', Desc: 'Y Gravity Moment About CG in Body Frame'
-  real*8 :: MZGRAV = 0.0                           ! Units: 'N m', Desc: 'Z Gravity Moment About CG in Body Frame'
-  real*8 :: FXAERO = 0.0                           ! Units: 'lbf', Desc: 'X Aerodynamic Force in Body Frame'
-  real*8 :: FYAERO = 0.0                           ! Units: 'lbf', Desc: 'Y Aerodynamic Force in Body Frame'
-  real*8 :: FZAERO = 0.0                           ! Units: 'lbf', Desc: 'Z Aerodynamic Force in Body Frame'
-  real*8 :: MXAERO = 0.0                           ! Units: 'N m', Desc: 'X Aerodynamic Moment About CG in Body Frame'
-  real*8 :: MYAERO = 0.0                           ! Units: 'N m', Desc: 'Y Aerodynamic Moment About CG in Body Frame'
-  real*8 :: MZAERO = 0.0                           ! Units: 'N m', Desc: 'Z Aerodynamic Moment About CG in Body Frame'
-  real*8 :: FXCONT = 0.0                           ! Units: 'lbf', Desc: 'X Contact Force in Body Frame'
-  real*8 :: FYCONT = 0.0                           ! Units: 'lbf', Desc: 'Y Contact Force in Body Frame'
-  real*8 :: FZCONT = 0.0                           ! Units: 'lbf', Desc: 'Z Contact Force in Body Frame'
-  real*8 :: MXCONT = 0.0                           ! Units: 'N m', Desc: 'X Contact Moment in Body Frame'
-  real*8 :: MYCONT = 0.0                           ! Units: 'N m', Desc: 'Y Contact Moment in Body Frame'
-  real*8 :: MZCONT = 0.0                           ! Units: 'N m', Desc: 'Z Contact Moment in Body Frame'
-  real*8 :: FXTOTAL = 0.0                          ! Units: 'lbf', Desc: 'X Total Applied Force in Body Frame'
-  real*8 :: FYTOTAL = 0.0                          ! Units: 'lbf', Desc: 'Y Total Applied Force in Body Frame'
-  real*8 :: FZTOTAL = 0.0                          ! Units: 'lbf', Desc: 'Z Total Applied Force in Body Frame'
-  real*8 :: MXTOTAL = 0.0                          ! Units: 'N m', Desc: 'X Total Applied Moment About Mass Center in Body Frame'
-  real*8 :: MYTOTAL = 0.0                          ! Units: 'N m', Desc: 'Y Total Applied Moment About Mass Center in Body Frame'
-  real*8 :: MZTOTAL = 0.0                          ! Units: 'N m', Desc: 'Z Total Applied Moment About Mass Center in Body Frame'
-  real*8 :: INITIALPHI = 0.0                       ! Units: 'rad', Desc: 'Initial Euler Roll Angle of Aircraft'
-  real*8 :: INITIALTHETA = 0.0                     ! Units: 'rad', Desc: 'Initial Euler Pitch Angle of Aircraft'
-  real*8 :: INITIALPSI = 0.0                       ! Units: 'rad', Desc: 'Initial Euler Yaw Angle of Aircraft'
-  real*8 :: INITIALSTATE(13) = 0.0                 ! Units: 'vd', Desc: 'Initial Aircraft State Vector'
-  real*8 :: PHI = 0                                ! Units: 'rad', Desc: Aircraft roll angle
-  real*8 :: THETA = 0                              ! Units: 'rad', Desc: Aircraft roll angle
-  real*8 :: PSI = 0                                ! Units: 'rad', Desc: Aircraft roll angle
-  real*8 :: STATE(13) = 0.0                        ! Units: 'vd', Desc: 'Aircraft State Vector'
-  real*8 :: STATEPREV(13) = 0.0                    ! Units: 'vd', Desc: 'Aircraft State Vector before camera snapshot'
-  real*8 :: STATEDOT(13) = 0.0                     ! Units: 'vd', Desc: 'Aircraft State Vector Derivative'
-  real*8 :: VXWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial I Axis'
-  real*8 :: VYWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial J Axis'
-  real*8 :: VZWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial K Axis'
-  
- end type TOWEDSTRUCTURE
-   
+include 'towedmodule.f90'
+ 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!! TETHER STRUCTURE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
- type TETHERSTRUCTURE
-  integer :: DYNOFFON = 0                          ! Units: 'nd', Desc: 'Dynamics Flag (0=Off, 1=On)'
-  integer :: GRAVOFFON = 0                         ! Units: 'nd', Desc: 'Gravity Flag (0=Off, 1=On)'
-  integer :: AEROFLAG = 0                          ! Units: 'nd', Desc: 'Aerodynamics Flag (0=Off, 1=On)'
-  integer :: ADDBEAD = 0                           ! Units: 'nd' Desc: 'Whether or not to add a bead
-  integer :: REMOVEBEAD = 0                        ! Units: 'nd' Desc: 'Whether or not to remove a bead or not
-  integer :: ELASOFFON = 0                         ! Units: 'nd', Desc: 'Elasticity Flag (0=Off, 1=On)'
-  integer :: NBEADS = 0                            ! Units: 'nd', Desc: 'Number of Tether Beads'                    
-  integer :: DQFLAG = 0                            ! Units: 'nd', Desc: 'Data Quality Flag (0=Data Not Loaded Successfully, 1=Data Loaded Successfully)'
-  integer :: NONLINEAR = 0                         ! Units: 'nd', Desc: 'Nonlinearity of Tether'
-  real*8 :: XTETHER = 0.0                          ! Units: 'ft', Desc: 'X Inertial Position of Tether Attachment Point'
-  real*8 :: YTETHER = 0.0                          ! Units: 'ft', Desc: 'Y Inertial Position of Tether Attachment Point'
-  real*8 :: ZTETHER = 0.0                          ! Units: 'ft', Desc: 'Z Inertial Position of Tether Attachment Point'
-  real*8 :: FXTETHER = 0.0                         ! Units: 'ft', Desc: 'X Tether force
-  real*8 :: FYTETHER = 0.0                         ! Units: 'ft', Desc: 'Y Tether force
-  real*8 :: FZTETHER = 0.0                         ! Units: 'ft', Desc: 'Z Tether force
-  real*8 :: FXPLATFORM = 0.0                         ! Units: 'ft', Desc: 'X Tether force
-  real*8 :: FYPLATFORM = 0.0                         ! Units: 'ft', Desc: 'Y Tether force
-  real*8 :: FZPLATFORM = 0.0                         ! Units: 'ft', Desc: 'Z Tether force
-  real*8 :: XTETHERDOT = 0.0                       ! Units: 'ft', Desc: 'X Inertial Velocity of Tether Attachment Point
-  real*8 :: YTETHERDOT = 0.0                       ! Units: 'ft', Desc: 'Y Inertial Velocity of Tether Attachment Point
-  real*8 :: ZTETHERDOT = 0.0                       ! Units: 'ft', Desc: 'Z Inertial Velocity of Tether Attachment Point
-  real*8 :: MASSPUL = 0.0                          ! Units: 'slug/ft', Desc: 'Mass Per Unit Length of Total Tether Line'   
-  real*8 :: AREA = 0.0                             ! Units: 'ft^2', Desc: 'Cross sectional area of tether line'
-  real*8 :: LEN = 0.0                              ! Units: 'ft', Desc: 'Unstretched Total Length of Tether Line'   
-  real*8 :: NOMLEN = 0.0                           ! Units: 'ft', Desc: 'Nominal Length of Tether at Initial Condition'
-  real*8 :: LENMAX = 0.0                           ! Units: 'ft', Desc: 'Maximum Length of Tether Line'   
-  real*8 :: LENMIN = 0.0                           ! Units: 'ft', Desc: 'Minimum Length of Tether Line'   
-  real*8 :: DIA = 0.0                              ! Units: 'ft', Desc: 'Unstretched Total Diameter of Tether Line' 
-  real*8 :: GP = 0.0                               ! Units: 'lbf/(rad-ft^2)', Desc: 'Gp Torsional Modulus of Total Tether Line'   
-  real*8 :: GD = 0.0                               ! Units: 'lbf-s/(rad-ft^2)', Desc: 'Gd Torsional Damping Modulus of Total Tether Line'     
-  real*8 :: KE = 0.0                               ! Units: 'lbf/ft^2', Desc: 'Ke Stiffness of Total Tether Line'   
-  real*8 :: KV = 0.0                               ! Units: 'lbf/ft^2', Desc: 'Kv Stiffness of Total Tether Line'   
-  real*8 :: CV = 0.0                               ! Units: 'lbf/(ft^2/s)', Desc: 'Cv Damping of Total Tether Line'   
-  real*8 :: EMASS = 0.0                            ! Units: 'kg', Desc: 'Mass of Tether Line Element'   
-  real*8 :: ELEN = 0.0                             ! Units: 'ft', Desc: 'Length of Tether Line Element'   
-  real*8 :: EKE = 0.0                              ! Units: 'lbf/ft', Desc: 'Ke Stiffness of Tether Line Element'   
-  real*8 :: EKV = 0.0                              ! Units: 'lbf/ft', Desc: 'Kv Stiffness of Tether Line Element'   
-  real*8 :: KP = 0.0                               ! Units: 'lbf-ft/rad', Desc: 'Gp Torsional Stiffness of Total Tether Line'   
-  real*8 :: KD = 0.0                               ! Units: 'lbf-ft-s/rad', Desc: 'Gd Torsional Damping of Total Tether Line'   
-  real*8 :: ECV = 0.0                              ! Units: 'lbf/(ft/s)', Desc: 'Cv Damping of Tether Line Element'   
-  real*8 :: SIGMA = 0.0                            ! Units: 'rad/s', Desc: 'Tension Filter Root'   
-  real*8 :: KU = 0.0                               ! Units: 'lbf/ft', Desc: 'Tension Filter Stiffness Input'   
-  real*8 :: CU = 0.0                               ! Units: 'lbf/(ft/s)', Desc: 'Tension Filter Damping Input'   
-  real*8 :: NU = 0.0                               ! Units: 'nd', Desc: 'Tether Material Poisson's Ratio'   
-  real*8 :: CD_AXIAL = 0.0                         ! Units: 'nd', Desc: 'Skin Friction Drag Coefficient'   
-  real*8 :: CD_NORMAL = 0.0                        ! Units: 'nd', Desc: 'Flat Plate Drag Coefficient'   
-  real*8 :: XS = 0.0                               ! Units: 'ft', Desc: 'X Inertial Position of Tether Start Edge Point'
-  real*8 :: YS = 0.0                               ! Units: 'ft', Desc: 'Y Inertial Position of Tether Start Edge Point'
-  real*8 :: ZS = 0.0                               ! Units: 'ft', Desc: 'Z Inertial Position of Tether Start Edge Point'
-  real*8 :: XSDOT = 0.0                            ! Units: 'ft/s', Desc: 'X Inertial Velocity of Tether Start Edge Point'
-  real*8 :: YSDOT = 0.0                            ! Units: 'ft/s', Desc: 'Y Inertial Velocity of Tether Start Edge Point'
-  real*8 :: ZSDOT = 0.0                            ! Units: 'ft/s', Desc: 'Z Inertial Velocity of Tether Start Edge Point'
-  real*8 :: XF = 0.0                               ! Units: 'ft', Desc: 'X Inertial Position of Tether Finish Edge Point'
-  real*8 :: YF = 0.0                               ! Units: 'ft', Desc: 'Y Inertial Position of Tether Finish Edge Point'
-  real*8 :: ZF = 0.0                               ! Units: 'ft', Desc: 'Z Inertial Position of Tether Finish Edge Point'
-  real*8 :: XFDOT = 0.0                            ! Units: 'ft/s', Desc: 'X Inertial Velocity of Tether Finish Edge Point'
-  real*8 :: YFDOT = 0.0                            ! Units: 'ft/s', Desc: 'Y Inertial Velocity of Tether Finish Edge Point'
-  real*8 :: ZFDOT = 0.0                            ! Units: 'ft/s', Desc: 'Z Inertial Velocity of Tether Finish Edge Point'
-  real*8 :: FXGRAV(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'X Gravity Force on Tether Bead in Inertial Frame'
-  real*8 :: FYGRAV(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'Y Gravity Force on Tether Bead in Inertial Frame'
-  real*8 :: FZGRAV(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'Z Gravity Force on Tether Bead in Inertial Frame'
-  real*8 :: FXAERO(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'X Aerodynamic Force on Tether Bead in Inertial Frame'
-  real*8 :: FYAERO(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'Y Aerodynamic Force on Tether Bead in Inertial Frame'
-  real*8 :: FZAERO(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'Z Aerodynamic Force on Tether Bead in Inertial Frame'
-  real*8 :: FXELAS(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'X Elastic Force on Tether Bead in Inertial Frame'
-  real*8 :: FYELAS(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'Y Elastic Force on Tether Bead in Inertial Frame'
-  real*8 :: FZELAS(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'Z Elastic Force on Tether Bead in Inertial Frame'
-  real*8 :: TCOM(200) = 0.0                        ! Time indices for reel trajectory
-  real*8 :: REELTRAJ(200) = 0.0                    ! Unstretched length values for reel trajectory
-  real*8 :: FELASBEADMINUS(MAXNBEADS,3) = 0.0      ! Units: 'lbf', Desc: 'Tether Bead Elastic Force Computation Matrix'
-  real*8 :: FELASBEADPLUS(MAXNBEADS,3) = 0.0       ! Units: 'lbf', Desc: 'Tether Bead Elastic Force Computation Matrix'
-  real*8 :: VELOCITYMAG(MAXNBEADS) = 0.0           ! Units: 'ft/s', Desc: 'Tether Bead Aerodynamic Velocity'
-  real*8 :: INITIALSTATE(7*MAXNBEADS+1) = 0.0      ! Units: 'vd', Desc: 'Initial Tether State Vector'
-  real*8 :: STATE(7*MAXNBEADS+1) = 0.0             ! Units: 'vd', Desc: 'Tether State Vector'
-  real*8 :: STATEDOT(7*MAXNBEADS+1) = 0.0          ! Units: 'vd', Desc: 'Tether State Vector Derivative' 
-  real*8 :: THETAINT = 0.0                         ! Units: 'rad', Desc: Integral of Theta
-  real*8 :: THETACOMMAND = 0.0                     ! Units: 'rad', Desc: Theta Command
-  real*8 :: THETAREEL = 0.0                        ! Units: 'rad', Desc: Theta of reel
-  real*8 :: THETADOTREEL = 0.0                     ! Units: 'rad/s', Desc: Thetadot of reel
-  real*8 :: TORQUE = 0.0                           ! Units: 'lbf-ft', Desc: Torque applied at reel
-  real*8 :: NOMTORQUE = 0.0                        ! Units: 'lbf-ft', Desc: Nominal Torque applied at reel
-  real*8 :: TENSION = 0.0                          ! Units: 'lbf', Desc: Tension at Reel
-  real*8 :: TORQUECOMMAND = 0.0                    ! Units: 'lbf-ft', Desc: Torque Command
-  real*8 :: IREEL = 0.0                            ! Units: 'slug-ft^2', Desc: Rotational Inertia of Reel
-  real*8 :: RREEL = 0.0                            ! Units: 'ft', Desc: radius of reel
-  real*8 :: TAU = 0.0                              ! Units: 'ft', Desc: Time Constant of Torque at Reel
-  real*8 :: STRETCHLEN = 0.0                       ! Units: 'ft', Desc: Stretched length of tether
-  real*8 :: PREVLEN = 0.0                          ! Units: 'ft', Desc: Previous Length command
-  real*8 :: PREVLENCOMMAND = 0.0                   ! Units: 'ft', Desc: Previous Length command
-  real*8 :: LDOTCOMMAND = 0.0                      ! Units: 'ft/s', Desc: Pay Out Rate Command
-  real*8 :: LDOTNOMINAL = 0.0                      ! Units: 'ft/s', Desc: Nominal Pay Out Rate
-  real*8 :: LDOTFACTOR = 1.0                       ! Units: 'ft/s', Desc: Nominal Pay Out Rate
-  real*8 :: SLTETHER = 0.0                         ! Units: 'ft', Desc: Stationline distance from center of mass to tether connection point on towed system
-  real*8 :: BLTETHER = 0.0                         ! Units: 'ft', Desc: buttline distance from center of mass to tether connection point on towed system
-  real*8 :: WLTETHER = 0.0                         ! Units: 'ft', Desc: waterline distance from center of mass to tether connection point on towed system
- end type TETHERSTRUCTURE
-  
+include 'tethermodule.f90'
+
 !!!!!!!!!!!!!!!!!!!!!!!!!! SIMULATION STRUCTURE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
  type SIMULATIONSTRUCTURE
@@ -434,7 +61,7 @@ IMPLICIT NONE
   real*8 :: INITIALSTATEDOT(MAXX) = 0.0            ! Units: 'vd', Desc: 'Initial State Dot'
   real*8 :: ACTUATOR(NOACTUATORS) = 0.0            ! Units: 'vd', Desc: 'Vector of Actuators
   real*8 :: ACTUATORDOT(NOACTUATORS) = 0.0         ! Units: 'vd', Desc: 'Vector of Actuators Derivatives
- end type SIMULATIONSTRUCTURE
+end type SIMULATIONSTRUCTURE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!! CONTROL SYSTEM STRUCTURE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
@@ -458,13 +85,13 @@ IMPLICIT NONE
   real*8 :: KITETHER = 0                           ! Units: 'nd', Desc: Tether integral gain on length
   real*8 :: KPARAFOIL = 0                          ! Units: 'nd', Desc: Parafoil proportional gain on 
   real*8 :: KDPARAFOIL = 0                         ! Units: 'nd', Desc: Parafoil derivative gain on
-  real*8 :: XCOMMAND = 0.0                         ! Units: 'ft', Desc: Desired x-coordinate, quadrotor
-  real*8 :: YCOMMAND = 0.0                         ! Units: 'ft', Desc: Desired y-coordinate, quadrotor
-  real*8 :: ZCOMMAND = 0.0                         ! Units: 'ft', Desc: Desired z-coordinate, quadrotor
-  real*8 :: PHICOMMAND = 0.0                       ! Units: 'rad',Desc: Quadcopter phi command
-  real*8 :: THETACOMMAND = 0.0                     ! Units: 'rad',Desc: Quadcopter theta command
-  real*8 :: PSICOMMAND = 0.0                       ! Units: 'rad',Desc: Quadcopter psi command
-  real*8 :: WAYPOINT = 0.0                         ! Units: 'ft', Desc: Desired x-coordinate, quadrotor
+  real*8 :: XCOMMAND = 0.0                         ! Units: 'ft', Desc: Desired x-coordinate, driver
+  real*8 :: YCOMMAND = 0.0                         ! Units: 'ft', Desc: Desired y-coordinate, driver
+  real*8 :: ZCOMMAND = 0.0                         ! Units: 'ft', Desc: Desired z-coordinate, driver
+  real*8 :: PHICOMMAND = 0.0                       ! Units: 'rad',Desc: Driver phi command
+  real*8 :: THETACOMMAND = 0.0                     ! Units: 'rad',Desc: Driver theta command
+  real*8 :: PSICOMMAND = 0.0                       ! Units: 'rad',Desc: Driver psi command
+  real*8 :: WAYPOINT = 0.0                         ! Units: 'ft', Desc: Desired x-coordinate, driver
   real*8 :: UPDATERATE = 0.0                       ! Units: 's', Desc: 'Rate for Control System Updates'
   real*8 :: UPDATETIME = 0.0                       ! Units: 's', Desc: 'Time for Next Control System Update'
   real*8 :: LEN = 0.0                              ! Units: 'ft', Desc: Feedback of length of tether
@@ -483,10 +110,6 @@ IMPLICIT NONE
   real*8 :: TENSIONERROR(3) = 0.0                  ! Units: 'md', Desc: Bias, Scale Factor, and Noise
 
 end type CONTROLSYSTEMSTRUCTURE
-
-!!!!!!!!!!!!!!!!!!!!!!!!!! COPTER STRUCTURE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-include 'coptermodule'
 
 !!!!!!!!!!!!!!!!!!!!!!!!!! TOSIM STRUCTURE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -513,7 +136,7 @@ include 'coptermodule'
   type(ATMOSPHERESTRUCTURE) :: ATM
   type(TOWEDSTRUCTURE) :: TOW
   type(TETHERSTRUCTURE) :: THR
-  type(COPTERSTRUCTURE) :: COPTER
+  type(DRIVERSTRUCTURE) :: DRIVER
   type(CONTROLSYSTEMSTRUCTURE) :: CS
   type(SIMULATIONSTRUCTURE) :: SIM
  end type TOSIMSTRUCTURE
@@ -577,8 +200,8 @@ PROGRAM TOSIM
     if ((inputfiletype.eq.'ATM') .or. (inputfiletype.eq.'atm') .or. (inputfiletype.eq.'Atm')) then
         T%ATMOSPHEREINPUTFILE = inputfilename;  
     end if
-    if ((inputfiletype.eq.'COPTER') .or. (inputfiletype.eq.'Copter') .or. (inputfiletype.eq.'Copter')) then
-        T%COPTER%INPUTFILE = inputfilename;  
+    if ((inputfiletype.eq.'DRIVER') .or. (inputfiletype.eq.'Driver') .or. (inputfiletype.eq.'Driver')) then
+        T%DRIVER%INPUTFILE = inputfilename;  
     end if
     if ((inputfiletype.eq.'THR') .or. (inputfiletype.eq.'thr') .or. (inputfiletype.eq.'Thr')) then
         T%TETHERINPUTFILE = inputfilename;  
@@ -623,7 +246,7 @@ PROGRAM TOSIM
 !!!!!!!!!!!!!!!!!!11! Load Data !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
  call ATMOSPHERE(T,1)
- call COPTER(T%COPTER,1) !1 = load data , 2 = print data , 3 = compute for the different models
+ call DRIVER(T%DRIVER,1) !1 = load data , 2 = print data , 3 = compute for the different models
  call TETHER(T,1)
  call TOWED(T,1)
  call CONTROL(T,1)
@@ -667,7 +290,7 @@ PROGRAM TOSIM
  write(25,*) ' '
  write(25,*) 'TOSIM Input File Names File: ',trim(T%FILEINPUTFILE)
  write(25,*) 'TOSIM Input File: ',trim(T%TOSIMINPUTFILE)
- write(25,*) 'Coptercopter Input File: ',trim(T%COPTER%INPUTFILE)
+ write(25,*) 'Driver Input File: ',trim(T%DRIVER%INPUTFILE)
  write(25,*) 'Atmosphere Input File: ',trim(T%ATMOSPHEREINPUTFILE)
  write(25,*) 'Towed Input File: ',trim(T%TOWEDINPUTFILE)
  write(25,*) 'Tether Input File: ',trim(T%TETHERINPUTFILE)
@@ -685,7 +308,7 @@ PROGRAM TOSIM
  write(25,*) ' '
 
  call ATMOSPHERE(T,2)
- call COPTER(T%COPTER,2)
+ call DRIVER(T%DRIVER,2)
  call TETHER(T,2)
  call TOWED(T,2)
  call CONTROL(T,2)
@@ -799,7 +422,7 @@ SUBROUTINE SIMULATION(T,iflag)
     ! T%SIM%TIME,T%TOW%VXWIND,T%TOW%VYWIND,T%TOW%VZWIND,T%THR%NBEADS*1.0D0,T%TOW%FXCONT,T%TOW%FYCONT,T%TOW%FZCONT,T%TOW%MXCONT,T%TOW%MYCONT,T%TOW%MZCONT
       ! T%SIM%STATE(T%SIM%NOSTATES-7:T%SIM%NOSTATES),T%SIM%STATEDOT(T%SIM%NOSTATES-7:T%SIM%NOSTATES)
       !Control OUT File
-    write(91,fmt='(1000F30.10)') T%SIM%TIME,T%TOW%AILERON,T%TOW%ELEVATOR,T%TOW%RUDDER,T%TOW%FLAPS,T%COPTER%OMEGAVEC(1:4,1), T%COPTER%FYGRAV, T%COPTER%FYAERO, T%COPTER%FYCONT
+    write(91,fmt='(1000F30.10)') T%SIM%TIME,T%TOW%AILERON,T%TOW%ELEVATOR,T%TOW%RUDDER,T%TOW%FLAPS,T%DRIVER%OMEGAVEC(1:4,1), T%DRIVER%FYGRAV, T%DRIVER%FYAERO, T%DRIVER%FYCONT
       !Force Vector File
     write(83,fmt='(1000F30.10)') T%SIM%TIME,T%THR%FXGRAV(1:T%THR%NBEADS),T%THR%FYGRAV(1:T%THR%NBEADS),T%THR%FZGRAV(1:T%THR%NBEADS),T%THR%FXELAS(1:T%THR%NBEADS),T%THR%FYELAS(1:T%THR%NBEADS),T%THR%FZELAS(1:T%THR%NBEADS),T%THR%FXAERO(1:T%THR%NBEADS),T%THR%FYAERO(1:T%THR%NBEADS),T%THR%FZAERO(1:T%THR%NBEADS)
       !Error Outputfile
@@ -946,13 +569,13 @@ SUBROUTINE SIMULATION(T,iflag)
   !Check for Creating a Restart point
 
    if ((T%SIM%CREATERESTART .eq. 1) .and. (T%SIM%RESTARTTIME .le. T%SIM%TIME+T%SIM%DELTATIME)) then
-      write(98,*) T%SIM%TIME-T%COPTER%TIMEON, ' !Restart Time offset'
+      write(98,*) T%SIM%TIME-T%DRIVER%TIMEON, ' !Restart Time offset'
       write(98,*) T%THR%NBEADS, ' !Number of Beads'
       do k=1,T%SIM%NOSTATES
          if (k .lt. 14) then
             write(98,*) T%SIM%STATE(k),' !Towed States'
          else if (k .lt. 26) then
-            write(98,*) T%SIM%STATE(k),' !Copter States'
+            write(98,*) T%SIM%STATE(k),' !Driver States'
          else if (k .ge. 26) then
             write(98,*) T%SIM%STATE(k),' !Tether States'
          end if
@@ -978,8 +601,8 @@ SUBROUTINE SIMULATION(T,iflag)
   T%SIM%CPUTIMESYSTEM = tocsystem - ticsystem
   T%SIM%CPUTIMETOTAL = toctotal - tictotal
 
-  write(*,*) 'Quadcopter Integral States'
-  call PRINTINTEGRAL(T%COPTER)
+  write(*,*) 'Driver Integral States'
+  call PRINTINTEGRAL(T%DRIVER)
 
   write(25,*) ' '
   write(25,*) 'SIMULATION CPU TIME USER (sec): ',T%SIM%CPUTIMEUSER,tocuser,ticuser
@@ -1043,7 +666,7 @@ SUBROUTINE SIMULATION(T,iflag)
   do i=1,T%SIM%NOSTATES
   if (i .eq. 1) write(25,*) 'Number of states:',T%SIM%NOSTATES
    if (i .eq. 14) then
-      write(25,*) 'Copter States'
+      write(25,*) 'Driver States'
    else if (i .eq. 26) then
       write(25,*) 'Tether States'
    else if (i .eq. T%SIM%NOSTATES - 8) then
@@ -1061,8 +684,8 @@ SUBROUTINE SIMULATION(T,iflag)
  
  if (iflag .eq. 1) then
 
-  !!!13 = aircraft,12 = Coptercopter,7*T%TH%NBEADS + 1 = tether,2 = actuator dynamics
-  !!! REVISIT Nemo : Added 8 states for thrust and thrustdot for each rotor
+  !!!13 = aircraft,12 = Driver,7*T%TH%NBEADS + 1 = tether,2 = actuator dynamics
+  !!! REVISIT Nghia : Added 8 states for thrust and thrustdot for each rotor
   
   T%SIM%NOSTATES = 13 + 12 + 7*T%THR%NBEADS + 1 + 8
   
@@ -1108,10 +731,10 @@ SUBROUTINE SIMULATION(T,iflag)
      end if
      rewind(90)
      
-     !Read restart time and shift Copter time
+     !Read restart time and shift Driver time
 
      read(unit=90,fmt=*,iostat=readflag) readreal;
-     T%COPTER%TIMEON = -readreal
+     T%DRIVER%TIMEON = -readreal
 
      !Read number of beads
 
@@ -1126,15 +749,15 @@ SUBROUTINE SIMULATION(T,iflag)
         read(unit=90,fmt=*,iostat=readflag) T%SIM%INITIALSTATE(i)
      end do
 
-     !Set initial location of Copter (x,y,z,p,t,p,u,v,w,p,q,r)
-     T%COPTER%INITIALSTATE(1:12) = T%SIM%INITIALSTATE(14:25)
+     !Set initial location of Driver (x,y,z,p,t,p,u,v,w,p,q,r)
+     T%DRIVER%INITIALSTATE(1:12) = T%SIM%INITIALSTATE(14:25)
      ! Added thrust initial conditions
-     T%COPTER%INITIALSTATE(13:20) = T%SIM%INITIALSTATE((T%SIM%NOSTATES-7):T%SIM%NOSTATES)
-     T%COPTER%XCGINITIAL = T%SIM%INITIALSTATE(14)
-     T%COPTER%YCGINITIAL = T%SIM%INITIALSTATE(15)
-     T%COPTER%ZCGINITIAL = T%SIM%INITIALSTATE(16)
-     !Set restart speed of Copter
-     T%COPTER%RESTARTSPEED = T%SIM%INITIALSTATE(20)
+     T%DRIVER%INITIALSTATE(13:20) = T%SIM%INITIALSTATE((T%SIM%NOSTATES-7):T%SIM%NOSTATES)
+     T%DRIVER%XCGINITIAL = T%SIM%INITIALSTATE(14)
+     T%DRIVER%YCGINITIAL = T%SIM%INITIALSTATE(15)
+     T%DRIVER%ZCGINITIAL = T%SIM%INITIALSTATE(16)
+     !Set restart speed of Driver
+     T%DRIVER%RESTARTSPEED = T%SIM%INITIALSTATE(20)
 
      !Read controls
 
@@ -1150,16 +773,16 @@ SUBROUTINE SIMULATION(T,iflag)
   else
 
      !Set restart speed to 0
-     T%COPTER%RESTARTSPEED = 0
+     T%DRIVER%RESTARTSPEED = 0
 
-     !Read Copter initial states
-        ! write(*,*) 'Quad States'
+     !Read Driver initial states
+        ! write(*,*) 'Driver States'
      do i=1,12
-        ! write(*,*) T%COPTER%INITIALSTATE(i)
-        read(unit=90,fmt=*,iostat=readflag) T%COPTER%INITIALSTATE(i)
+        ! write(*,*) T%DRIVER%INITIALSTATE(i)
+        read(unit=90,fmt=*,iostat=readflag) T%DRIVER%INITIALSTATE(i)
      end do
      !Put initial state vector into the state vector
-     T%COPTER%STATE(1:12) = T%COPTER%INITIALSTATE(1:12)
+     T%DRIVER%STATE(1:12) = T%DRIVER%INITIALSTATE(1:12)
 
      !!!!Read Towed Initial States!!!
 
@@ -1169,13 +792,13 @@ SUBROUTINE SIMULATION(T,iflag)
         read(unit=90,fmt=*,iostat=readflag) T%TOW%INITIALSTATE(i)
      end do
 
-     !Read Copter Thrust initial states
+     !Read Driver Thrust initial states
         ! write(*,*) 'Thrust States'
      do i=1,8
-        ! write(*,*) T%COPTER%INITIALSTATE(i)
-        read(unit=90,fmt=*,iostat=readflag) T%COPTER%INITIALSTATE(i+12)
+        ! write(*,*) T%DRIVER%INITIALSTATE(i)
+        read(unit=90,fmt=*,iostat=readflag) T%DRIVER%INITIALSTATE(i+12)
      end do
-     T%COPTER%STATE(13:20) = T%COPTER%INITIALSTATE(13:20)
+     T%DRIVER%STATE(13:20) = T%DRIVER%INITIALSTATE(13:20)
      !!!Convert Phi,theta,psi to quaternions!!!
 
      T%TOW%INITIALPHI = T%TOW%INITIALSTATE(4)
@@ -1198,11 +821,11 @@ SUBROUTINE SIMULATION(T,iflag)
 
      !!!!!! Compute initial Tether points !!!!!!!!!!
 
-     call QUAD_HANDSHAKE_INIT(T) !!Do some calculations specific to TOSIM
-     call COPTER(T%COPTER,3) ! Compute location of reel !!!!!Reel Location = T%COPTER%(XYZ)REEL
+     call DRIVER_HANDSHAKE_INIT(T) !!Do some calculations specific to TOSIM
+     call DRIVER(T%DRIVER,3) ! Compute location of reel !!!!!Reel Location = T%DRIVER%(XYZ)REEL
 
-     !!Place Copter states in initial state vector
-     T%COPTER%INITIALSTATE(1:20) = T%COPTER%STATE(1:20)
+     !!Place Driver states in initial state vector
+     T%DRIVER%INITIALSTATE(1:20) = T%DRIVER%STATE(1:20)
 
      !pass aircraft state to global state
 
@@ -1213,13 +836,13 @@ SUBROUTINE SIMULATION(T,iflag)
      call TOWED(T,3) !Cradle tether connection point Location = T%THR%(XYZ)TETHER
 
      stateindex = 0
-     xslope = (T%THR%XTETHER - T%COPTER%XREEL)/(T%THR%NBEADS+1)
-     yslope = (T%THR%YTETHER - T%COPTER%YREEL)/(T%THR%NBEADS+1)
-     zslope = (T%THR%ZTETHER - T%COPTER%ZREEL)/(T%THR%NBEADS+1)
+     xslope = (T%THR%XTETHER - T%DRIVER%XREEL)/(T%THR%NBEADS+1)
+     yslope = (T%THR%YTETHER - T%DRIVER%YREEL)/(T%THR%NBEADS+1)
+     zslope = (T%THR%ZTETHER - T%DRIVER%ZREEL)/(T%THR%NBEADS+1)
      do i=1,T%THR%NBEADS
-        T%THR%INITIALSTATE(stateindex+1) = T%COPTER%XREEL + xslope*(i);
-        T%THR%INITIALSTATE(stateindex+2) = T%COPTER%YREEL + yslope*(i);
-        T%THR%INITIALSTATE(stateindex+3) = T%COPTER%ZREEL + zslope*(i);
+        T%THR%INITIALSTATE(stateindex+1) = T%DRIVER%XREEL + xslope*(i);
+        T%THR%INITIALSTATE(stateindex+2) = T%DRIVER%YREEL + yslope*(i);
+        T%THR%INITIALSTATE(stateindex+3) = T%DRIVER%ZREEL + zslope*(i);
         T%THR%INITIALSTATE(stateindex+4) = 0 !Initialize derivatives to zero
         T%THR%INITIALSTATE(stateindex+5) = 0
         T%THR%INITIALSTATE(stateindex+6) = 0
@@ -1234,12 +857,12 @@ SUBROUTINE SIMULATION(T,iflag)
      !!!!PLACE LOCAL INITIAL STATES INTO GLOBAL INITIAL STATES
      !!TOWED STATES
      T%SIM%INITIALSTATE(1:13) = T%TOW%INITIALSTATE(1:13)
-     !!COPTER STATES(14:25)
-     T%SIM%INITIALSTATE(14:25) = T%COPTER%INITIALSTATE(1:12)
+     !!DRIVER STATES(14:25)
+     T%SIM%INITIALSTATE(14:25) = T%DRIVER%INITIALSTATE(1:12)
      !!!TETHER STATES
      T%SIM%INITIALSTATE(26:T%SIM%NOSTATES-8) = T%THR%INITIALSTATE(1:7*T%THR%NBEADS+1)
      !!!REVISIT THRUST STATES
-     T%SIM%INITIALSTATE(T%SIM%NOSTATES-7:T%SIM%NOSTATES) = T%COPTER%INITIALSTATE(13:20)
+     T%SIM%INITIALSTATE(T%SIM%NOSTATES-7:T%SIM%NOSTATES) = T%DRIVER%INITIALSTATE(13:20)
   end if
 
   ! Run Tether Sweep if AEROFLAG is set to 2
@@ -1249,9 +872,9 @@ SUBROUTINE SIMULATION(T,iflag)
      !Set length of tether to 1 foot
      T%THR%LEN = 1
      !Set the position of the reel to 0,0,0 (1st truss element)
-     T%COPTER%XREEL = 0;
-     T%COPTER%YREEL = 0;
-     T%COPTER%ZREEL = 0;
+     T%DRIVER%XREEL = 0;
+     T%DRIVER%YREEL = 0;
+     T%DRIVER%ZREEL = 0;
      !Set the position of the single bead to 0,0,0.5
      T%THR%STATE(1) = 0;
      T%THR%STATE(2) = 0;
@@ -1261,9 +884,9 @@ SUBROUTINE SIMULATION(T,iflag)
      T%THR%YTETHER = 0;
      T%THR%ZTETHER = 1.0D0;
      !Set the velocity of tether, bead and reel equal to zero
-     T%COPTER%XREELDOT = 0;
-     T%COPTER%YREELDOT = 0;
-     T%COPTER%ZREELDOT = 0;
+     T%DRIVER%XREELDOT = 0;
+     T%DRIVER%YREELDOT = 0;
+     T%DRIVER%ZREELDOT = 0;
      T%THR%STATE(4) = 0;
      T%THR%STATE(5) = 0;
      T%THR%STATE(6) = 0;
@@ -1289,8 +912,8 @@ SUBROUTINE SIMULATION(T,iflag)
         T%THR%ZTETHERDOT = wnominal
         T%THR%STATE(4) = unominal
         T%THR%STATE(6) = wnominal
-        T%COPTER%XREELDOT = unominal
-        T%COPTER%ZREELDOT = wnominal
+        T%DRIVER%XREELDOT = unominal
+        T%DRIVER%ZREELDOT = wnominal
         call TETHER(T,3)
         write(101,*) aoa,unominal,wnominal,T%THR%FXAERO(1),T%THR%FYAERO(1),T%THR%FZAERO(1)
      end do
@@ -1378,22 +1001,22 @@ if (iflag .eq. 3) then
     end if
     stateindex = stateindex + 13
 
-    ! Copter Motion or Derivation
-    if (T%COPTER%OFFON .eq. 1) then
-       if ((T%COPTER%MODNO .eq. 0) .or. (T%COPTER%MODNO .eq. 3)) then !0 and 3 are our integration models
-          T%COPTER%STATE(1:12) = T%SIM%STATE(stateindex+1:stateindex+12)
-          T%COPTER%STATE(13:20) = T%SIM%STATE((T%SIM%NOSTATES-7):T%SIM%NOSTATES)
+    ! Driver Motion or Derivation
+    if (T%DRIVER%OFFON .eq. 1) then
+       if ((T%DRIVER%MODNO .eq. 0) .or. (T%DRIVER%MODNO .eq. 3)) then !0 and 3 are our integration models
+          T%DRIVER%STATE(1:12) = T%SIM%STATE(stateindex+1:stateindex+12)
+          T%DRIVER%STATE(13:20) = T%SIM%STATE((T%SIM%NOSTATES-7):T%SIM%NOSTATES)
        end if
-       call QUAD_HANDSHAKE(T)
-       call COPTER(T%COPTER,3) 
-       if ((T%COPTER%MODNO .eq. 0) .or. (T%COPTER%MODNO .eq. 3)) then
-          T%SIM%STATEDOT(stateindex+1:stateindex+12) = T%COPTER%STATEDOT(1:12)
-          T%SIM%STATEDOT((T%SIM%NOSTATES-7):T%SIM%NOSTATES) = T%COPTER%STATEDOT(13:20)
+       call DRIVER_HANDSHAKE(T)
+       call DRIVER(T%DRIVER,3) 
+       if ((T%DRIVER%MODNO .eq. 0) .or. (T%DRIVER%MODNO .eq. 3)) then
+          T%SIM%STATEDOT(stateindex+1:stateindex+12) = T%DRIVER%STATEDOT(1:12)
+          T%SIM%STATEDOT((T%SIM%NOSTATES-7):T%SIM%NOSTATES) = T%DRIVER%STATEDOT(13:20)
        else
-          T%SIM%STATE(stateindex+1:stateindex+12) = T%COPTER%STATE(1:12)
+          T%SIM%STATE(stateindex+1:stateindex+12) = T%DRIVER%STATE(1:12)
        end if
     else
-       T%COPTER%TIMEON = T%SIM%TIME
+       T%DRIVER%TIMEON = T%SIM%TIME
     end if
     stateindex = stateindex + 12
 
@@ -1421,7 +1044,7 @@ if (iflag .eq. 2) then
    write(25,*) 'Towed States'
    do i=1,T%SIM%NOSTATES
       if (i .eq. 14) then
-         write(25,*) 'Coptercopter States'
+         write(25,*) 'Driver States'
       else if (i .eq. 26) then
          write(25,*) 'Tether States'
       end if
@@ -1434,7 +1057,7 @@ if (iflag .eq. 2) then
    write(25,*) 'Towed Statedots'
    do i=1,T%SIM%NOSTATES
       if (i .eq. 14) then
-         write(25,*) 'Coptercopter Statedots'
+         write(25,*) 'Driver Statedots'
       else if (i .eq. 26) then
          write(25,*) 'Tether Statedots'
       end if
@@ -1452,45 +1075,45 @@ END SUBROUTINE SYSTEMDERIVATIVES
 !!!!!!!!!!! SUB ROUTINE HANDSHAKE INIT !!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!! THIS RUNS ONLY ONCE
 
-SUBROUTINE QUAD_HANDSHAKE_INIT(T)
+SUBROUTINE DRIVER_HANDSHAKE_INIT(T)
   use TOSIMDATATYPES
   implicit none
   type(TOSIMSTRUCTURE) T
-  !Pass some tether dynamics stuff to QUAD
-  T%COPTER%THR_DYNOFFON = T%THR%DYNOFFON
-  T%COPTER%THR_ELASOFFON = T%THR%ELASOFFON
+  !Pass some tether dynamics stuff to DRIVER
+  T%DRIVER%THR_DYNOFFON = T%THR%DYNOFFON
+  T%DRIVER%THR_ELASOFFON = T%THR%ELASOFFON
   !Basically pass all things that don't change
-  T%COPTER%DELTATIME = T%SIM%DELTATIME
-  call QUAD_HANDSHAKE(T)
-end SUBROUTINE QUAD_HANDSHAKE_INIT
+  T%DRIVER%DELTATIME = T%SIM%DELTATIME
+  call DRIVER_HANDSHAKE(T)
+end SUBROUTINE DRIVER_HANDSHAKE_INIT
 
 !!!!!!!!!!!!!!!!!!!!!!! SUBROUTINE HANDSHAKE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE QUAD_HANDSHAKE(T)
+SUBROUTINE DRIVER_HANDSHAKE(T)
   use TOSIMDATATYPES
   implicit none
   type(TOSIMSTRUCTURE) T
-  !Pass Time to COPTER Module
-  !T%COPTER%TIME = T%SIM%TIME - T%COPTER%TIMEON
-  T%COPTER%TIME = T%SIM%TIME
+  !Pass Time to DRIVER Module
+  !T%DRIVER%TIME = T%SIM%TIME - T%DRIVER%TIMEON
+  T%DRIVER%TIME = T%SIM%TIME
   !In order to compute the aero model properly you need
   !to pass x,y,z to the ATMOSPHERE model
-  if (T%COPTER%AEROOFFON .eq. 1) then
-     T%ATM%XI = T%COPTER%STATE(1)
-     T%ATM%YI = T%COPTER%STATE(2)
-     T%ATM%ZI = T%COPTER%STATE(3)
-     !Compute Atmopsheric density and winds - Same for Quad
+  if (T%DRIVER%AEROOFFON .eq. 1) then
+     T%ATM%XI = T%DRIVER%STATE(1)
+     T%ATM%YI = T%DRIVER%STATE(2)
+     T%ATM%ZI = T%DRIVER%STATE(3)
+     !Compute Atmopsheric density and winds - Same for Driver
      call ATMOSPHERE(T,3) !T%ATM%DEN
-     T%COPTER%VXWIND = T%ATM%VXWIND
-     T%COPTER%VYWIND = T%ATM%VYWIND
-     T%COPTER%VZWIND = T%ATM%VZWIND
-     T%COPTER%DEN = T%ATM%DEN
+     T%DRIVER%VXWIND = T%ATM%VXWIND
+     T%DRIVER%VYWIND = T%ATM%VYWIND
+     T%DRIVER%VZWIND = T%ATM%VZWIND
+     T%DRIVER%DEN = T%ATM%DEN
   end if
-  !Pass some tether dynamics stuff to QUAD
-  T%COPTER%FTETHERX = T%THR%FXPLATFORM
-  T%COPTER%FTETHERY = T%THR%FYPLATFORM
-  T%COPTER%FTETHERZ = T%THR%FZPLATFORM
-end SUBROUTINE QUAD_HANDSHAKE
+  !Pass some tether dynamics stuff to DRIVER
+  T%DRIVER%FTETHERX = T%THR%FXPLATFORM
+  T%DRIVER%FTETHERY = T%THR%FYPLATFORM
+  T%DRIVER%FTETHERZ = T%THR%FZPLATFORM
+end SUBROUTINE DRIVER_HANDSHAKE
 
 !!!!!!!!!!!!!!!!!!!1!!! SUBROUTINE STATELIMITS!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1727,8 +1350,8 @@ SUBROUTINE CONTROL(T,iflag)
        end if
     end if
 
-    !! Controller for QUAD
-    call COPTER_CONTROL(T%COPTER)
+    !! Controller for DRIVER
+    call DRIVER_CONTROL(T%DRIVER)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   RETURN
@@ -1748,7 +1371,7 @@ SUBROUTINE CONTROL(T,iflag)
   write(25,*) trim(T%CSINPUTFILE)
   write(25,*) ' '
   write(25,*) 'Tether Line Length Control Flag (0=Off, 1=On): ', T%CS%TETHERCONTROLOFFON
-  write(25,*) 'Copter Control Flag (0=Off, 1=On): ',T%COPTER%CONTROLOFFON
+  write(25,*) 'Driver Control Flag (0=Off, 1=On): ',T%DRIVER%CONTROLOFFON
   write(25,*) 'Towed Body Control Off On (0=Off, 1=On): ',T%CS%TOWEDCONTROLOFFON
   write(25,*) 'Towed proportional gain on speed: ',T%CS%KU 
   write(25,*) 'Towed proportional gain on roll angle: ',T%CS%KPP
@@ -1805,15 +1428,15 @@ SUBROUTINE CONTROL(T,iflag)
   read(unit=94,fmt=*,iostat=readflag) T%CS%KPT
   read(unit=94,fmt=*,iostat=readflag) T%CS%KV 
   read(unit=94,fmt=*,iostat=readflag) T%CS%KU
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KPXQUAD
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KIXQUAD
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KDXQUAD
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KPYQUAD
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KIYQUAD
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KDYQUAD
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KPZQUAD
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KIZQUAD
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KDZQUAD
+  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KPXDRIVE
+  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KIXDRIVE
+  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KDXDRIVE
+  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KPYDRIVE
+  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KIYDRIVE
+  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KDYDRIVE
+  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KPZDRIVE
+  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KIZDRIVE
+  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KDZDRIVE
   ! read(unit=94,fmt=*,iostat=readflag) T%CS%KPPHI
   ! read(unit=94,fmt=*,iostat=readflag) T%CS%KIPHI
   ! read(unit=94,fmt=*,iostat=readflag) T%CS%KDPHI
@@ -1827,7 +1450,7 @@ SUBROUTINE CONTROL(T,iflag)
   ! read(unit=94,fmt=*,iostat=readflag) T%CS%YINTEGRAL !!From the input routine
   ! read(unit=94,fmt=*,iostat=readflag) T%CS%ZINTEGRAL
   ! read(unit=94,fmt=*,iostat=readflag) T%CS%PHIINTEGRAL !!Honestly these gains are so intense we should move them 
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%THETAINTEGRAL !!to the quad input file.
+  ! read(unit=94,fmt=*,iostat=readflag) T%CS%THETAINTEGRAL !!to the driver input file.
   ! read(unit=94,fmt=*,iostat=readflag) T%CS%PSIINTEGRAL
   ! read(unit=94,fmt=*,iostat=readflag) T%CS%XCOMMAND
   ! read(unit=94,fmt=*,iostat=readflag) T%CS%YCOMMAND
@@ -2045,18 +1668,18 @@ SUBROUTINE ATMOSPHERE(T,iflag)
   ! T%ATM%YI = 0
   ! T%ATM%ZI = -31.19
   ! T%SIM%TIME = 6.8
-  if (T%COPTER%AIRWAKE .eq. 1) then
-     !Add in Copter airwake velocity
-     T%COPTER%TIME = T%SIM%TIME
-     call AIRWAKE(T%COPTER,T%ATM%XI,T%ATM%YI,T%ATM%ZI)
-     T%ATM%VWAKE = T%COPTER%VWAKE
+  if (T%DRIVER%AIRWAKE .eq. 1) then
+     !Add in Driver airwake velocity
+     T%DRIVER%TIME = T%SIM%TIME
+     call AIRWAKE(T%DRIVER,T%ATM%XI,T%ATM%YI,T%ATM%ZI)
+     T%ATM%VWAKE = T%DRIVER%VWAKE
   end if
   ! PAUSE; STOP;
 
-  if (T%COPTER%DOWNWASHONOFF .eq. 1) then
-     T%COPTER%TIME = T%SIM%TIME
-     call DOWNWASH(T%COPTER,T%TOW%STATE)
-     T%ATM%VWAKE = T%COPTER%VWAKE
+  if (T%DRIVER%DOWNWASHONOFF .eq. 1) then
+     T%DRIVER%TIME = T%SIM%TIME
+     call DOWNWASH(T%DRIVER,T%TOW%STATE)
+     T%ATM%VWAKE = T%DRIVER%VWAKE
   end if
 
   !!Add all winds
@@ -3152,9 +2775,9 @@ SUBROUTINE TETHER(T,iflag)
   
   !Position of 1st truss element
 
-  r(1,1) = T%COPTER%XREEL; 
-  r(1,2) = T%COPTER%YREEL; 
-  r(1,3) = T%COPTER%ZREEL;
+  r(1,1) = T%DRIVER%XREEL; 
+  r(1,2) = T%DRIVER%YREEL; 
+  r(1,3) = T%DRIVER%ZREEL;
 
   !Position of every truss element in between is just equal to the bead location
 
@@ -3191,9 +2814,9 @@ SUBROUTINE TETHER(T,iflag)
      
   !The velocity of the first point is the velocity of the reel
 
-  v(1,1) = T%COPTER%XREELDOT; 
-  v(1,2) = T%COPTER%YREELDOT; 
-  v(1,3) = T%COPTER%ZREELDOT;
+  v(1,1) = T%DRIVER%XREELDOT; 
+  v(1,2) = T%DRIVER%YREELDOT; 
+  v(1,3) = T%DRIVER%ZREELDOT;
   
   !The velocity of all other points just comes from the state vector
 
@@ -3607,7 +3230,7 @@ SUBROUTINE TETHERPROPERTIES(T)
 
      ! write(*,*) 'Entire First Bead = ',old_first_bead_state(1:6)
      ! write(*,*) 'Tension of First Bead = ',old_first_bead_tension
-     ! write(*,*) 'Reel Location = ',T%COPTER%XREEL,T%COPTER%YREEL,T%COPTER%ZREEL,T%COPTER%XREELDOT,T%COPTER%YREELDOT,T%COPTER%ZREELDOT
+     ! write(*,*) 'Reel Location = ',T%DRIVER%XREEL,T%DRIVER%YREEL,T%DRIVER%ZREEL,T%DRIVER%XREELDOT,T%DRIVER%YREELDOT,T%DRIVER%ZREELDOT
 
      !The weird thing about the tether model is that all states are in the first part of the vector and 
      !the tensions are all at the end so you need to shift the tensions down first
@@ -3624,10 +3247,10 @@ SUBROUTINE TETHERPROPERTIES(T)
      T%THR%STATE(1:6) = 0.0
      ! write(*,*) 'After State Shift = ',T%THR%STATE(1:7*(T%THR%NBEADS+1)+1)
 
-     !Now we need to initialize the new first beads by averaging the state of the now second bead and the state of the connection point on the Coptercopter
-     T%THR%STATE(1) = 0.5*(old_first_bead_state(1) + T%COPTER%XREEL)
-     T%THR%STATE(2) = 0.5*(old_first_bead_state(2) + T%COPTER%YREEL)
-     T%THR%STATE(3) = 0.5*(old_first_bead_state(3) + T%COPTER%ZREEL)
+     !Now we need to initialize the new first beads by averaging the state of the now second bead and the state of the connection point on the Driver
+     T%THR%STATE(1) = 0.5*(old_first_bead_state(1) + T%DRIVER%XREEL)
+     T%THR%STATE(2) = 0.5*(old_first_bead_state(2) + T%DRIVER%YREEL)
+     T%THR%STATE(3) = 0.5*(old_first_bead_state(3) + T%DRIVER%ZREEL)
      !The velocity of the bead should be the same as the first bead
      T%THR%STATE(4) = old_first_bead_state(4)
      T%THR%STATE(5) = old_first_bead_state(5)
@@ -3940,7 +3563,7 @@ SUBROUTINE WRFMODEL(T)
 
   xi_ft = T%ATM%XI 
   yi_ft = T%ATM%YI
-  zi_ft = 656-T%ATM%ZI !REVISIT REVISIT REVISIT - Assume that the Coptercopter is at 200 meters
+  zi_ft = 656-T%ATM%ZI !REVISIT REVISIT REVISIT - Assume that the Driver is at 200 meters
 
   xtemp =  xi_ft
   xi_ft =  xtemp*cos(T%ATM%PSIOFFSET) + yi_ft*sin(T%ATM%PSIOFFSET);
@@ -4638,20 +4261,20 @@ SUBROUTINE FEEDBACK(T)
     !!! REVISIT ME
     !Pass Global state to local state
     T%TOW%STATE(1:13)  = T%SIM%STATE(1:13)
-    T%COPTER%STATE(1:12) = T%SIM%STATE(14:25)
-    T%COPTER%STATE(13:20) = T%SIM%STATE(T%SIM%NOSTATES-7:T%SIM%NOSTATES)  ! Thrust from rotors
+    T%DRIVER%STATE(1:12) = T%SIM%STATE(14:25)
+    T%DRIVER%STATE(13:20) = T%SIM%STATE(T%SIM%NOSTATES-7:T%SIM%NOSTATES)  ! Thrust from rotors
 
     !!!!!!!!!!!TETHER ANGLES!!!!!!!!!!!!!!
 
-    !Vectors from Copter to towed system
-    rGS_I(1,1) = T%COPTER%XCG - T%TOW%STATE(1)
-    rGS_I(2,1) = T%COPTER%YCG - T%TOW%STATE(2)
-    rGS_I(3,1) = T%COPTER%ZCG - T%TOW%STATE(3)
+    !Vectors from Driver to towed system
+    rGS_I(1,1) = T%DRIVER%XCG - T%TOW%STATE(1)
+    rGS_I(2,1) = T%DRIVER%YCG - T%TOW%STATE(2)
+    rGS_I(3,1) = T%DRIVER%ZCG - T%TOW%STATE(3)
 
-    !Rotate to Copter frame
-    rGS_S(1,1) = rGS_I(1,1)*cos(T%COPTER%PSI) + rGS_I(2,1)*sin(T%COPTER%PSI) + T%COPTER%SLREEL
-    rGS_S(2,1) = -rGS_I(1,1)*sin(T%COPTER%PSI) + rGS_I(2,1)*cos(T%COPTER%PSI) + T%COPTER%BLREEL
-    rGS_S(3,1) = rGS_I(3,1) + T%COPTER%WLREEL
+    !Rotate to Driver frame
+    rGS_S(1,1) = rGS_I(1,1)*cos(T%DRIVER%PSI) + rGS_I(2,1)*sin(T%DRIVER%PSI) + T%DRIVER%SLREEL
+    rGS_S(2,1) = -rGS_I(1,1)*sin(T%DRIVER%PSI) + rGS_I(2,1)*cos(T%DRIVER%PSI) + T%DRIVER%BLREEL
+    rGS_S(3,1) = rGS_I(3,1) + T%DRIVER%WLREEL
     
     ! write(*,*) '-----------------------------------------------'
     ! write(*,*) 'rGS_S(1:3,1) = ',rGS_S(1,1),rGS_S(2,1),rGS_S(3,1)
