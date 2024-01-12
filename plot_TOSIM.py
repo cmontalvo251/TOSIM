@@ -8,7 +8,6 @@ import sys
 import matplotlib.pyplot as plt
 import sixdof as SIX
 
-
 if len(sys.argv) > 1:
     SIMULATE = int(sys.argv[1])
 else:
@@ -21,8 +20,9 @@ if SIMULATE == 1:
     ##Run the code
     #os.system('./LinuxRun.exe Input_Files/Tether_Drop_Files/TOMAD.ifiles')
     #os.system('./LinuxRun.exe Input_Files/Forward_Flight/TOMAD.ifiles')
-    os.system('./LinuxRun.exe Input_Files/Forward_Flight_Steady/TOMAD.ifiles')
+    #os.system('./LinuxRun.exe Input_Files/Forward_Flight_Steady/TOMAD.ifiles')
     #os.system('./LinuxRun.exe Input_Files/Hovering/TOMAD.ifiles')
+    os.system('./Simulation.exe Input_Files/Hovering/TOSIM.ifiles')
 else:
     print 'Skipping Simulation and just plotting'
 
@@ -96,7 +96,6 @@ for n in beads:
     plti.plot(time,tether_state[:,6*NBEADS+n],'k-',linewidth=2)
     pp.savefig()
 #The final 8 states are the new quadcopter thrust states which I don't have plotted yet
-
 
 #I have found that it's easier to plot the misc file so we'll plot that instead
 misc_data = M.dlmread('Output_Files/Misc.OUT',delimiter=' ')
