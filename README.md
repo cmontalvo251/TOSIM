@@ -20,5 +20,7 @@ Routine Debugged and streamlined by Nghia Huynh in Fall 2017
 
 Dr. Carlos Montalvo created a separate module for quadcopter.f90 Spg 2018
 
-Version 6.0 Released Feb 2018
+Dr. Carlos Montalvo moved this repo from Gitlab to Github and made the code open source. Due to the open source nature of the code, most if not all of the TAPAS/TERN/AREAI code has been removed. There may still be some remnants floating around but none of it is operational or endorsed as working. Still the code has a quadcopter as the driver and an aircraft as the towed system 
+
+Version 7.0 Released Jan 2024
 

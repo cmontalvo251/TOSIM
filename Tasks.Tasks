@@ -2,9 +2,9 @@ SETUP:
 
  ✔ Move OG files back to source folder @done (24-01-11 19:58)
  ✔ Compile fortran code @done (24-01-11 19:58)
- ☐ Setup Hovering files for simulation 
- ☐ Simulate hovering
- ☐ Plot files and save PDF push PDF files to cloud using -f
+ ✔ Setup Hovering files for simulation @done (24-01-11 20:10)
+ ✔ Simulate hovering @done (24-01-11 20:10)
+ ✔ Plot files and save PDF push PDF files to cloud using -f @done (24-01-11 20:10)
  ☐ Edit readme to say that TOSIM was moved from Gitlab to github and ensured that it is in working order (Version 7.0)
  ☐ Move MultiSat++ to Github under a private repo
  ☐ Delete MultiSat++ from Gitlab
