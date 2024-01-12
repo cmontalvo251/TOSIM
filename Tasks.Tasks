@@ -5,23 +5,23 @@ SETUP:
  ✔ Setup Hovering files for simulation @done (24-01-11 20:10)
  ✔ Simulate hovering @done (24-01-11 20:10)
  ✔ Plot files and save PDF push PDF files to cloud using -f @done (24-01-11 20:10)
- ☐ Edit readme to say that TOSIM was moved from Gitlab to github and ensured that it is in working order (Version 7.0)
- ☐ Move MultiSat++ to Github under a private repo
- ☐ Delete MultiSat++ from Gitlab
- ☐ Look for Orbit or Orbit++ where is that and what do you need to do with it? More than likely you can move that into FASTCASST since I think there is a satellite model. Do you have the geographic lib and magnetic field model in FASTCASST? 
- ☐ Also where is the WRF model? Is that in the atmosphere model in FASTCASST? If not the WRF c++ model needs to get moved into FASTCASST and added as a wind model routine. Also, since this would be too dofficult to add in, you just need to put it in a WRF_Archive and then add some tasks for it
- ☐ Where is Aircraft++? And where is ACICA? Those need to be in FASTCASST Archives. 
- ☐ While you're logged into Gitlab, move the FASTPilot files into FASTCASST
- ☐ Take FASTboat from FASTPilot and make a ship folder. It wont work yet but at least its there
- ☐ Take FASTCar from Fastpilot and make a car folder. It wont work yet but at least its there
- ☐ Delete FASTPilot repo
- ☐ Email ECE faculty that you are going to begin migrating JagSat from Gtilab to Github and if they have any issues with that before I do it. 
+ ✔ Edit readme to say that TOSIM was moved from Gitlab to github and ensured that it is in working order (Version 7.0) @done (24-01-11 20:12)
+ ✔ Move MultiSat++ to Github under a private repo @done (24-01-11 20:20)
+ ✔ Delete MultiSat++ from Gitlab @done (24-01-11 20:22)
+ ✔ Look for Orbit or Orbit++ where is that and what do you need to do with it? More than likely you can move that into FASTCASST since I think there is a satellite model. Do you have the geographic lib and magnetic field model in FASTCASST? @done (24-01-11 20:23)
+ ✔ Also where is the WRF model? Is that in the atmosphere model in FASTCASST? If not the WRF c++ model needs to get moved into FASTCASST and added as a wind model routine. Also, since this would be too dofficult to add in, you just need to put it in a WRF_Archive and then add some tasks for it @done (24-01-11 20:37)
+ ✔ Where is Aircraft++? And where is ACICA? Those need to be in FASTCASST Archives. @done (24-01-11 20:46)
+ ✔ While you're logged into Gitlab, move the FASTPilot files into FASTCASST @done (24-01-11 20:46)
+ ✔ Take FASTboat from FASTPilot and make a ship folder. It wont work yet but at least its there @done (24-01-11 20:46)
+ ✔ Take FASTCar from Fastpilot and make a car folder. It wont work yet but at least its there @done (24-01-11 20:47)
+ ✔ Delete FASTPilot repo @done (24-01-11 20:47)
+ ✔ Move MaaWM into TOSIM and put it in the Fortran_Archive folder. MaaWM is fortran right? @done (24-01-11 21:06)
+ ✔ Email ECE faculty that you are going to begin migrating JagSat from Gtilab to Github and if they have any issues with that before I do it. @done (24-01-11 21:07)
  ☐ Glance through FastSensors and see if thats an easy migration (if its easy, move it. If its not easy, make a list in FASTCASST on what to do to get that migration sorted out) 
  ☐ Make a branch for MultiSat++ called TOSIM
  ☐ Remove Esail specifics from TOSIM branch (rename satellites to bodies and the hub to driver) code does not need to compile in this stage
  ☐ Move TOSIM branch code to TOSIM repo
  ☐ Organize TOSIM to have Fortran_Archive folder that is still backed up 
- ☐ Move MaaWM into TOSIM and put it in the Fortran_Archive folder. MaaWM is fortran right? 
  ☐ Delete TOSIM branch from MultiSAT++
  ☐ Move README into Fortran archive 
  ☐ Make new TOSIM Readme to point out that fortran code is still there but MultiSat++ has been moved to open source code and is the new  TOSIM code (Version 1.0)
