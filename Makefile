@@ -1,4 +1,4 @@
-OBJ=	source/TOSIM.o #\
+OBJ=	source/TOSIM.o \
 	source/driver.o
 CC = gfortran #Define compiler (CC) to be gfortran compiler
 FFLAGS= -c -fno-automatic -O3
@@ -11,8 +11,8 @@ all: $(OBJ) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJ)
 	$(CC) -O3 -o $(EXECUTABLE) $(OBJ)
-#source/driver.o: source/driver.f90
-#	$(CC) $(MAINFLAGS) source/driver.f90 -o source/driver.o
+source/driver.o: source/driver.f90
+	$(CC) $(MAINFLAGS) source/driver.f90 -o source/driver.o
 source/TOSIM.o: source/TOSIM.f90
 #	mkdir Output_Files
 	rm -rf *.o *.exe

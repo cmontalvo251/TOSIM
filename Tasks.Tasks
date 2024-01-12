@@ -1,0 +1,37 @@
+SETUP:
+
+ ✔ Move OG files back to source folder @done (24-01-11 19:58)
+ ✔ Compile fortran code @done (24-01-11 19:58)
+ ☐ Setup Hovering files for simulation 
+ ☐ Simulate hovering
+ ☐ Plot files and save PDF push PDF files to cloud using -f
+ ☐ Edit readme to say that TOSIM was moved from Gitlab to github and ensured that it is in working order (Version 7.0)
+ ☐ Move MultiSat++ to Github under a private repo
+ ☐ Delete MultiSat++ from Gitlab
+ ☐ Look for Orbit or Orbit++ where is that and what do you need to do with it? More than likely you can move that into FASTCASST since I think there is a satellite model. Do you have the geographic lib and magnetic field model in FASTCASST? 
+ ☐ Also where is the WRF model? Is that in the atmosphere model in FASTCASST? If not the WRF c++ model needs to get moved into FASTCASST and added as a wind model routine. Also, since this would be too dofficult to add in, you just need to put it in a WRF_Archive and then add some tasks for it
+ ☐ Where is Aircraft++? And where is ACICA? Those need to be in FASTCASST Archives. 
+ ☐ While you're logged into Gitlab, move the FASTPilot files into FASTCASST
+ ☐ Take FASTboat from FASTPilot and make a ship folder. It wont work yet but at least its there
+ ☐ Take FASTCar from Fastpilot and make a car folder. It wont work yet but at least its there
+ ☐ Delete FASTPilot repo
+ ☐ Email ECE faculty that you are going to begin migrating JagSat from Gtilab to Github and if they have any issues with that before I do it. 
+ ☐ Glance through FastSensors and see if thats an easy migration (if its easy, move it. If its not easy, make a list in FASTCASST on what to do to get that migration sorted out) 
+ ☐ Make a branch for MultiSat++ called TOSIM
+ ☐ Remove Esail specifics from TOSIM branch (rename satellites to bodies and the hub to driver) code does not need to compile in this stage
+ ☐ Move TOSIM branch code to TOSIM repo
+ ☐ Organize TOSIM to have Fortran_Archive folder that is still backed up 
+ ☐ Move MaaWM into TOSIM and put it in the Fortran_Archive folder. MaaWM is fortran right? 
+ ☐ Delete TOSIM branch from MultiSAT++
+ ☐ Move README into Fortran archive 
+ ☐ Make new TOSIM Readme to point out that fortran code is still there but MultiSat++ has been moved to open source code and is the new  TOSIM code (Version 1.0)
+ ☐ Simulate a driver and single body
+ ☐ Link the quadcopter model from FASTCASST to the single body
+ ☐ Give the driver similar mass properties to a skiff and have it stay put
+ ☐ Simulate a case where the quadcopter is just hovering above the driver
+ ☐ Turn the driver into a full 6DOF body
+ ☐ Simuate the ship model in FASTCASST
+ ☐ Link the ship model to the driver in TOSIM 
+ ☐ Edit the readme again and make a note that you can use any model from FASTCASST Version 2.0
+ ☐ Go back to FASTCASST and put that you do have plans to integrate TOSIM into FASTCASST. Make bullets explaining what you would need to do to accomplish that. 
+ ☐ Then show grad students progress
