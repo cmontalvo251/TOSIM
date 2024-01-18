@@ -17,7 +17,8 @@ SETUP:
  ✔ Delete FASTPilot repo @done (24-01-11 20:47)
  ✔ Move MaaWM into TOSIM and put it in the Fortran_Archive folder. MaaWM is fortran right? @done (24-01-11 21:06)
  ✔ Email ECE faculty that you are going to begin migrating JagSat from Gtilab to Github and if they have any issues with that before I do it. @done (24-01-11 21:07)
- ☐ Glance through FastSensors and see if thats an easy migration (if its easy, move it. If its not easy, make a list in FASTCASST on what to do to get that migration sorted out) 
+ ✔ Go back to FASTCASST and put that you do have plans to integrate TOSIM into FASTCASST. Make bullets explaining what you would need to do to accomplish that. @done (24-01-11 21:22)
+ ✔ Glance through FastSensors and see if thats an easy migration (if its easy, move it. If its not easy, make a list in FASTCASST on what to do to get that migration sorted out) @done (24-01-11 21:44)
  ☐ Make a branch for MultiSat++ called TOSIM
  ☐ Remove Esail specifics from TOSIM branch (rename satellites to bodies and the hub to driver) code does not need to compile in this stage
  ☐ Move TOSIM branch code to TOSIM repo
@@ -33,5 +34,4 @@ SETUP:
  ☐ Simuate the ship model in FASTCASST
  ☐ Link the ship model to the driver in TOSIM 
  ☐ Edit the readme again and make a note that you can use any model from FASTCASST Version 2.0
- ☐ Go back to FASTCASST and put that you do have plans to integrate TOSIM into FASTCASST. Make bullets explaining what you would need to do to accomplish that. 
  ☐ Then show grad students progress

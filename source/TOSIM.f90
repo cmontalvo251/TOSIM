@@ -15,19 +15,617 @@ IMPLICIT NONE
 
 !!!!!!!!!!!!!!!!!!!!!!ATMOSPHERE STRUCTURE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-include 'atmospheremodule.f90'
+type ATMOSPHERESTRUCTURE
+    integer :: markX = 1                             ! X coordinate Marker in interpolation routine 
+    integer :: markY = 1                             ! Y coordinate Marker in interpolation routine 
+    integer :: markZ = 1                             ! Z coordinate Marker in interpolation routine 
+    integer :: markT = 1                             ! T coordinate Marker in interpolation routine 
+    integer :: markXT = 1                            ! X coordinate Marker in turbulence interpolation routine 
+    integer :: markYT = 1                            ! Y coordinate Marker in turbulence interpolation routine 
+    integer :: markZT = 1                            ! Z coordinate Marker in turbulenceinterpolation routine 
+    integer :: bounds = 0                            ! Flag indicating wether or not you have gone out of WRF bounds
+    integer :: boundflag = 1                         ! Flag indicating wether or not you have gone out of WRF bounds
+    integer :: boundsT = 0                           ! Flag indicating wether or not you have gone out of TURB bounds
+    integer :: boundflagT = 1                        ! Flag indicating wether or not you have gone out of TURB bounds
+    integer :: parameters(5) = 0                     ! Vector of a few parameters 
+    integer :: tcoord(601) = 0                       ! Vector of time
+    integer :: dim = 40                              ! Dimension of Spatial wind data matrices
+    integer :: dimT = 500                            ! Dimension of Turbulence wind data matrices
+    integer :: tlength = 601                         ! Dimension of time vector
+    integer :: OFFON = 0                             ! Units: 'nd', Desc: 'Off/On Switch'
+    integer :: TABSIZE = 0                           ! Units: 'nd', Desc: 'Table Size'
+    integer :: MODNO = 1                             ! Units: 'nd', Desc: 'Model Number'
+    integer :: IP = 1                                ! Units: 'nd', Desc: 'Table Pointer'
+    integer :: DQFLAG = 0                            ! Units: 'nd', Desc: 'Data Quality Flag (0=Data Not Loaded Successfully, 1=Data Loaded Successfully)'
+    integer :: TIMEVARYING = 0                       ! Units: 'nd', Desc: 'Static Wind field or not
+    real*8 :: FREQUENCY = 1                          ! Units: '1/s', Desc: 'frequency of sinusoidal winds
+    real*8 :: TIMEON = 0                             ! Units: 'sec', Desc: 'Time to turn on winds'
+    real*8 :: zcoord(40) = 0                         ! Z coordinates of wind data in z (ft)
+    real*8 :: xcoord(40) = 0                         ! X coordinates of wind data in x (ft)
+    real*8 :: ycoord(40) = 0                         ! Y coordinates of wind data in y (ft)
+    real*8 :: xcoordT(500) = 0                       ! X coordinates of turbulence data in x (ft)
+    real*8 :: ycoordT(500) = 0                       ! Y coordinates of turbulence data in y (ft)
+    !real*8 :: terrain(40,40) = 0                     ! Terrain height in meters
+    !!!REVISIT REVISIT REVIST - Always make sure this is back to normal
+    ! real*8 :: U0(1,1,1),V0(1,1,1),W0(1,1,1)          ! U,V,W velocity at timestep t (ft/s)
+    ! real*8 :: Udt(1,1,1),Vdt(1,1,1),Wdt(1,1,1)       ! U,V,W velocity at timestep t+dt (ft/s)
+    ! real*8 :: UTURB(1,1),VTURB(1,1),WTURB(1,1)       ! U,V,W turbulence at timestep t (ft/s)
+    real*8 :: U0(40,40,40),V0(40,40,40),W0(40,40,40) ! U,V,W velocity at timestep t (ft/s)
+    real*8 :: Udt(40,40,40),Vdt(40,40,40),Wdt(40,40,40) ! U,V,W velocity at timestep t+dt (ft/s)
+    real*8 :: UTURB(500,500),VTURB(500,500),WTURB(500,500) ! U,V,W turbulence at timestep t (ft/s)
+    real*8 :: dx = 0                                 ! X resolution (ft)
+    real*8 :: dxT = 1                                ! XY resolution of turbulence (ft)
+    real*8 :: dyT = 1                                ! XY resolution of turbulence (ft)
+    real*8 :: dy = 0                                 ! X resolution (ft)
+    real*8 :: ztop = 0                               ! Highest altitude to sample from (ft)
+    real*8 :: IWINDSCALE = 1                         ! Scale of WRF winds
+    real*8 :: TURBLEVEL = 1                          ! Scale of Turbulence 
+    real*8 :: Vtrim = 20                             ! Trim velocity of craft flying through winds
+    real*8 :: TIMESTEP = 0.0001                      ! Timestep of Simulation
+    real*8 :: WINDGUST(3) = 0                        ! Vector holding WINDGUST values at current timestep (ft/s)
+    real*8 :: VWAKE(3) = 0                           ! Vector holding wake data values at current timestep (ft/s)
+    real*8 :: WRFX = 0                               ! Wrf winds in x (ft/s)
+    real*8 :: WRFY = 0                               ! Wrf winds in y (ft/s)
+    real*8 :: WRFZ = 0                               ! Wrf winds in z (ft/s)
+    real*8 :: ALT = 0.0                              ! Units: 'ft', Desc: 'Altitude'
+    real*8 :: DEN = 0.002363                         ! Units: 'slug/ft^3', Desc: 'Density'
+    real*8 :: SOS = 1086.336                         ! Units: 'slug/ft^3', Desc: 'Density'
+    real*8 :: WINDSPEED = 0.0                        ! Units: 'ft/s', Desc: 'Wind Speed'
+    real*8 :: WINDDIR = 0.0                          ! Units: 'rad', Desc: 'Wind Direction'
+    real*8 :: WINDELEV = 0.0                         ! Units: 'rad', Desc: 'Wind Elevation'
+    real*8 :: XI = 0.0                               ! Units: 'ft', Desc: 'Inertial X Position'
+    real*8 :: YI = 0.0                               ! Units: 'ft', Desc: 'Inertial Y Position'
+    real*8 :: ZI = 0.0                               ! Units: 'ft', Desc: 'Inertial Z Position'
+    real*8 :: VXWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial I Axis'
+    real*8 :: VYWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial J Axis'
+    real*8 :: VZWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial K Axis'
+    real*8 :: ALTTAB(MAXNALT) = 0.0                  ! Units: 'ft', Desc: 'Density Altitude Table'
+    real*8 :: DENTAB(MAXNALT) = 0.0                  ! Units: 'slug/ft^3', Desc: 'Density Table'
+    real*8 :: VXWINDTAB(MAXNALT) = 0.0               ! Units: 'ft/s', Desc: 'VXWIND Wind Table'
+    real*8 :: VYWINDTAB(MAXNALT) = 0.0               ! Units: 'ft/s', Desc: 'VYWIND Wind Table'
+    real*8 :: VZWINDTAB(MAXNALT) = 0.0               ! Units: 'ft/s', Desc: 'VZWIND Wind Table'
+    real*8 :: xshift = 0                             ! Units: 'ft' , 'Desc: shift in x coordinate for interpolation
+    real*8 :: yshift = 0                             ! Units: 'ft' , 'Desc: shift in y coordinate for interpolation
+    real*8 :: zshift = 0                             ! Units: 'ft' , 'Desc: shift in y coordinate for interpolation
+    real*8 :: xshiftT = 0                            ! Units: 'ft' , 'Desc: shift in x coordinate for interpolation
+    real*8 :: yshiftT = 0                            ! Units: 'ft' , 'Desc: shift in y coordinate for interpolation
+    real*8 :: zshiftT = 0                            ! Units: 'ft' , 'Desc: shift in y coordinate for interpolation
+    real*8 :: PSIOFFSET = 0                          ! Units: 'rad' ,'Desc: used to rotate the dryden and WRF model'
+    real*8 :: XOFFSET = 0                            ! Units: 'ft' ,'Desc: used to offset WRF model
+    real*8 :: YOFFSET = 0                            ! Units: 'ft' ,'Desc: used to offset WRF model
+    real*8 :: WAVESPEED(2) = 0                       ! Units: 'ft/s', Desc: Speed that the static waves propagate to simulate time varying component
+    real*8 :: RANDOMIZE = 0                          ! Units: 'nd', Desc: randomization parameter for wind field. 0.1 = 10 percent gaussian noise
+    character*128 PATH
+    character*256 U0name,V0name,W0name,UTurbname,Vturbname,Wturbname
+    character*256 Udtname,Vdtname,Wdtname
+ end type ATMOSPHERESTRUCTURE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!! DRIVER STRUCTURE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-include 'drivermodule.f90'
+  integer,parameter :: MAXNDRIVER = 10             ! Units: 'nd', Desc: 'Maximum Number of Driver Motion Table Points'
+  integer,parameter :: MAXWP = 1000             ! Units: 'nd', Desc: 'Maximum Number of Driver Motion Table Points'
+  integer,parameter :: IMAX = 1                    ! Units: 'nd', Desc: 'Maximum Airwake index in X
+  integer,parameter :: JMAX = 1                    ! Units: 'nd', Desc: 'Maximum Airwake index in Y
+  integer,parameter :: KMAX = 1                    ! Units: 'nd', Desc: 'Maximum Airwake index in Z
+  integer,parameter :: NTIMES = 1                  ! Units: 'nd', Desc: 'Maximum Airwake index for t
+  real*8,parameter  :: qPI = 3.14159265358979323846  ! Units: 'nd', Desc: 'Pi' - using qPI to not conflict with any other usage of PI
+  type DRIVERSTRUCTURE
+     integer :: OFFON = 0                             ! Units: 'nd', Desc: 'Off/On Switch'
+     integer :: DYNOFFON = 0                             ! Units: 'nd', Desc: 'Off/On Switch'
+     integer :: GRAVOFFON = 0                         ! Units: 'nd', Desc: 'Gravity Flag (0=Off, 1=On)'
+     integer :: AEROOFFON = 0                         ! Units: 'nd', Desc: 'Aerodynamics Flag (0=Off, 1=On)'
+     integer :: CONTOFFON = 0                         ! Units: 'nd', Desc: 'Contact Flag (0=Off, 1=On)'
+     integer :: MODNO = 1                             ! Units: 'nd', Desc: 'Model Number Flag'
+     integer :: IP = 1                                ! Units: 'nd', Desc: 'Time Table Look-Up Pointer'
+     integer :: TABSIZE = 1                           ! Units: 'nd', Desc: 'Time Table Size'
+     integer :: DQFLAG = 0                            ! Units: 'nd', Desc: 'Data Quality Flag (0=Data Not Loaded Successfully, 1=Data Loaded Successfully)'
+     integer :: AIRWAKE = 0                           ! Units: 'nd', Desc: 'Air wake on or off'
+     integer :: markX = 1                             ! Units: 'nd', X index placeholder
+     integer :: markY = 1                             ! Units: 'nd', X index placeholder
+     integer :: markZ = 1                             ! Units: 'nd', X index placeholder
+     integer :: markT = 1                             ! Units: 'nd', X index placeholder
+     integer :: DOWNWASHONOFF = 0                     ! Units: 'nd', X index placeholder
+     integer :: THR_DYNOFFON = 0
+     integer :: THR_ELASOFFON = 0
+     integer :: CONTROLOFFON = 0
+     integer :: WAYPOINT = 1                          ! Defaults to 1 but apparently can change in input file
+     integer :: NUMWAYPOINTS = 0                         ! Defaults to 1 but apparently can change in input file
+     integer :: COMMANDFLAG(MAXWP) = 1           ! 0 or 1 to advance waypoint command     real*8 :: COMMANDFLAG(MAXWP) =
+     real*8 :: ALC = 0                                ! Driver aero parameter
+     real*8 :: ALS = 0                                ! Driver aero parameter
+     real*8 :: DXD = 0                                ! Driver aero parameter
+     real*8 :: DYD = 0                                ! Driver aero parameter
+     real*8 :: RNEW = 0                               ! Driver aero parameter
+     real*8 :: C_T = 0                                ! Driver aero parameter
+     real*8 :: C_TAU = 0                              ! Driver aero parameter
+     real*8 :: LPHI12 = 0                             ! Driver aero parameter
+     real*8 :: LPHI34 = 0                             ! Driver aero parameter
+     real*8 :: LTHETA12 = 0                           ! Driver aero parameter
+     real*8 :: LTHETA34 = 0                           ! Driver aero parameter
+     real*8 :: OMEGAMAX = 0                           ! Driver aero parameter
+     real*8 :: OMEGAVEC(4,1) = 0                      ! Driver aero parameter
+     real*8 :: THRUSTVEC(4,1) = 0                     ! Driver aero parameter
+     real*8 :: MUVEC(4,1) = 0                         ! Driver aero parameter
+     real*8 :: KT = 0                                 ! Driver Aero Parameter
+     real*8 :: OMEGA0 = 0                             ! Driver Aero Parameter
+     real*8 :: IRR = 0                                ! Driver Aero Parameter
+     real*8 :: MINWAYPOINT = 1.0D0
+     real*8 :: MS_MIN = 0.0                           ! Maximum PWM signal (microseconds)
+     real*8 :: MS_MAX = 0.0                           ! Minimum PWM signal (microseconds)
+     real*8 :: DOWNWASH = 0.0                         ! Units: 'nd', Magnitude of Downwash
+     real*8 :: DIAMETER = 0.0                         ! Units: 'nd', Diameter of Downwash (ft)
+     real*8 :: SLCG = 0.0                             ! Units: 'ft', Desc: 'Stationline of Mass Center of Driver'
+     real*8 :: BLCG = 0.0                             ! Units: 'ft', Desc: 'Buttline of Mass Center of Driver'
+     real*8 :: WLCG = 0.0                             ! Units: 'ft', Desc: 'Waterline of Mass Center of Driver'
+     real*8 :: SLREEL = 0.0                           ! Units: 'ft', Desc: 'Stationline of Tether Reel Point on Driver'
+     real*8 :: BLREEL = 0.0                           ! Units: 'ft', Desc: 'Buttline of Tether Reel Point on Driver'
+     real*8 :: WLREEL = 0.0                           ! Units: 'ft', Desc: 'Waterline of Tether Reel Point on Driver'
+     real*8 :: SLAIRWAKE = 0.0                        ! Units: 'ft', Desc: 'Stationline of Airwake grid start on Driver
+     real*8 :: BLAIRWAKE = 0.0                        ! Units: 'ft', Desc: 'Buttline of Airwake grid start on Driver
+     real*8 :: WLAIRWAKE = 0.0                        ! Units: 'ft', Desc: 'Waterline of Airwake grid start on Driver
+     real*8 :: SPEED = 0.0                            ! Units: 'ft/s', Desc: 'Speed of Driver'
+     real*8 :: FINALSPEED = 0.0                       ! Units: 'ft/s', Desc: 'Initial Speed of Driver'
+     real*8 :: RESTARTSPEED = -999                    ! Units: 'ft/s', Desc: 'Restart speed of Driverdriver' 
+     real*8 :: DIRECTION = 0.0                        ! Units: 'rad', Desc: 'Direction of Motion of Driver'
+     real*8 :: XCGINITIAL = 0.0                       ! Units: 'ft', Desc: 'Initial XCG Inertial Position of Driver'
+     real*8 :: YCGINITIAL = 0.0                       ! Units: 'ft', Desc: 'Initial YCG Inertial Position of Driver'
+     real*8 :: ZCGINITIAL = 0.0                       ! Units: 'ft', Desc: 'Initial ZCG Inertial Position of Driver'
+     real*8 :: TIME = 0.0                             ! Units: 's', Desc: 'Time'
+     real*8 :: TIMEON = 0                             ! Units: 's', Desc: Time for Driver to come on
+     real*8 :: XCG = 0.0                              ! Units: 'ft', Desc: 'XCG Inertial Position of Driver'
+     real*8 :: YCG = 0.0                              ! Units: 'ft', Desc: 'YCG Inertial Position of Driver'
+     real*8 :: ZCG = 0.0                              ! Units: 'ft', Desc: 'ZCG Inertial Position of Driver'
+     real*8 :: PHI = 0.0                              ! Units: 'rad', Desc: 'Driver Euler Roll Angle'
+     real*8 :: THETA = 0.0                            ! Units: 'rad', Desc: 'Driver Euler Pitch Angle'
+     real*8 :: PSI = 0.0                              ! Units: 'rad', Desc: 'Driver Euler Yaw Angle'
+     real*8 :: PSIPREV = 0.0                          ! Units: 'rad', Desc: 'Driver Euler Yaw Angle'
+     real*8 :: UB = 0.0                               ! Units: 'ft/s', Desc: 'UB Body Frame Mass Center Velocity of Driver'
+     real*8 :: VB = 0.0                               ! Units: 'ft/s', Desc: 'VB Body Frame Mass Center Velocity of Driver'
+     real*8 :: WB = 0.0                               ! Units: 'ft/s', Desc: 'WB Body Frame Mass Center Velocity of Driver'
+     real*8 :: PB = 0.0                               ! Units: 'rad/s', Desc: 'PB Roll Rate of Driver'
+     real*8 :: QB = 0.0                               ! Units: 'rad/s', Desc: 'QB Pitch Rate of Driver'
+     real*8 :: RB = 0.0                               ! Units: 'rad/s', Desc: 'RB Yaw Rate of Driver'
+     real*8 :: XDOT = 0                               ! Units: 'ft/s', Desc: Inertial Frame X velocity of Driver
+     real*8 :: YDOT = 0                               ! Units: 'ft/s', Desc: Inertial Frame X velocity of Driver
+     real*8 :: ZDOT = 0                               ! Units: 'ft/s', Desc: Inertial Frame X velocity of Driver
+     real*8 :: XREEL = 0.0                            ! Units: 'ft', Desc: 'XREEL Inertial Position of Reel'
+     real*8 :: YREEL = 0.0                            ! Units: 'ft', Desc: 'YREEL Inertial Position of Reel'
+     real*8 :: ZREEL = 0.0                            ! Units: 'ft', Desc: 'ZREEL Inertial Position of Reel'
+     real*8 :: XREELDOT = 0.0                         ! Units: 'ft/s', Desc: 'XREEL DOT Inertial Velocity of Reel'
+     real*8 :: YREELDOT = 0.0                         ! Units: 'ft/s', Desc: 'YREEL DOT Inertial Velocity of Reel'
+     real*8 :: ZREELDOT = 0.0                         ! Units: 'ft/s', Desc: 'ZREEL DOT Inertial Velocity of Reel'
+     real*8 :: UREEL = 0.0                            ! Units: 'ft', Desc: 'UREEL Inertial Velcity of Reel in Driver Reference Frame'
+     real*8 :: VREEL = 0.0                            ! Units: 'ft', Desc: 'VREEL Inertial Velcity of Reel in Driver Reference Frame'
+     real*8 :: WREEL = 0.0                            ! Units: 'ft', Desc: 'WREEL Inertial Velcity of Reel in Driver Reference Frame'
+     !REVISIT REVISIT REVISIT
+     ! real*8 :: UDRIVER(1,1,1),VDRIVER(1,1,1),WDRIVER(1,1,1) ! U,V,W Driver airwake velocity at timestep t (ft/s)
+     ! real*8 :: UDRIVERDT(1,1,1),VDRIVERDT(1,1,1),WDRIVERDT(1,1,1) ! U,V,W airwake velocity at timestep t+dt (ft/s)
+     ! real*8 :: XDRIVER(1,1,1),YDRIVER(1,1,1),ZDRIVER(1,1,1) ! U,V,W airwake velocity at timestep t+dt (ft/s)
+     real*8 :: UDRIVER(IMAX,JMAX,KMAX),VDRIVER(IMAX,JMAX,KMAX),WDRIVER(IMAX,JMAX,KMAX) ! U,V,W Driver airwake velocity at timestep t (ft/s)
+     real*8 :: UDRIVERDT(IMAX,JMAX,KMAX),VDRIVERDT(IMAX,JMAX,KMAX),WDRIVERDT(IMAX,JMAX,KMAX) ! U,V,W airwake velocity at timestep t+dt (ft/s)
+     real*8 :: XDRIVER(IMAX,JMAX,KMAX),YDRIVER(IMAX,JMAX,KMAX),ZDRIVER(IMAX,JMAX,KMAX) ! U,V,W airwake velocity at timestep t+dt (ft/s)
+     real*8 :: TCOORD(NTIMES)                            ! Units: 's' Desc: Airwake time intervals
+     real*8 :: XCOORD(IMAX)                            ! Units: 's' Desc: Airwake time intervals
+     real*8 :: YCOORD(JMAX)                            ! Units: 's' Desc: Airwake time intervals
+     real*8 :: ZCOORD(KMAX)                            ! Units: 's' Desc: Airwake time intervals
+     real*8 :: TIMETAB(MAXNDRIVER) = 0.0           ! Units: 's', Desc: 'Time Table'
+     real*8 :: XCGTAB(MAXNDRIVER) = 0.0            ! Units: 'ft', Desc: 'XCG Inertial Position of Driver Table'
+     real*8 :: YCGTAB(MAXNDRIVER) = 0.0            ! Units: 'ft', Desc: 'YCG Inertial Position of Driver Table'
+     real*8 :: ZCGTAB(MAXNDRIVER) = 0.0            ! Units: 'ft', Desc: 'ZCG Inertial Position of Driver Table'
+     real*8 :: PHITAB(MAXNDRIVER) = 0.0            ! Units: 'rad', Desc: 'Driver Euler Roll Angle Table'
+     real*8 :: THETATAB(MAXNDRIVER) = 0.0          ! Units: 'rad', Desc: 'Driver Euler Pitch Angle Table'
+     real*8 :: PSITAB(MAXNDRIVER) = 0.0            ! Units: 'rad', Desc: 'Driver Euler Yaw Angle Table'
+     real*8 :: UBTAB(MAXNDRIVER) = 0.0             ! Units: 'ft/s', Desc: 'UB Body Frame Mass Center Velocity of Driver Table'
+     real*8 :: VBTAB(MAXNDRIVER) = 0.0             ! Units: 'ft/s', Desc: 'VB Body Frame Mass Center Velocity of Driver Table'
+     real*8 :: WBTAB(MAXNDRIVER) = 0.0             ! Units: 'ft/s', Desc: 'WB Body Frame Mass Center Velocity of Driver Table'
+     real*8 :: PBTAB(MAXNDRIVER) = 0.0             ! Units: 'rad/s', Desc: 'PB Roll Rate of Driver Table'
+     real*8 :: QBTAB(MAXNDRIVER) = 0.0             ! Units: 'rad/s', Desc: 'QB Pitch Rate of Driver Table'
+     real*8 :: RBTAB(MAXNDRIVER) = 0.0             ! Units: 'rad/s', Desc: 'RB Yaw Rate of Driver Table'
+     real*8 :: INITIALSTATE(20) = 0                    ! Units: 'varies', Desc: 'Initial State Vector'
+     real*8 :: NOMINALSTATE(20) = 0                    ! Units: 'varies', Desc: 'Initial State Vector'
+     real*8 :: STATE(20) = 0                           ! Units: 'varies', Desc: 'State Vector'
+     real*8 :: STATEDOT(20) = 0                        ! Units: 'varies', Desc: 'State Dot Vector'
+     real*8 :: KRKBODY(20,4) = 0.0                  ! Units: 'md', RK4 vector
+     real*8 :: TIS(3,3) = 0.0                          ! Units: 'nd', Desc: 'Transformation from Driver to Inertial Reference Frame'
+     real*8 :: TIC(3,3) = 0.0                          ! Units: 'nd', Desc: 'Transformation from Driver to Inertial Reference Frame'
+     real*8 :: TCI(3,3) = 0.0                          ! Units: 'nd', Desc: 'Transformation from Driver to Inertial Reference Frame'
+     real*8 :: XDDOTNOISE = 0.0                        ! Units: 'ft/s^2', Desc: 'Acceleration Noise of Driverdriver'
+     real*8 :: YDDOTSCALE = 0.0                        ! Units: 'ft/s^2', Desc: 'Acceleration Noise of Driverdriver'
+     real*8 :: YDDOTPERIOD = 0.0                        ! Units: 'ft/s^2', Desc: 'Acceleration Noise of Driverdriver'
+     real*8 :: IXX = 0.0                              ! Units: 'kg m^2', Desc: 'Ixx of Inertia Matrix'
+     real*8 :: IYY = 0.0                              ! Units: 'kg m^2', Desc: 'Iyy of Inertia Matrix'
+     real*8 :: IZZ = 0.0                              ! Units: 'kg m^2', Desc: 'Izz of Inertia Matrix'
+     real*8 :: IXY = 0.0                              ! Units: 'kg m^2', Desc: 'Ixy of Inertia Matrix'
+     real*8 :: IXZ = 0.0                              ! Units: 'kg m^2', Desc: 'Ixz of Inertia Matrix'
+     real*8 :: IYZ = 0.0                              ! Units: 'kg m^2', Desc: 'Iyz of Inertia Matrix'
+     real*8 :: IXXI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Ixx Inverse of Inertia Matrix'
+     real*8 :: IYYI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Iyy Inverse of Inertia Matrix'
+     real*8 :: IZZI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Izz Inverse of Inertia Matrix'
+     real*8 :: IXYI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Ixy Inverse of Inertia Matrix'
+     real*8 :: IXZI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Ixz Inverse of Inertia Matrix'
+     real*8 :: IYZI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Iyz Inverse of Inertia Matrix'
+     real*8 :: MASS = 0.0                             ! Units: 'kg', Desc: 'Mass'
+     real*8 :: WEIGHT = 0.0                           ! Units: 'lbf', Desc: 'Weight'
+     real*8 :: TURNRADIUS = 0.0                       ! Units: 'ft', Desc: Minimum turn radius of driverdriver
+     real*8 :: FXTOTAL = 0.0                          ! Units: 'lbf', Desc: 'X Total Applied Force in Body Frame'
+     real*8 :: FYTOTAL = 0.0                          ! Units: 'lbf', Desc: 'Y Total Applied Force in Body Frame'
+     real*8 :: FZTOTAL = 0.0                          ! Units: 'lbf', Desc: 'Z Total Applied Force in Body Frame'
+     real*8 :: MXTOTAL = 0.0                          ! Units: 'N m', Desc: 'X Total Applied Moment About Mass Center in Body Frame'
+     real*8 :: MYTOTAL = 0.0                          ! Units: 'N m', Desc: 'Y Total Applied Moment About Mass Center in Body Frame'
+     real*8 :: MZTOTAL = 0.0                          ! Units: 'N m', Desc: 'Z Total Applied Moment About Mass Center in Body Frame'
+     real*8 :: FXGRAV = 0.0                           ! Units: 'lbf', Desc: 'X Gravity Forces in Body Frame'
+     real*8 :: FYGRAV = 0.0                           ! Units: 'lbf', Desc: 'Y Gravity Forces in Body Frame'
+     real*8 :: FZGRAV = 0.0                           ! Units: 'lbf', Desc: 'Z Gravity Forces in Body Frame'
+     real*8 :: MXGRAV = 0.0                           ! Units: 'N m', Desc: 'X Gravity Moment About CG in Body Frame'
+     real*8 :: MYGRAV = 0.0                           ! Units: 'N m', Desc: 'Y Gravity Moment About CG in Body Frame'
+     real*8 :: MZGRAV = 0.0                           ! Units: 'N m', Desc: 'Z Gravity Moment About CG in Body Frame'
+     real*8 :: FXAERO = 0.0                           ! Units: 'lbf', Desc: 'X Aerodynamic Force in Body Frame'
+     real*8 :: FYAERO = 0.0                           ! Units: 'lbf', Desc: 'Y Aerodynamic Force in Body Frame'
+     real*8 :: FZAERO = 0.0                           ! Units: 'lbf', Desc: 'Z Aerodynamic Force in Body Frame'
+     real*8 :: MXAERO = 0.0                           ! Units: 'N m', Desc: 'X Aerodynamic Moment About CG in Body Frame'
+     real*8 :: MYAERO = 0.0                           ! Units: 'N m', Desc: 'Y Aerodynamic Moment About CG in Body Frame'
+     real*8 :: MZAERO = 0.0                           ! Units: 'N m', Desc: 'Z Aerodynamic Moment About CG in Body Frame'
+     real*8 :: FXCONT = 0.0                           ! Units: 'lbf', Desc: 'X Contact Force in Body Frame'
+     real*8 :: FYCONT = 0.0                           ! Units: 'lbf', Desc: 'Y Contact Force in Body Frame'
+     real*8 :: FZCONT = 0.0                           ! Units: 'lbf', Desc: 'Z Contact Force in Body Frame'
+     real*8 :: MXCONT = 0.0                           ! Units: 'N m', Desc: 'X Contact Moment in Body Frame'
+     real*8 :: MYCONT = 0.0                           ! Units: 'N m', Desc: 'Y Contact Moment in Body Frame'
+     real*8 :: MZCONT = 0.0                           ! Units: 'N m', Desc: 'Z Contact Moment in Body Frame'
+     real*8 :: VXWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial I Axis'
+     real*8 :: VYWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial J Axis'
+     real*8 :: VZWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial K Axis'
+     real*8 :: DEN = 0.002363                         ! Units: 'slug/ft^3', Desc: 'Density'
+     real*8 :: FTETHERX = 0.0
+     real*8 :: FTETHERY = 0.0
+     real*8 :: FTETHERZ = 0.0
+     real*8 :: VWAKE(3) = 0.0
+     real*8 :: AIRWAKEPOSITION(3) = 0.0
+     real*8 :: GRAVITY = 32.2			      ! Units: 'ft/s this is the default but you can change it in the input file
+     real*8 :: XCOMMAND = 0.0
+     real*8 :: YCOMMAND = 0.0
+     real*8 :: ZCOMMAND = 0.0
+     real*8 :: PHICOMMAND = 0.0
+     real*8 :: THETACOMMAND = 0.0
+     real*8 :: PSICOMMAND = 0.0
+     real*8 :: UCOMMAND = 0.0
+     real*8 :: KPXDRIVE = 0                            ! Units: 'nd', Desc: driverdriver proportional gain on x-position
+     real*8 :: KIXDRIVE = 0                            ! Units: 'nd', Desc: driverdriver integral gain on x-position
+     real*8 :: KDXDRIVE = 0                            ! Units: 'nd', Desc: driverdriver derivative gain on x-position
+     real*8 :: KPYDRIVE = 0                            ! Units: 'nd', Desc: driverdriver proportional gain on y-position
+     real*8 :: KIYDRIVE = 0                            ! Units: 'nd', Desc: driverdriver integral gain on y-position
+     real*8 :: KDYDRIVE = 0                            ! Units: 'nd', Desc: driverdriver derivative gain on y-position
+     real*8 :: KPZDRIVE = 0                            ! Units: 'nd', Desc: driverdriver proportional gain on z-position
+     real*8 :: KIZDRIVE = 0                            ! Units: 'nd', Desc: driverdriver integral gain on z-position 
+     real*8 :: KDZDRIVE = 0                            ! Units: 'nd', Desc: driverdriver derivative gain on z-position
+     real*8 :: KPPSI = 0                              ! Units: 'nd', Desc: driverdriver proportional gain on heading
+     real*8 :: KIPSI = 0                              ! Units: 'nd', Desc: driverdriver integral gain on heading
+     real*8 :: KDPSI = 0                              ! Units: 'nd', Desc: driverdriver derivative gain on heading
+     real*8 :: KPPHI = 0                              ! Units: 'nd', Desc: driverdriver proportional gain on roll 
+     real*8 :: KIPHI = 0                              ! Units: 'nd', Desc: driverdriver integral gain on roll 
+     real*8 :: KDPHI = 0                              ! Units: 'nd', Desc: driverdriver derivative gain on roll
+     real*8 :: KPTHETA = 0                            ! Units: 'nd', Desc: driverdriver proportional gain on pitch
+     real*8 :: KITHETA = 0                            ! Units: 'nd', Desc: driverdriver integral gain on pitch
+     real*8 :: KDTHETA = 0                            ! Units: 'nd', Desc: driverdriver derivative gain on pitch
+     real*8 :: XINTEGRAL = 0
+     real*8 :: YINTEGRAL = 0
+     real*8 :: ZINTEGRAL = 0
+     real*8 :: PHIINTEGRAL = 0.0                      ! Units: 'ft', Desc: 'PHI integral term in PID Controller'
+     real*8 :: THETAINTEGRAL = 0.0                    ! Units: 'ft', Desc: 'THETA integral term in PID Controller'
+     real*8 :: PSIINTEGRAL = 0.0                      ! Units: 'ft', Desc: 'PSI integral term in PID Controller'
+     real*8 :: UINTEGRAL = 0.0
+     real*8 :: MS_0 = 0.0                             ! Units: 'us', Desc: Microsecond impulse to keep driver hovering // REVISIT can take this out later
+     real*8 :: MS_ROLL = 0.0                          ! Units: 'us', Desc: Microsecond impulse to roll  // REVISIT can take this out later
+     real*8 :: MS_PITCH = 0.0                         ! Units: 'us', Desc: Microsecond impulse to pitch // REVISIT can take this out later
+     real*8 :: MS_YAW = 0.0                           ! Units: 'us', Desc: Microsecond impulse to yaw   // REVISIT can take this out later
+     real*8 :: PWM2F(4,1) = 0.0                       ! Units: 'lbf',Desc: Force converted as a function of input microsecond pulse
+     real*8 :: DELTATIME = 0.0                        ! Simulation timestep
+     real*8 :: XCOM(MAXWP) = 500                         ! Units: 'm', X Waypoint command
+     real*8 :: YCOM(MAXWP) = 500                         ! Units: 'm', Y Waypoint command
+     real*8 :: ZCOM(MAXWP) = -200                        ! Units: 'm', Altitude command
+     character*256 U0name,V0name,W0name
+     character*256 Udtname,Vdtname,Wdtname,AIRWAKEPATH
+     character(128) :: INPUTFILE = ' '                ! Units: 'nd', Desc: 'Driver Input File'     chara
+  end type DRIVERSTRUCTURE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!! TOWED STRUCTURE !!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
-include 'towedmodule.f90'
+ type TOWEDSTRUCTURE
+  integer :: DYNOFFON = 0                          ! Units: 'nd', Desc: 'Dynamics Flag (0=Off, 1=On)'
+  integer :: GRAVOFFON = 0                         ! Units: 'nd', Desc: 'Gravity Flag (0=Off, 1=On)'
+  integer :: AEROFLAG = 0                          ! Units: 'nd', Desc: 'Aerodynamics Flag (0=Off, 1=On)'
+  integer :: SWEEPOFFON = 0                        ! Units: 'nd', Desc: 'Alpha Sweeps Flag (0=Off, 1=On)'
+  integer :: CONTOFFON = 0                         ! Units: 'nd', Desc: 'Contact Flag (0=Off, 1=On)'
+  integer :: DQFLAG = 0                            ! Units: 'nd', Desc: 'Data Quality Flag (0=Data Not Loaded Successfully, 1=Data Loaded Successfully)'
+  integer :: NLSE = 0                              ! Units: 'nd', Desc: 'Number of Lifting Surface Elements'
+  integer :: IP(MAXNLSE) = 1                       ! Units: 'nd', Desc: 'Table Look-up Pointer'
+  integer :: TABSIZE(MAXNLSE) = 1                  ! Units: 'nd', Desc: 'Table Size'
+  integer :: IPROP(2) = 1                          ! Prop table look up pointer
+  integer :: NPROPTAB = 0                          ! Propellor table size
+  integer :: THRUSTMOD = 0                         ! 0 = linear , 1 = table look up
+  integer :: numNodesNLL = 10                     ! 'nd' Number of Non-linear lifting nodes for us in WingsX
+  REAL :: Rde  = 0.                                ! 'nd' Reynolds number in WingsX
+  REAL :: CL0  = 0.                                ! 'nd' Zero-AOA lift coefficient WingsX
+  REAL :: Sw   = 0.                                ! Reference area (ft^2) - WingsX
+  REAL :: bw   = 0.                                ! Reference wingspan (ft) - WingsX
+  REAL :: cw   = 0.                                ! Reference chord (ft) - WingsX
+  REAL :: Vflt = 0.                                ! Reference Flight speed (ft/s) - WingsX
+  REAL :: hx   = 0.                                ! Reference angular momentum (ft) - WingsX
+  REAL :: hy   = 0.                                ! Reference angular momentum (ft) - WingsX
+  REAL :: hz   = 0.                                ! Reference angular momentum (ft) - WingsX
+  real*8 :: C_T_TAB(MAXPROP) = 0                   ! Thrust table
+  real*8 :: OMEGA_TAB(MAXPROP) = 0                 ! Rotational speed table
+  real*8 :: ADVANCERATIO_TAB(MAXPROP) = 0          ! Advance ratio table
+  real*8 :: DELTHRUST_TAB(MAXPROP) = 0             ! control input table
+  real*8 :: SAREA = 0                              ! Reference area of aircraft (m^2)
+  real*8 :: B = 0                                  ! Wingspan of aircraft(ft)
+  real*8 :: C_BAR = 0                              ! Mean chord of aircraft(ft)
+  real*8 :: V_T = 0                                ! Trim velocity of aircraft (ft/s)
+  real*8 :: PD = 0                                 ! propellor diameter (ft)
+  real*8 :: C_L = 0                                ! Lift coefficient (nd)
+  real*8 :: C_L_TABLE(SWEEPTABLE) = 0              ! Lift coefficient Table (nd)
+  real*8 :: C_D_TABLE(SWEEPTABLE) = 0              ! Drag coefficient Table (nd)
+  real*8 :: CXb_TABLE(SWEEPTABLE) = 0              ! Axial Drag coefficient Table (nd)
+  real*8 :: CYb_TABLE(SWEEPTABLE) = 0              ! Lateral Drag coefficient Table (nd)
+  real*8 :: CZb_TABLE(SWEEPTABLE) = 0              ! Normal Drag coefficient Table (nd)
+  real*8 :: Cll_TABLE(SWEEPTABLE) = 0              ! Roll Moment coefficient Table (nd)
+  real*8 :: Cm_TABLE(SWEEPTABLE) = 0               ! Pitch moment coefficient Table (nd)
+  real*8 :: Cn_TABLE(SWEEPTABLE) = 0               ! Yaw moment coefficient Table (nd)
+  real*8 :: AOATABLE(SWEEPTABLE) = 0               ! Angle of attack Table (nd)
+  real*8 :: CXb = 0                                ! Axial coefficient (nd)
+  real*8 :: CYb = 0                                ! Lateral coefficient (nd)
+  real*8 :: CZb = 0                                ! Normal coefficient (nd)
+  real*8 :: Cll = 0                                ! Roll moment coefficient (nd)
+  real*8 :: Cm = 0                                 ! Pitch moment coefficient (nd)
+  real*8 :: Cn = 0                                 ! Yaw moment coefficient (nd)
+  real*8 :: C_D = 0                                ! Drag coefficient (nd)
+  real*8 :: C_L_0 = 0                              ! zero lift slope
+  real*8 :: C_L_ALPHA = 0                          ! lift curve slope
+  real*8 :: C_L_ALPHAHAT = 0                       ! dynamic lift curve slope
+  real*8 :: C_L_UHAT = 0                           ! increase in lift with speed
+  real*8 :: C_L_Q = 0                              ! increase in lift with q
+  real*8 :: C_D_Q = 0                              ! increase in drag with q
+  real*8 :: C_L_DE = 0                             ! increase in lift with elevator
+  real*8 :: C_L_DF = 0                             ! increase in lift with flaps
+  real*8 :: C_L_M = 0                              ! lift with mach no.
+  real*8 :: C_D_DF = 0                             ! drag with flaps
+  real*8 :: C_M_DF = 0                             ! moment with flaps
+  real*8 :: C_Y_BETA = 0                           ! side force w.r.t sideslip
+  real*8 :: C_Y_P = 0                              ! side force w.r.t roll rate
+  real*8 :: C_Y_R = 0                              ! side force w.r.t. yaw rate
+  real*8 :: C_Y_DR = 0                             ! side force w.r.t. rudder
+  real*8 :: C_Y_DA = 0                             ! side force w.r.t. aileron
+  real*8 :: C_D_0 = 0                              ! zero lift drag
+  real*8 :: C_D_ALPHA2 = 0                         ! drag polar
+  real*8 :: C_D_ALPHAHAT = 0                       ! dynamic drag polar
+  real*8 :: C_D_UHAT = 0                           ! increase in drag with speed
+  real*8 :: C_D_DE = 0                             ! inrease in drag with elevator
+  real*8 :: C_D_M = 0                              ! inrease in drag with mach no.
+  real*8 :: C_L_BETA = 0                           ! roll moment w.r.t beta
+  real*8 :: C_L_P = 0                              ! roll moment w.r.t roll rate
+  real*8 :: C_L_R = 0                              ! roll moment w.r.t. yaw rate
+  real*8 :: C_L_DR = 0                             ! roll moment w.r.t. rudder
+  real*8 :: C_L_DA = 0                             ! roll moment w.r.t. aileron
+  real*8 :: C_roll_ALPHA = 0                       ! roll moment w.r.t. angle of attack
+  real*8 :: C_N_ALPHA = 0                          ! yaw moment w.r.t. angle of attack
+  real*8 :: C_M_0 = 0                              ! zero lift moment
+  real*8 :: C_M_ALPHA = 0                          ! pitch moment curve
+  real*8 :: C_M_ALPHAHAT = 0                       ! dynamic moment curve
+  real*8 :: C_M_UHAT = 0                           ! increase in pitch moment w.r.t speed
+  real*8 :: C_M_Q = 0                              ! pitch moment w.r.t. q
+  real*8 :: C_M_DE = 0                             ! pitch moment w.r.t elevator
+  real*8 :: C_M_M = 0                              ! pitch moment w.r.t mach no.
+  real*8 :: C_M_BETA = 0                           ! pitch moment w.r.t beta
+  real*8 :: C_N_BETA = 0                           ! yaw moment w.r.t. beta
+  real*8 :: C_N_P = 0                              ! yaw moment w.r.t. roll rate
+  real*8 :: C_N_R = 0                              ! yaw moment w.r.t. yaw rate
+  real*8 :: C_N_DR = 0                             ! yaw moment w.r.t. rudder
+  real*8 :: C_N_DA = 0                             ! yaw moment w.r.t. aileron
+  real*8 :: C_X_DT = 0                             ! Thrust w.r.t. delthrust
+  real*8 :: C_X_BOX = 0                            ! Box coeff C_X
+  real*8 :: C_Y_BOX = 0                            ! Box coeff C_Y
+  real*8 :: C_Z_BOX = 0                            ! Box coeff C_Z
+  real*8 :: C_L_BOX = 0                            ! Box coeff C_L
+  real*8 :: C_M_BOX = 0                            ! Box coeff C_M
+  real*8 :: C_N_BOX = 0                            ! Box coeff C_N
+  real*8 :: C_L_P_BOX = 0                          ! Box coeff C_L_P
+  real*8 :: C_M_Q_BOX = 0                          ! Box coeff C_M_Q
+  real*8 :: C_N_R_BOX = 0                          ! Box coeff C_N_R
+  real*8 :: AOAREF = 0                             ! Reference Angle of attack
+  real*8 :: MASS = 0.0                             ! Units: 'kg', Desc: 'Mass'
+  real*8 :: WEIGHT = 0.0                           ! Units: 'lbf', Desc: 'Weight'  
+  real*8 :: SLCG = 0.0                             ! Units: 'ft', Desc: 'Stationline of Mass Center'
+  real*8 :: BLCG = 0.0                             ! Units: 'ft', Desc: 'Buttline of Mass Center'
+  real*8 :: WLCG = 0.0                             ! Units: 'ft', Desc: 'Waterline of Mass Center'
+  real*8 :: IXX = 0.0                              ! Units: 'kg m^2', Desc: 'Ixx of Inertia Matrix'
+  real*8 :: IYY = 0.0                              ! Units: 'kg m^2', Desc: 'Iyy of Inertia Matrix'
+  real*8 :: IZZ = 0.0                              ! Units: 'kg m^2', Desc: 'Izz of Inertia Matrix'
+  real*8 :: IXY = 0.0                              ! Units: 'kg m^2', Desc: 'Ixy of Inertia Matrix'
+  real*8 :: IXZ = 0.0                              ! Units: 'kg m^2', Desc: 'Ixz of Inertia Matrix'
+  real*8 :: IYZ = 0.0                              ! Units: 'kg m^2', Desc: 'Iyz of Inertia Matrix'
+  real*8 :: IXXI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Ixx Inverse of Inertia Matrix'
+  real*8 :: IYYI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Iyy Inverse of Inertia Matrix'
+  real*8 :: IZZI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Izz Inverse of Inertia Matrix'
+  real*8 :: IXYI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Ixy Inverse of Inertia Matrix'
+  real*8 :: IXZI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Ixz Inverse of Inertia Matrix'
+  real*8 :: IYZI = 0.0                             ! Units: '1/(kg m^2)', Desc: 'Iyz Inverse of Inertia Matrix'
+  real*8 :: TIA(3,3) = 0.0                         ! Units: 'nd', Desc: 'Aircraft to Inertial Frame Transformation Matrix'
+  real*8 :: TAI(3,3) = 0.0                         ! Units: 'nd', Desc: 'Inertial to Aircraft Frame Transformation Matrix'
+  real*8 :: ELEVATOR = 0                           ! Units: 'rad', Desc: Elevator Command
+  real*8 :: RUDDER = 0                             ! Units: 'rad', Desc: RUDDER Command
+  real*8 :: AILERON = 0                            ! Units: 'rad', Desc: AILERON Commandn
+  real*8 :: FLAPS = 0                              ! Units: 'rad', Desc: FLAP Command
+  real*8 :: DELTHRUST = 0                          ! Units: 'rad', Desc: DELTHRUST Command (Total Thrust = Cxdt*DELTHRUST + T0)
+  real*8 :: ELEVTRIM  = 0                          ! Units: 'nd', Desc: Stall in airfoil parameters
+  real*8 :: CLMAX = 0                              ! Units: 'nd', Desc: Stall in airfoil parameters
+  real*8 :: AOAMAX = 0                             ! Units: 'nd', Desc: Stall in airfoil parameters
+  real*8 :: AOALINEARMAX = 0                       ! Units: 'nd', Desc: Stall in airfoil parameters
+  real*8 :: CLASTALLMAX = 0                        ! Units: 'nd', Desc: Stall in airfoil parameters
+  real*8 :: CLMIN = 0                              ! Units: 'nd', Desc: Stall in airfoil parameters
+  real*8 :: AOAMIN = 0                             ! Units: 'nd', Desc: Stall in airfoil parameters
+  real*8 :: AOALINEARMIN = 0                       ! Units: 'nd', Desc: Stall in airfoil parameters
+  real*8 :: CLASTALLMIN = 0                        ! Units: 'nd', Desc: Stall in airfoil parameters
+  real*8 :: T0 = 0                                 ! Units: 'nd', Desc: Stall in airfoil parameters
+  real*8 :: TPRIME = 0                             ! Units: 'nd', Desc: Stall in airfoil parameters
+  real*8 :: TDBLPRIME = 0                          ! Units: 'nd', Desc: Stall in airfoil parameters
+  real*8 :: DENEXP = 0                             ! Units: 'nd', Desc: Stall in airfoil parameters ! Throttle = (T0 + TPRIME*V + TDBLPRIME*V^2)*(RHO/RHO_SEA_LEVEL)^DENEXP
+  real*8 :: TOFFSET = 0                            ! Units: 'nd', Desc: Stall in airfoil parameters 
+  real*8 :: TSLOPE = 0                             ! Units: 'nd', Desc: Stall in airfoil parameters 
+  real*8 :: SLLSE(MAXNLSE) = 0.0                   ! Units: 'ft', Desc: 'Stationline of Lifting Surface Element'
+  real*8 :: BLLSE(MAXNLSE) = 0.0                   ! Units: 'ft', Desc: 'Waterline of Lifting Surface Element'
+  real*8 :: WLLSE(MAXNLSE) = 0.0                   ! Units: 'ft', Desc: 'Buttline of Lifting Surface Element'
+  real*8 :: AREALSE(MAXNLSE) = 0.0                 ! Units: 'ft', Desc: 'Lifting Surface Element Reference Area'
+  real*8 :: ALPHALSE(MAXNLSE) = 0.0                ! Units: 'rad', Desc: 'Aerodynamic Angle of Attack of Lifting Surface Element'
+  real*8 :: PHILSE(MAXNLSE) = 0.0                  ! Units: 'rad', Desc: 'Phi Orientation Angle of Lifting Surface Element'
+  real*8 :: GAMLSE(MAXNLSE) = 0.0                  ! Units: 'rad', Desc: 'Gamma Orientation Angle of Lifting Surface Element'
+  real*8 :: DELTALSE(MAXNLSE) = 0.0                ! Units: 'rad', Desc: 'Delta Orientation Angle of Lifting Surface Element'
+  real*8 :: FXLSE(MAXNLSE) = 0.0                   ! Units: 'nd', Desc: 'Fx Force of Lifting Surface Element in Aircraft Reference Frame'
+  real*8 :: FYLSE(MAXNLSE) = 0.0                   ! Units: 'nd', Desc: 'Fy Force of Lifting Surface Element in Aircraft Reference Frame'
+  real*8 :: FZLSE(MAXNLSE) = 0.0                   ! Units: 'nd', Desc: 'Fz Force of Lifting Surface Element in Aircraft Reference Frame'
+  real*8 :: MXLSE(MAXNLSE) = 0.0                   ! Units: 'nd', Desc: 'Mx Moment of Lifting Surface Element in Aircraft Reference Frame'
+  real*8 :: MYLSE(MAXNLSE) = 0.0                   ! Units: 'nd', Desc: 'My Moment of Lifting Surface Element in Aircraft Reference Frame'
+  real*8 :: MZLSE(MAXNLSE) = 0.0                   ! Units: 'nd', Desc: 'Mz Moment of Lifting Surface Element in Aircraft Reference Frame'
+  real*8 :: ALPHALSETAB(MAXNLSE,MAXNAOA) = 0.0     ! Units: 'rad', Desc: 'Aerodynamic Angle of Attack Table for Lifting Surface Element'
+  real*8 :: CLLSETAB(MAXNLSE,MAXNAOA) = 0.0        ! Units: 'rad', Desc: 'Lift Coefficient Table for Lifting Surface Element'
+  real*8 :: CDLSETAB(MAXNLSE,MAXNAOA) = 0.0        ! Units: 'rad', Desc: 'Drag Coefficient Table for Lifting Surface Element'
+  real*8 :: FXGRAV = 0.0                           ! Units: 'lbf', Desc: 'X Gravity Forces in Body Frame'
+  real*8 :: FYGRAV = 0.0                           ! Units: 'lbf', Desc: 'Y Gravity Forces in Body Frame'
+  real*8 :: FZGRAV = 0.0                           ! Units: 'lbf', Desc: 'Z Gravity Forces in Body Frame'
+  real*8 :: MXGRAV = 0.0                           ! Units: 'N m', Desc: 'X Gravity Moment About CG in Body Frame'
+  real*8 :: MYGRAV = 0.0                           ! Units: 'N m', Desc: 'Y Gravity Moment About CG in Body Frame'
+  real*8 :: MZGRAV = 0.0                           ! Units: 'N m', Desc: 'Z Gravity Moment About CG in Body Frame'
+  real*8 :: FXAERO = 0.0                           ! Units: 'lbf', Desc: 'X Aerodynamic Force in Body Frame'
+  real*8 :: FYAERO = 0.0                           ! Units: 'lbf', Desc: 'Y Aerodynamic Force in Body Frame'
+  real*8 :: FZAERO = 0.0                           ! Units: 'lbf', Desc: 'Z Aerodynamic Force in Body Frame'
+  real*8 :: MXAERO = 0.0                           ! Units: 'N m', Desc: 'X Aerodynamic Moment About CG in Body Frame'
+  real*8 :: MYAERO = 0.0                           ! Units: 'N m', Desc: 'Y Aerodynamic Moment About CG in Body Frame'
+  real*8 :: MZAERO = 0.0                           ! Units: 'N m', Desc: 'Z Aerodynamic Moment About CG in Body Frame'
+  real*8 :: FXCONT = 0.0                           ! Units: 'lbf', Desc: 'X Contact Force in Body Frame'
+  real*8 :: FYCONT = 0.0                           ! Units: 'lbf', Desc: 'Y Contact Force in Body Frame'
+  real*8 :: FZCONT = 0.0                           ! Units: 'lbf', Desc: 'Z Contact Force in Body Frame'
+  real*8 :: MXCONT = 0.0                           ! Units: 'N m', Desc: 'X Contact Moment in Body Frame'
+  real*8 :: MYCONT = 0.0                           ! Units: 'N m', Desc: 'Y Contact Moment in Body Frame'
+  real*8 :: MZCONT = 0.0                           ! Units: 'N m', Desc: 'Z Contact Moment in Body Frame'
+  real*8 :: FXTOTAL = 0.0                          ! Units: 'lbf', Desc: 'X Total Applied Force in Body Frame'
+  real*8 :: FYTOTAL = 0.0                          ! Units: 'lbf', Desc: 'Y Total Applied Force in Body Frame'
+  real*8 :: FZTOTAL = 0.0                          ! Units: 'lbf', Desc: 'Z Total Applied Force in Body Frame'
+  real*8 :: MXTOTAL = 0.0                          ! Units: 'N m', Desc: 'X Total Applied Moment About Mass Center in Body Frame'
+  real*8 :: MYTOTAL = 0.0                          ! Units: 'N m', Desc: 'Y Total Applied Moment About Mass Center in Body Frame'
+  real*8 :: MZTOTAL = 0.0                          ! Units: 'N m', Desc: 'Z Total Applied Moment About Mass Center in Body Frame'
+  real*8 :: INITIALPHI = 0.0                       ! Units: 'rad', Desc: 'Initial Euler Roll Angle of Aircraft'
+  real*8 :: INITIALTHETA = 0.0                     ! Units: 'rad', Desc: 'Initial Euler Pitch Angle of Aircraft'
+  real*8 :: INITIALPSI = 0.0                       ! Units: 'rad', Desc: 'Initial Euler Yaw Angle of Aircraft'
+  real*8 :: INITIALSTATE(13) = 0.0                 ! Units: 'vd', Desc: 'Initial Aircraft State Vector'
+  real*8 :: PHI = 0                                ! Units: 'rad', Desc: Aircraft roll angle
+  real*8 :: THETA = 0                              ! Units: 'rad', Desc: Aircraft roll angle
+  real*8 :: PSI = 0                                ! Units: 'rad', Desc: Aircraft roll angle
+  real*8 :: STATE(13) = 0.0                        ! Units: 'vd', Desc: 'Aircraft State Vector'
+  real*8 :: STATEPREV(13) = 0.0                    ! Units: 'vd', Desc: 'Aircraft State Vector before camera snapshot'
+  real*8 :: STATEDOT(13) = 0.0                     ! Units: 'vd', Desc: 'Aircraft State Vector Derivative'
+  real*8 :: VXWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial I Axis'
+  real*8 :: VYWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial J Axis'
+  real*8 :: VZWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial K Axis'
+  
+ end type TOWEDSTRUCTURE
  
 !!!!!!!!!!!!!!!!!!!!!!!!!!!! TETHER STRUCTURE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
-include 'tethermodule.f90'
+ type TETHERSTRUCTURE
+  integer :: DYNOFFON = 0                          ! Units: 'nd', Desc: 'Dynamics Flag (0=Off, 1=On)'
+  integer :: GRAVOFFON = 0                         ! Units: 'nd', Desc: 'Gravity Flag (0=Off, 1=On)'
+  integer :: AEROFLAG = 0                          ! Units: 'nd', Desc: 'Aerodynamics Flag (0=Off, 1=On)'
+  integer :: ADDBEAD = 0                           ! Units: 'nd' Desc: 'Whether or not to add a bead
+  integer :: REMOVEBEAD = 0                        ! Units: 'nd' Desc: 'Whether or not to remove a bead or not
+  integer :: ELASOFFON = 0                         ! Units: 'nd', Desc: 'Elasticity Flag (0=Off, 1=On)'
+  integer :: NBEADS = 0                            ! Units: 'nd', Desc: 'Number of Tether Beads'                    
+  integer :: DQFLAG = 0                            ! Units: 'nd', Desc: 'Data Quality Flag (0=Data Not Loaded Successfully, 1=Data Loaded Successfully)'
+  integer :: NONLINEAR = 0                         ! Units: 'nd', Desc: 'Nonlinearity of Tether'
+  real*8 :: XTETHER = 0.0                          ! Units: 'ft', Desc: 'X Inertial Position of Tether Attachment Point'
+  real*8 :: YTETHER = 0.0                          ! Units: 'ft', Desc: 'Y Inertial Position of Tether Attachment Point'
+  real*8 :: ZTETHER = 0.0                          ! Units: 'ft', Desc: 'Z Inertial Position of Tether Attachment Point'
+  real*8 :: FXTETHER = 0.0                         ! Units: 'ft', Desc: 'X Tether force
+  real*8 :: FYTETHER = 0.0                         ! Units: 'ft', Desc: 'Y Tether force
+  real*8 :: FZTETHER = 0.0                         ! Units: 'ft', Desc: 'Z Tether force
+  real*8 :: FXPLATFORM = 0.0                         ! Units: 'ft', Desc: 'X Tether force
+  real*8 :: FYPLATFORM = 0.0                         ! Units: 'ft', Desc: 'Y Tether force
+  real*8 :: FZPLATFORM = 0.0                         ! Units: 'ft', Desc: 'Z Tether force
+  real*8 :: XTETHERDOT = 0.0                       ! Units: 'ft', Desc: 'X Inertial Velocity of Tether Attachment Point
+  real*8 :: YTETHERDOT = 0.0                       ! Units: 'ft', Desc: 'Y Inertial Velocity of Tether Attachment Point
+  real*8 :: ZTETHERDOT = 0.0                       ! Units: 'ft', Desc: 'Z Inertial Velocity of Tether Attachment Point
+  real*8 :: MASSPUL = 0.0                          ! Units: 'slug/ft', Desc: 'Mass Per Unit Length of Total Tether Line'   
+  real*8 :: AREA = 0.0                             ! Units: 'ft^2', Desc: 'Cross sectional area of tether line'
+  real*8 :: LEN = 0.0                              ! Units: 'ft', Desc: 'Unstretched Total Length of Tether Line'   
+  real*8 :: NOMLEN = 0.0                           ! Units: 'ft', Desc: 'Nominal Length of Tether at Initial Condition'
+  real*8 :: LENMAX = 0.0                           ! Units: 'ft', Desc: 'Maximum Length of Tether Line'   
+  real*8 :: LENMIN = 0.0                           ! Units: 'ft', Desc: 'Minimum Length of Tether Line'   
+  real*8 :: DIA = 0.0                              ! Units: 'ft', Desc: 'Unstretched Total Diameter of Tether Line' 
+  real*8 :: GP = 0.0                               ! Units: 'lbf/(rad-ft^2)', Desc: 'Gp Torsional Modulus of Total Tether Line'   
+  real*8 :: GD = 0.0                               ! Units: 'lbf-s/(rad-ft^2)', Desc: 'Gd Torsional Damping Modulus of Total Tether Line'     
+  real*8 :: KE = 0.0                               ! Units: 'lbf/ft^2', Desc: 'Ke Stiffness of Total Tether Line'   
+  real*8 :: KV = 0.0                               ! Units: 'lbf/ft^2', Desc: 'Kv Stiffness of Total Tether Line'   
+  real*8 :: CV = 0.0                               ! Units: 'lbf/(ft^2/s)', Desc: 'Cv Damping of Total Tether Line'   
+  real*8 :: EMASS = 0.0                            ! Units: 'kg', Desc: 'Mass of Tether Line Element'   
+  real*8 :: ELEN = 0.0                             ! Units: 'ft', Desc: 'Length of Tether Line Element'   
+  real*8 :: EKE = 0.0                              ! Units: 'lbf/ft', Desc: 'Ke Stiffness of Tether Line Element'   
+  real*8 :: EKV = 0.0                              ! Units: 'lbf/ft', Desc: 'Kv Stiffness of Tether Line Element'   
+  real*8 :: KP = 0.0                               ! Units: 'lbf-ft/rad', Desc: 'Gp Torsional Stiffness of Total Tether Line'   
+  real*8 :: KD = 0.0                               ! Units: 'lbf-ft-s/rad', Desc: 'Gd Torsional Damping of Total Tether Line'   
+  real*8 :: ECV = 0.0                              ! Units: 'lbf/(ft/s)', Desc: 'Cv Damping of Tether Line Element'   
+  real*8 :: SIGMA = 0.0                            ! Units: 'rad/s', Desc: 'Tension Filter Root'   
+  real*8 :: KU = 0.0                               ! Units: 'lbf/ft', Desc: 'Tension Filter Stiffness Input'   
+  real*8 :: CU = 0.0                               ! Units: 'lbf/(ft/s)', Desc: 'Tension Filter Damping Input'   
+  real*8 :: NU = 0.0                               ! Units: 'nd', Desc: 'Tether Material Poisson's Ratio'   
+  real*8 :: CD_AXIAL = 0.0                         ! Units: 'nd', Desc: 'Skin Friction Drag Coefficient'   
+  real*8 :: CD_NORMAL = 0.0                        ! Units: 'nd', Desc: 'Flat Plate Drag Coefficient'   
+  real*8 :: XS = 0.0                               ! Units: 'ft', Desc: 'X Inertial Position of Tether Start Edge Point'
+  real*8 :: YS = 0.0                               ! Units: 'ft', Desc: 'Y Inertial Position of Tether Start Edge Point'
+  real*8 :: ZS = 0.0                               ! Units: 'ft', Desc: 'Z Inertial Position of Tether Start Edge Point'
+  real*8 :: XSDOT = 0.0                            ! Units: 'ft/s', Desc: 'X Inertial Velocity of Tether Start Edge Point'
+  real*8 :: YSDOT = 0.0                            ! Units: 'ft/s', Desc: 'Y Inertial Velocity of Tether Start Edge Point'
+  real*8 :: ZSDOT = 0.0                            ! Units: 'ft/s', Desc: 'Z Inertial Velocity of Tether Start Edge Point'
+  real*8 :: XF = 0.0                               ! Units: 'ft', Desc: 'X Inertial Position of Tether Finish Edge Point'
+  real*8 :: YF = 0.0                               ! Units: 'ft', Desc: 'Y Inertial Position of Tether Finish Edge Point'
+  real*8 :: ZF = 0.0                               ! Units: 'ft', Desc: 'Z Inertial Position of Tether Finish Edge Point'
+  real*8 :: XFDOT = 0.0                            ! Units: 'ft/s', Desc: 'X Inertial Velocity of Tether Finish Edge Point'
+  real*8 :: YFDOT = 0.0                            ! Units: 'ft/s', Desc: 'Y Inertial Velocity of Tether Finish Edge Point'
+  real*8 :: ZFDOT = 0.0                            ! Units: 'ft/s', Desc: 'Z Inertial Velocity of Tether Finish Edge Point'
+  real*8 :: FXGRAV(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'X Gravity Force on Tether Bead in Inertial Frame'
+  real*8 :: FYGRAV(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'Y Gravity Force on Tether Bead in Inertial Frame'
+  real*8 :: FZGRAV(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'Z Gravity Force on Tether Bead in Inertial Frame'
+  real*8 :: FXAERO(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'X Aerodynamic Force on Tether Bead in Inertial Frame'
+  real*8 :: FYAERO(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'Y Aerodynamic Force on Tether Bead in Inertial Frame'
+  real*8 :: FZAERO(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'Z Aerodynamic Force on Tether Bead in Inertial Frame'
+  real*8 :: FXELAS(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'X Elastic Force on Tether Bead in Inertial Frame'
+  real*8 :: FYELAS(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'Y Elastic Force on Tether Bead in Inertial Frame'
+  real*8 :: FZELAS(MAXNBEADS) = 0.0                ! Units: 'lbf', Desc: 'Z Elastic Force on Tether Bead in Inertial Frame'
+  real*8 :: TCOM(200) = 0.0                        ! Time indices for reel trajectory
+  real*8 :: REELTRAJ(200) = 0.0                    ! Unstretched length values for reel trajectory
+  real*8 :: FELASBEADMINUS(MAXNBEADS,3) = 0.0      ! Units: 'lbf', Desc: 'Tether Bead Elastic Force Computation Matrix'
+  real*8 :: FELASBEADPLUS(MAXNBEADS,3) = 0.0       ! Units: 'lbf', Desc: 'Tether Bead Elastic Force Computation Matrix'
+  real*8 :: VELOCITYMAG(MAXNBEADS) = 0.0           ! Units: 'ft/s', Desc: 'Tether Bead Aerodynamic Velocity'
+  real*8 :: INITIALSTATE(7*MAXNBEADS+1) = 0.0      ! Units: 'vd', Desc: 'Initial Tether State Vector'
+  real*8 :: STATE(7*MAXNBEADS+1) = 0.0             ! Units: 'vd', Desc: 'Tether State Vector'
+  real*8 :: STATEDOT(7*MAXNBEADS+1) = 0.0          ! Units: 'vd', Desc: 'Tether State Vector Derivative' 
+  real*8 :: THETAINT = 0.0                         ! Units: 'rad', Desc: Integral of Theta
+  real*8 :: THETACOMMAND = 0.0                     ! Units: 'rad', Desc: Theta Command
+  real*8 :: THETAREEL = 0.0                        ! Units: 'rad', Desc: Theta of reel
+  real*8 :: THETADOTREEL = 0.0                     ! Units: 'rad/s', Desc: Thetadot of reel
+  real*8 :: TORQUE = 0.0                           ! Units: 'lbf-ft', Desc: Torque applied at reel
+  real*8 :: NOMTORQUE = 0.0                        ! Units: 'lbf-ft', Desc: Nominal Torque applied at reel
+  real*8 :: TENSION = 0.0                          ! Units: 'lbf', Desc: Tension at Reel
+  real*8 :: TORQUECOMMAND = 0.0                    ! Units: 'lbf-ft', Desc: Torque Command
+  real*8 :: IREEL = 0.0                            ! Units: 'slug-ft^2', Desc: Rotational Inertia of Reel
+  real*8 :: RREEL = 0.0                            ! Units: 'ft', Desc: radius of reel
+  real*8 :: TAU = 0.0                              ! Units: 'ft', Desc: Time Constant of Torque at Reel
+  real*8 :: STRETCHLEN = 0.0                       ! Units: 'ft', Desc: Stretched length of tether
+  real*8 :: PREVLEN = 0.0                          ! Units: 'ft', Desc: Previous Length command
+  real*8 :: PREVLENCOMMAND = 0.0                   ! Units: 'ft', Desc: Previous Length command
+  real*8 :: LDOTCOMMAND = 0.0                      ! Units: 'ft/s', Desc: Pay Out Rate Command
+  real*8 :: LDOTNOMINAL = 0.0                      ! Units: 'ft/s', Desc: Nominal Pay Out Rate
+  real*8 :: LDOTFACTOR = 1.0                       ! Units: 'ft/s', Desc: Nominal Pay Out Rate
+  real*8 :: SLTETHER = 0.0                         ! Units: 'ft', Desc: Stationline distance from center of mass to tether connection point on towed system
+  real*8 :: BLTETHER = 0.0                         ! Units: 'ft', Desc: buttline distance from center of mass to tether connection point on towed system
+  real*8 :: WLTETHER = 0.0                         ! Units: 'ft', Desc: waterline distance from center of mass to tether connection point on towed system
+ end type TETHERSTRUCTURE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!! SIMULATION STRUCTURE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
@@ -167,7 +765,7 @@ PROGRAM TOSIM
 
  call getarg(1,T%FILEINPUTFILE)
  if (len(trim(T%FILEINPUTFILE)) .lt. 1) then
-    default = 'Input_Files/TOMAD.ifiles'
+    default = 'Input_Files/Hovering/TOSIM.ifiles'
     write(*,'(a)') 'Enter input file otherwise will use the following file: ',default
     write(*,*) 'Hit enter if you just wish to continue....'
     read(5,'(a)')rec
@@ -1957,6 +2555,1644 @@ end if
  
 RETURN
 END SUBROUTINE ATMOSPHERE
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!SUBROUTINE DRIVER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!! README !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!! BEFORE YOU CALL DRIVER(DRIVE,3) to run the routine you must pass a few variables
+!! to this data ball. They are listed below.
+!! DRIVE%TIME -- You must pass the simulation time variable to the local DRIVE variable
+!In order to compute the aero model properly you need
+!to pass x,y,z to the ATMOSPHERE model
+!if (DRIVE%AEROOFFON .eq. 1) then
+!    ATM%XI = DRIVE%STATE(1)
+!     ATM%YI = DRIVE%STATE(2)
+!     ATM%ZI = DRIVER%STATE(3)
+!    Compute Atmopsheric density and winds - Same for DRIVER
+!    call ATMOSPHERE()
+!    !I'm assuming you have an atmospher model that takes XI,YI,ZI
+!    !And returns VX,VY,VZ
+!    DRIVE%VXWIND = ATM%VXWIND
+!    DRIVE%VYWIND = ATM%VYWIND
+!    DRIVE%VZWIND = ATM%VZWIND
+!    DRIVE%DEN = ATM%DEN
+!end if
+!!!!!!!!!!!!!!!!!!!!!!!!!!! SUBROUTINE DRIVER !!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+SUBROUTINE DRIVER(DRIVE,iflag)
+ use TOSIMDATATYPES
+ implicit none
+ integer i,iflag,ifind,openflag,readflag
+ real*8 m,readreal,ctheta,stheta,sphi,cphi,spsi,cpsi,ttheta,dspeed,psiprev,omegar
+ real*8 tend,slope,accel,noise,freq,vATM_I(3,1),vATM_A(3,1),uaero,vaero,waero,V_A,sumomega
+ real*8 xcg,ycg,zcg,phi,theta,psi,ub,vb,wb,pb,qb,rb,rCF_B(3,1),forcevec(4,1),thrust
+ real*8 Gammavec(3,1),bquad,C_Ftether_I(3,1),C_Ftether_B(3,1),S_rCF_B(3,3),C_Mtether_B(3,1)
+ real*8 xcgdot,ycgdot,zcgdot,phidot,thetadot,psidot,ubdot,vbdot,wbdot,c1,c2,c3,pbdot,qbdot,rbdot
+ real*8 rReel_I(3,1),rCG_I(3,1),v_CG_I(3,1),S_wt_B(3,3),v_Reel_I(3,1),deti
+ real*8 TVEC(4),TDOTVEC(4),TDBLDOTVEC(4)
+ real*8 sigmaF,omegaF,zetaF,C1F(4),C2F(4),C3F(4),idx,W2Tpwm(4,1),W0,j
+ character*256 xgridname,ygridname,zgridname
+ character*1 letter
+ character*10 number
+ type(DRIVERSTRUCTURE) DRIVE
+
+!!!!!!!!!!!!!!!!!!!!!!!!!! COMPUTE FLAG iflag = 3 !!!!!!!!!!!!!!!!!!!!!!!!!
+  
+ if (iflag .eq. 3) then  
+    
+    !Extract everything from state vector
+    xcg = DRIVE%STATE(1)
+    ycg = DRIVE%STATE(2)
+    zcg = DRIVE%STATE(3)
+    phi = DRIVE%STATE(4) 
+    theta = DRIVE%STATE(5)
+    psi = DRIVE%STATE(6)
+    ub = DRIVE%STATE(7)
+    vb = DRIVE%STATE(8)
+    wb = DRIVE%STATE(9)
+    pb = DRIVE%STATE(10)
+    qb = DRIVE%STATE(11) 
+    rb = DRIVE%STATE(12)
+    TVEC(1)    = DRIVE%STATE(13)
+    TDOTVEC(1) = DRIVE%STATE(14)
+    TVEC(2)    = DRIVE%STATE(15)
+    TDOTVEC(2) = DRIVE%STATE(16)
+    TVEC(3)    = DRIVE%STATE(17)
+    TDOTVEC(3) = DRIVE%STATE(18)
+    TVEC(4)    = DRIVE%STATE(19)
+    TDOTVEC(4) = DRIVE%STATE(20)
+    ! TVEC(1) = DRIVE%STATE(13)
+    ! TVEC(2) = DRIVE%STATE(14)
+    ! TVEC(3) = DRIVE%STATE(15)
+    ! TVEC(4) = DRIVE%STATE(16)
+
+    !Set some things for other models
+    DRIVE%XCG = DRIVE%STATE(1) 
+    DRIVE%YCG = DRIVE%STATE(2)
+    DRIVE%ZCG = DRIVE%STATE(3)
+    DRIVE%PSI = DRIVE%STATE(6) !psi
+    DRIVE%SPEED = DRIVE%STATE(7) !ub
+
+    !Distance from CG to tether attachment point
+    rCF_B(1,1) = DRIVE%SLREEL
+    rCF_B(2,1) = DRIVE%BLREEL 
+    rCF_B(3,1) = DRIVE%WLREEL
+
+    !- This is where we're going to hi-jack the model and compute the derivatives using Lisa Schibelius'
+    !DRIVEDRIVER MODEL
+    if (DRIVE%MODNO .eq. 3) then
+
+       ! Unwrap State Vector - This is the same for the DRIVEDRIVER
+
+       ! Aircraft to Inertial Transformation Matrix - Same for DRIVEDRIVER
+       ctheta = cos(theta);
+       stheta = sin(theta);
+       ttheta = stheta / ctheta;
+       cphi = cos(phi);
+       sphi = sin(phi);
+       spsi = sin(psi);
+       cpsi = cos(psi);
+       DRIVE%TIC(1,1) = ctheta * cpsi;
+       DRIVE%TIC(2,1) = ctheta * spsi;
+       DRIVE%TIC(3,1) = -stheta;
+       DRIVE%TIC(1,2) = sphi * stheta * cpsi - cphi * spsi;
+       DRIVE%TIC(2,2) = sphi * stheta * spsi + cphi * cpsi;
+       DRIVE%TIC(3,2) = sphi * ctheta;
+       DRIVE%TIC(1,3) = cphi * stheta * cpsi + sphi * spsi;
+       DRIVE%TIC(2,3) = cphi * stheta * spsi - sphi * cpsi;
+       DRIVE%TIC(3,3) = cphi * ctheta;
+
+       ! Inertial to Aircraft Transformation Matrix - Same for DRIVEDRIVER
+       
+       DRIVE%TCI = transpose(DRIVE%TIC)
+  
+       ! Gravity Forces and Moments - Same for DRIVER
+  
+       DRIVE%FXGRAV = 0.0; DRIVE%FYGRAV = 0.0; DRIVE%FZGRAV = 0.0;
+       DRIVE%MXGRAV = 0.0; DRIVE%MYGRAV = 0.0; DRIVE%MZGRAV = 0.0;
+       if (DRIVE%GRAVOFFON .eq. 1) then
+          DRIVE%FXGRAV = DRIVE%TIC(3,1)*DRIVE%WEIGHT
+          DRIVE%FYGRAV = DRIVE%TIC(3,2)*DRIVE%WEIGHT
+          DRIVE%FZGRAV = DRIVE%TIC(3,3)*DRIVE%WEIGHT
+       end if
+
+       ! Aerodynamic Forces and Moments - Still Same for DRIVER
+       
+       DRIVE%FXAERO = 0.0; DRIVE%FYAERO = 0.0; DRIVE%FZAERO = 0.0;
+       DRIVE%MXAERO = 0.0; DRIVE%MYAERO = 0.0; DRIVE%MZAERO = 0.0;
+       
+       if (DRIVE%AEROOFFON .eq. 1) then
+          vATM_I(1,1) = DRIVE%VXWIND
+          vATM_I(2,1) = DRIVE%VYWIND
+          vATM_I(3,1) = DRIVE%VZWIND
+          vATM_A = matmul(DRIVE%TCI,vATM_I)
+
+          !Add in atmospheric winds
+
+          uaero = ub - vATM_A(1,1)
+          vaero = vb - vATM_A(2,1)
+          waero = wb - vATM_A(3,1)
+          
+          !Compute total velocity
+
+          V_A = sqrt(uaero**2 + vaero**2 + waero**2)
+
+          !Quadcopter Aerodynamic Model written by Lisa Schibelius - 12/2016
+
+          !Recompute KT
+          DRIVE%KT = DRIVE%C_T*((DRIVE%DEN*qPI*(DRIVE%RNEW**4)/4))
+
+          !Compute Thrust
+
+          ! call PWM2FORCE(T)
+          sigmaF = 0.000437554764978899 !0.000437554764978899
+          omegaF = 45.42   !18.65
+          zetaF  = 0.942     !0.8533
+
+          !write(*,*) 'MUvec = ',DRIVE%MUVEC
+
+          !!! Second order filter
+          do idx = 1,4
+              C1F(idx) = -2*zetaF*TDOTVEC(idx)
+              C2F(idx) = -(omegaF)*TVEC(idx)
+              C3F(idx) = DRIVE%MUVEC(idx,1)*sigmaF*omegaF   ! replaced sigma with force
+              TDBLDOTVEC(idx) = omegaF*(C1F(idx) + C2F(idx) + C3F(idx))
+              DRIVE%THRUSTVEC(idx,1) = TVEC(idx)
+          end do
+
+          DRIVE%OMEGAVEC = sqrt(DRIVE%THRUSTVEC/DRIVE%KT)
+          sumomega = sum(DRIVE%OMEGAVEC)
+
+          !!! Make sure angular velocities of rotor does not go beyond the limit
+          IF (sumomega .ge. DRIVE%OMEGAMAX*4) then
+            do j = 1,4
+              if (DRIVE%OMEGAVEC(j,1) .gt. DRIVE%OMEGAMAX) then
+              DRIVE%OMEGAVEC(j,1) = DRIVE%OMEGAMAX
+              end if
+              if (DRIVE%OMEGAVEC(j,1) .lt. 0.00D0) then
+                DRIVE%OMEGAVEC(j,1) = 0.00D0
+              end if
+            end do
+            sumomega = sum(DRIVE%OMEGAVEC)
+            DRIVE%THRUSTVEC = DRIVE%KT*DRIVE%OMEGAVEC**2
+            do j = 1,4
+              TVEC(idx) = DRIVE%THRUSTVEC(idx,1)
+            end do
+          ENDIF
+          forcevec = DRIVE%THRUSTVEC
+          thrust = sum(DRIVE%THRUSTVEC)
+
+          !write(*,*) 'Rotor Thrust = ',forcevec,thrust
+
+          !!! Adding constraint to run Monte Carlo
+          !!! This constraint actually messed up my altitude controller
+          ! if (thrust .gt. DRIVE%WEIGHT/cos(30.0*qPI/180)) then !You need to put in theta of the quad 
+          !   thrust = DRIVE%WEIGHT/cos(30.0*qPI/180) !!Not just a static 30 degrees. That's why this didn't work.
+          ! end if
+          ! I was thinking this would be better.
+          ! if (thrust .lt. DRIVE%WEIGHT/cos(theta)) then
+          ! Increase thrust by the difference/4
+          ! Make sense?
+
+          !Aerodynamic Forces
+          if (sumomega .gt. 1e-2) then
+             DRIVE%FXAERO = -thrust*(((DRIVE%ALC/(sumomega*DRIVE%RNEW))+DRIVE%DXD)*uaero - ((DRIVE%ALS)/(sumomega*DRIVE%RNEW))*vaero)
+             DRIVE%FYAERO = -thrust*(((DRIVE%ALS)/(sumomega*DRIVE%RNEW))*uaero + (((DRIVE%ALC)/(sumomega*DRIVE%RNEW))+DRIVE%DYD)*vaero)
+             DRIVE%FZAERO = -thrust
+          end if
+
+
+          omegar = DRIVE%OMEGAVEC(1,1) - DRIVE%OMEGAVEC(2,1) + DRIVE%OMEGAVEC(3,1) - DRIVE%OMEGAVEC(4,1)
+          Gammavec(1,1) = DRIVE%IRR * omegar * qb
+          Gammavec(2,1) = -DRIVE%IRR * omegar * pb
+          Gammavec(3,1) = 0
+          !gotodynamics
+
+          !!!!!!!!! Aerodynamics
+          bquad = DRIVE%C_TAU*((DRIVE%DEN*qPI*(DRIVE%RNEW**5)/4))
+	  
+	  !!! According to dynamic equations, a positive roll will have rotors 1,4 > 2,3. This was previously 2,3>1,4
+          ! Since T3 = T1*Ltheta_front/Ltheta_back we're just going to do this for simplicity
+          DRIVE%MXAERO = Gammavec(1,1) + (DRIVE%LPHI12*(TVEC(1) - TVEC(2)) + DRIVE%LPHI34*(TVEC(4) - TVEC(3)))
+          DRIVE%MYAERO = Gammavec(2,1) + DRIVE%LTHETA12*(TVEC(1) +TVEC(2) - TVEC(3) -TVEC(4))
+          DRIVE%MZAERO = Gammavec(3,1) + bquad*(DRIVE%OMEGAVEC(1,1)**2 - DRIVE%OMEGAVEC(2,1)**2 + DRIVE%OMEGAVEC(3,1)**2 - DRIVE%OMEGAVEC(4,1)**2)
+          ! DRIVE%MZAERO = Gammavec(3,1) + bquad*(TVEC(1)**2 - TVEC(2)**2 + TVEC(3)**2 - TVEC(4)**2)
+
+          !At this point we should have F(XYZ)AERO and M(XYZ)AERO populated
+
+          DRIVE%FXCONT = 0.0; DRIVE%FYCONT = 0.0; DRIVE%FZCONT = 0.0;          
+          DRIVE%MXCONT = 0.0; DRIVE%MYCONT = 0.0; DRIVE%MZCONT = 0.0;
+
+          !Don't forget to add Tether forces
+          if ((DRIVE%THR_DYNOFFON .eq. 1) .and. (DRIVE%THR_ELASOFFON .eq. 1)) then
+             if (isnan(DRIVE%FTETHERX) .or. isnan(DRIVE%FTETHERY)) then
+                write(*,*) 'Sorry dude Nans in tether model detected - I suggest lowering your timestep'
+                write(*,*) 'Current Time = ',DRIVE%TIME
+                write(*,*) 'Tether Forces = ',DRIVE%FTETHERX,DRIVE%FTETHERY
+                STOP
+             else
+                C_Ftether_I(1,1) = DRIVE%FTETHERX
+                C_Ftether_I(2,1) = DRIVE%FTETHERY
+                C_Ftether_I(3,1) = DRIVE%FTETHERZ
+                C_Ftether_B = matmul(DRIVE%TCI,C_Ftether_I)
+                DRIVE%FXCONT = C_Ftether_B(1,1)
+                DRIVE%FYCONT = C_Ftether_B(2,1)
+                DRIVE%FZCONT = C_Ftether_B(3,1)
+                
+                !Skew symmetric operator on cradle cg to tether connection point
+    
+                S_rCF_B(1,1) = 0.0
+                S_rCF_B(1,2) = -rCF_B(3,1)
+                S_rCF_B(1,3) = rCF_B(2,1)
+                S_rCF_B(2,1) = rCF_B(3,1)
+                S_rCF_B(2,2) = 0.0
+                S_rCF_B(2,3) = -rCF_B(1,1)
+                S_rCF_B(3,1) = -rCF_B(2,1)
+                S_rCF_B(3,2) = rCF_B(1,1)
+                S_rCF_B(3,3) = 0.0
+
+                C_Mtether_B = matmul(S_rCF_B,C_Ftether_B)
+        
+                DRIVE%MXCONT = C_Mtether_B(1,1)
+                DRIVE%MYCONT = C_Mtether_B(2,1)
+                DRIVE%MZCONT = C_Mtether_B(3,1)
+             end if
+          end if
+
+          ! Total Forces and Moments
+
+          DRIVE%FXTOTAL = DRIVE%FXGRAV + DRIVE%FXAERO + DRIVE%FXCONT
+          DRIVE%FYTOTAL = DRIVE%FYGRAV + DRIVE%FYAERO + DRIVE%FYCONT
+          !write(*,*) 'Z Force = ',DRIVE%FZGRAV,DRIVE%FZAERO,DRIVE%FZCONT
+          DRIVE%FZTOTAL = DRIVE%FZGRAV + DRIVE%FZAERO + DRIVE%FZCONT
+          DRIVE%MXTOTAL = DRIVE%MXGRAV + DRIVE%MXAERO + DRIVE%MXCONT
+          DRIVE%MYTOTAL = DRIVE%MYGRAV + DRIVE%MYAERO + DRIVE%MYCONT
+          DRIVE%MZTOTAL = DRIVE%MZGRAV + DRIVE%MZAERO + DRIVE%MZCONT
+
+          ! State Derivatives
+  
+          xcgdot = DRIVE%TIC(1,1)*ub + DRIVE%TIC(1,2)*vb + DRIVE%TIC(1,3)*wb
+          ycgdot = DRIVE%TIC(2,1)*ub + DRIVE%TIC(2,2)*vb + DRIVE%TIC(2,3)*wb
+          zcgdot = DRIVE%TIC(3,1)*ub + DRIVE%TIC(3,2)*vb + DRIVE%TIC(3,3)*wb  
+
+          phidot = pb + sphi * ttheta * qb + cphi * ttheta * rb;
+          thetadot = cphi * qb - sphi * rb;
+          psidot = (sphi / ctheta) * qb + (cphi / ctheta) * rb;
+          ubdot = DRIVE%FXTOTAL/DRIVE%MASS + rb*vb - qb*wb
+          vbdot = DRIVE%FYTOTAL/DRIVE%MASS + pb*wb - rb*ub
+          !write(*,*) 'Weight and Z =',DRIVE%FZTOTAL,DRIVE%MASS
+          wbdot = DRIVE%FZTOTAL/DRIVE%MASS + qb*ub - pb*vb
+          
+          c1 = DRIVE%MXTOTAL - pb*(qb*DRIVE%IXZ-rb*DRIVE%IXY) - qb*(qb*DRIVE%IYZ-rb*DRIVE%IYY) - rb*(qb*DRIVE%IZZ-rb*DRIVE%IYZ)
+          c2 = DRIVE%MYTOTAL - pb*(rb*DRIVE%IXX-pb*DRIVE%IXZ) - qb*(rb*DRIVE%IXY-pb*DRIVE%IYZ) - rb*(rb*DRIVE%IXZ-pb*DRIVE%IZZ)
+          c3 = DRIVE%MZTOTAL - pb*(pb*DRIVE%IXY-qb*DRIVE%IXX) - qb*(pb*DRIVE%IYY-qb*DRIVE%IXY) - rb*(pb*DRIVE%IYZ-qb*DRIVE%IXZ)
+          pbdot = DRIVE%IXXI*c1 + DRIVE%IXYI*c2 + DRIVE%IXZI*c3
+          qbdot = DRIVE%IXYI*c1 + DRIVE%IYYI*c2 + DRIVE%IYZI*c3
+          rbdot = DRIVE%IXZI*c1 + DRIVE%IYZI*c2 + DRIVE%IZZI*c3
+
+          ! Wrap State Derivatives
+  
+          DRIVE%STATEDOT(1) = xcgdot
+          DRIVE%STATEDOT(2) = ycgdot
+          DRIVE%STATEDOT(2) = ycgdot
+          DRIVE%STATEDOT(3) = zcgdot
+          DRIVE%STATEDOT(4) = phidot
+          DRIVE%STATEDOT(5) = thetadot
+          DRIVE%STATEDOT(6) = psidot
+          DRIVE%STATEDOT(7) = ubdot
+          DRIVE%STATEDOT(8) = vbdot
+          DRIVE%STATEDOT(9) = wbdot
+          DRIVE%STATEDOT(10) = pbdot 
+          DRIVE%STATEDOT(11) = qbdot 
+          DRIVE%STATEDOT(12) = rbdot
+          DRIVE%STATEDOT(13) = TDOTVEC(1)
+          DRIVE%STATEDOT(14) = TDBLDOTVEC(1)
+          DRIVE%STATEDOT(15) = TDOTVEC(2)
+          DRIVE%STATEDOT(16) = TDBLDOTVEC(2)
+          DRIVE%STATEDOT(17) = TDOTVEC(3)
+          DRIVE%STATEDOT(18) = TDBLDOTVEC(3)
+          DRIVE%STATEDOT(19) = TDOTVEC(4)
+          DRIVE%STATEDOT(20) = TDBLDOTVEC(4)
+
+          !write(*,*) 'Statedot = ',DRIVE%STATEDOT
+       
+          !!Save some stuff for Tether model
+          DRIVE%XDOT = xcgdot
+          DRIVE%YDOT = ycgdot
+          DRIVE%ZDOT = zcgdot
+
+          !Compute Reel Locations - r_reel = r_cg + TIB*r_body
+          rCG_I(1,1) = xcg 
+          rCG_I(2,1) = ycg
+          rCG_I(3,1) = zcg ! + (1/3) !REVISIT
+          rReel_I = rCG_I + matmul(DRIVE%TIC,rCF_B)
+          DRIVE%XREEL = rReel_I(1,1)
+          DRIVE%YREEL = rReel_I(2,1)
+          DRIVE%ZREEL = rReel_I(3,1)
+          !Compute Reel Dot - v_reel = v_cg + TIB*(omega x r_body)
+          v_CG_I(1,1) = xcgdot
+          v_CG_I(2,1) = ycgdot
+          v_CG_I(3,1) = zcgdot
+          S_wt_B(1,1) = 0.0
+          S_wt_B(1,2) = -rb
+          S_wt_B(1,3) = qb
+          S_wt_B(2,1) = rb
+          S_wt_B(2,2) = 0.0
+          S_wt_B(2,3) = -pb
+          S_wt_B(3,1) = -qb
+          S_wt_B(3,2) = pb
+          S_wt_B(3,3) = 0.0
+          v_Reel_I = v_CG_I + matmul(DRIVE%TIC,matmul(S_wt_B,rCF_B))
+          DRIVE%XREELDOT = v_Reel_I(1,1)
+          DRIVE%YREELDOT = v_Reel_I(2,1)
+          DRIVE%ZREELDOT = v_Reel_I(3,1)
+       end if !AEROOFFON
+
+    end if !End MODNO
+    ! Integration Model 
+    if (DRIVE%MODNO .eq. 0) then
+       !!!Compute Driver speed 
+       if (DRIVE%RESTARTSPEED .eq. -999) then
+          !DRIVE%SPEED = DRIVE%FINALSPEED
+          accel = 0
+       else
+          !Ramp in speed - assume constant decel/acceleration of 2 ft/s
+          dspeed = 3
+          tend = abs(DRIVE%RESTARTSPEED-DRIVE%FINALSPEED)/dspeed
+          if (DRIVE%TIME .gt. tend) then
+             !DRIVE%SPEED = DRIVE%FINALSPEED
+             accel = 0
+          else
+             !DRIVE%SPEED = DRIVE%RESTARTSPEED + sign(1.0,DRIVE%FINALSPEED-DRIVE%RESTARTSPEED)*dspeed*(DRIVE%TIME)
+             accel = sign(1.0,DRIVE%FINALSPEED-DRIVE%RESTARTSPEED)*dspeed
+          end if
+       end if
+
+       !!Compute Derivatives
+       DRIVE%XDOT = DRIVE%SPEED !!This assumes you are flying straight - REVISIT REVISIT
+       DRIVE%YDOT = vb
+       DRIVE%ZDOT = wb
+       DRIVE%STATEDOT(1) = DRIVE%XDOT
+       DRIVE%STATEDOT(2) = DRIVE%YDOT
+       DRIVE%STATEDOT(3) = DRIVE%ZDOT
+       DRIVE%STATEDOT(4:6) = 0 !Phi theta psi
+       call RandUniform(noise)
+       DRIVE%STATEDOT(7) = accel + (1.0D0-2*noise)*DRIVE%XDDOTNOISE !udot
+       call RandUniform(noise)
+       freq = 0
+       if (DRIVE%YDDOTPERIOD .ne. 0) then
+          freq = (2*qPI)/(DRIVE%YDDOTPERIOD)*cos((2*qPI)/(DRIVE%YDDOTPERIOD)*DRIVE%TIME)
+       end if
+       DRIVE%STATEDOT(8) = 0 + (1.0D0-2*noise)*DRIVE%XDDOTNOISE + DRIVE%YDDOTSCALE*freq !vdot
+       call RandUniform(noise)
+       DRIVE%STATEDOT(9) = (1.0D0-2*noise)*DRIVE%XDDOTNOISE !wdot
+       DRIVE%STATEDOT(10:12) = 0 !p,q,rdot
+
+       !Compute Reel Locations
+       DRIVE%XREEL = DRIVE%XCG + cos(DRIVE%PSI)*(DRIVE%SLREEL-DRIVE%SLCG) - sin(DRIVE%PSI)*(DRIVE%BLREEL-DRIVE%BLCG) 
+       DRIVE%YREEL = DRIVE%YCG + sin(DRIVE%PSI)*(DRIVE%SLREEL-DRIVE%SLCG) + cos(DRIVE%PSI)*(DRIVE%BLREEL-DRIVE%BLCG) 
+       DRIVE%ZREEL = DRIVE%ZCG + DRIVE%WLREEL - DRIVE%WLCG 
+       DRIVE%XREELDOT = DRIVE%XDOT
+       DRIVE%YREELDOT = DRIVE%YDOT
+       DRIVE%ZREELDOT = DRIVE%ZDOT
+       
+    end if
+
+ ! Constant Model
+
+    if (DRIVE%MODNO .eq. 1) then
+
+     DRIVE%SPEED = DRIVE%FINALSPEED
+        
+     ! if (DRIVE%TIME .gt. 1000) then
+     !    DRIVE%XCG = DRIVE%XCGINITIAL + DRIVE%SPEED*1000 + (DRIVE%SPEED+5)*(DRIVE%TIME-1000)
+     !    speed = DRIVE%SPEED+5
+     ! end if
+     DRIVE%XDOT = DRIVE%SPEED*cos(DRIVE%PSI)
+     DRIVE%YDOT = DRIVE%SPEED*sin(DRIVE%PSI) !!!DO NOT FORGET TO FIX THIS TOO
+
+     !!Compute CG location -- This assumes that speed is constant
+
+     DRIVE%XCG = DRIVE%XCGINITIAL + DRIVE%SPEED*cos(DRIVE%PSI)*DRIVE%TIME
+     DRIVE%YCG = DRIVE%YCGINITIAL + DRIVE%SPEED*sin(DRIVE%PSI)*DRIVE%TIME
+     DRIVE%ZCG = DRIVE%ZCGINITIAL
+
+     !Compute CG speed
+
+     DRIVE%ZDOT = 0.0
+     DRIVE%XREEL = DRIVE%XCG + cos(DRIVE%PSI)*(DRIVE%SLREEL-DRIVE%SLCG) - sin(DRIVE%PSI)*(DRIVE%BLREEL-DRIVE%BLCG) 
+     DRIVE%YREEL = DRIVE%YCG + sin(DRIVE%PSI)*(DRIVE%SLREEL-DRIVE%SLCG) + cos(DRIVE%PSI)*(DRIVE%BLREEL-DRIVE%BLCG) 
+     DRIVE%ZREEL = DRIVE%ZCG + DRIVE%WLREEL - DRIVE%WLCG 
+     DRIVE%XREELDOT = DRIVE%XDOT
+     DRIVE%YREELDOT = DRIVE%YDOT
+     DRIVE%ZREELDOT = DRIVE%ZDOT
+
+     !Place everything in state vector
+
+     DRIVE%STATE(1) = DRIVE%XCG
+     DRIVE%STATE(2) = DRIVE%YCG
+     DRIVE%STATE(3) = DRIVE%ZCG
+     DRIVE%STATE(4) = 0 !phi 
+     DRIVE%STATE(5) = 0 !theta
+     DRIVE%STATE(6) = DRIVE%PSI !psi
+     DRIVE%STATE(7) = DRIVE%SPEED
+     DRIVE%STATE(8:12) = 0
+
+   ! Helpful variables
+     
+     DRIVE%THETA = 0
+     DRIVE%PHI = 0
+     ctheta = cos(DRIVE%THETA)
+     stheta = sin(DRIVE%THETA)
+     cphi = cos(DRIVE%PHI)
+     sphi = sin(DRIVE%PHI)
+     cpsi = cos(DRIVE%PSI)
+     spsi = sin(DRIVE%PSI)
+
+     ! Reel Position and Velocity
+     
+     DRIVE%TIS(1,1) = ctheta*cpsi
+     DRIVE%TIS(2,1) = ctheta*spsi
+     DRIVE%TIS(3,1) = -stheta
+     DRIVE%TIS(1,2) = sphi*stheta*cpsi - cphi*spsi
+     DRIVE%TIS(2,2) = sphi*stheta*spsi + cphi*cpsi
+     DRIVE%TIS(3,2) = sphi*ctheta
+     DRIVE%TIS(1,3) = cphi*stheta*cpsi + sphi*spsi
+     DRIVE%TIS(2,3) = cphi*stheta*spsi - sphi*cpsi
+     DRIVE%TIS(3,3) = cphi*ctheta
+  end if
+  
+  ! Table Look-Up Model 
+
+  if (DRIVE%MODNO .eq. 2) then
+    
+   ifind = 0
+  
+   ! Position Pointer  
+
+   if (DRIVE%TIME .le. DRIVE%TIMETAB(DRIVE%IP)) then 
+    ifind = -1 
+    do while ((ifind.ne.0) .and. (DRIVE%IP.gt.1))
+     DRIVE%IP = DRIVE%IP - 1 
+     if (DRIVE%TIMETAB(DRIVE%IP)   .le. DRIVE%TIME) then 
+     if (DRIVE%TIMETAB(DRIVE%IP+1) .gt. DRIVE%TIME) then 
+      ifind = 0
+     end if
+     end if 
+    end do 
+   end if
+   if (DRIVE%TIME .gt. DRIVE%TIMETAB(DRIVE%IP+1)) then 
+    ifind = 1
+    do while ((ifind.ne.0) .and. (DRIVE%IP.lt.DRIVE%TABSIZE-1))
+     DRIVE%IP = DRIVE%IP + 1 
+     if (DRIVE%TIMETAB(DRIVE%IP)   .le. DRIVE%TIME) then 
+     if (DRIVE%TIMETAB(DRIVE%IP+1) .gt. DRIVE%TIME) then 
+      ifind = 0 
+     end if 
+     end if 
+    end do 
+   end if
+   if (ifind .eq. 0) then
+    m = (DRIVE%TIME-DRIVE%TIMETAB(DRIVE%IP))/(DRIVE%TIMETAB(DRIVE%IP+1)-DRIVE%TIMETAB(DRIVE%IP))
+   else if (ifind .eq. -1) then
+    m = 0.0
+   else if (ifind .eq. 1) then
+    m = 1.0
+   end if
+  
+   ! Interpolate
+    
+   DRIVE%XCG   = DRIVE%XCGINITIAL + DRIVE%XCGTAB(DRIVE%IP)   + m*(DRIVE%XCGTAB(DRIVE%IP+1)-DRIVE%XCGTAB(DRIVE%IP))
+   DRIVE%YCG   = DRIVE%YCGINITIAL + DRIVE%YCGTAB(DRIVE%IP)   + m*(DRIVE%YCGTAB(DRIVE%IP+1)-DRIVE%YCGTAB(DRIVE%IP))
+   DRIVE%ZCG   = DRIVE%ZCGINITIAL + DRIVE%ZCGTAB(DRIVE%IP)   + m*(DRIVE%ZCGTAB(DRIVE%IP+1)-DRIVE%ZCGTAB(DRIVE%IP))
+   DRIVE%PHI   = DRIVE%PHITAB(DRIVE%IP)   + m*(DRIVE%PHITAB(DRIVE%IP+1)-DRIVE%PHITAB(DRIVE%IP))
+   DRIVE%THETA = DRIVE%THETATAB(DRIVE%IP) + m*(DRIVE%THETATAB(DRIVE%IP+1)-DRIVE%THETATAB(DRIVE%IP))
+   DRIVE%PSI   = DRIVE%PSITAB(DRIVE%IP)   + m*(DRIVE%PSITAB(DRIVE%IP+1)-DRIVE%PSITAB(DRIVE%IP))
+   DRIVE%UB    = DRIVE%UBTAB(DRIVE%IP)    + m*(DRIVE%UBTAB(DRIVE%IP+1)-DRIVE%UBTAB(DRIVE%IP))
+   DRIVE%VB    = DRIVE%VBTAB(DRIVE%IP)    + m*(DRIVE%VBTAB(DRIVE%IP+1)-DRIVE%VBTAB(DRIVE%IP))
+   DRIVE%WB    = DRIVE%WBTAB(DRIVE%IP)    + m*(DRIVE%WBTAB(DRIVE%IP+1)-DRIVE%WBTAB(DRIVE%IP))
+   DRIVE%PB    = DRIVE%PBTAB(DRIVE%IP)    + m*(DRIVE%PBTAB(DRIVE%IP+1)-DRIVE%PBTAB(DRIVE%IP))
+   DRIVE%QB    = DRIVE%QBTAB(DRIVE%IP)    + m*(DRIVE%QBTAB(DRIVE%IP+1)-DRIVE%QBTAB(DRIVE%IP))
+   DRIVE%RB    = DRIVE%RBTAB(DRIVE%IP)    + m*(DRIVE%RBTAB(DRIVE%IP+1)-DRIVE%RBTAB(DRIVE%IP))
+
+   !Place state in statevector
+
+   DRIVE%STATE(1) = DRIVE%XCG
+   DRIVE%STATE(2) = DRIVE%YCG
+   DRIVE%STATE(3) = DRIVE%ZCG
+   DRIVE%STATE(4) = DRIVE%PHI
+   DRIVE%STATE(5) = DRIVE%THETA
+   DRIVE%STATE(6) = DRIVE%PSI
+   DRIVE%STATE(7) = DRIVE%UB
+   DRIVE%STATE(8) = DRIVE%VB
+   DRIVE%STATE(9) = DRIVE%WB
+   DRIVE%STATE(10) = DRIVE%PB
+   DRIVE%STATE(11) = DRIVE%QB
+   DRIVE%STATE(12) = DRIVE%RB
+
+   ! Helpful variables
+
+   ctheta = cos(DRIVE%THETA)
+   stheta = sin(DRIVE%THETA)
+   cphi = cos(DRIVE%PHI)
+   sphi = sin(DRIVE%PHI)
+   cpsi = cos(DRIVE%PSI)
+   spsi = sin(DRIVE%PSI)
+
+   ! Reel Position and Velocity
+    
+   DRIVE%TIS(1,1) = ctheta*cpsi
+   DRIVE%TIS(2,1) = ctheta*spsi
+   DRIVE%TIS(3,1) = -stheta
+   DRIVE%TIS(1,2) = sphi*stheta*cpsi - cphi*spsi
+   DRIVE%TIS(2,2) = sphi*stheta*spsi + cphi*cpsi
+   DRIVE%TIS(3,2) = sphi*ctheta
+   DRIVE%TIS(1,3) = cphi*stheta*cpsi + sphi*spsi
+   DRIVE%TIS(2,3) = cphi*stheta*spsi - sphi*cpsi
+   DRIVE%TIS(3,3) = cphi*ctheta
+
+   !!Compute Driver speed in inertial coordinates
+
+   DRIVE%XDOT = DRIVE%TIS(1,1)*DRIVE%UB + DRIVE%TIS(1,2)*DRIVE%VB + DRIVE%TIS(1,3)*DRIVE%WB  
+   DRIVE%YDOT = DRIVE%TIS(2,1)*DRIVE%UB + DRIVE%TIS(2,2)*DRIVE%VB + DRIVE%TIS(2,3)*DRIVE%WB  
+   DRIVE%ZDOT = DRIVE%TIS(3,1)*DRIVE%UB + DRIVE%TIS(3,2)*DRIVE%VB + DRIVE%TIS(3,3)*DRIVE%WB  
+
+   !!!Compute Reel velocity in Driver frame
+
+   DRIVE%UREEL = DRIVE%UB + DRIVE%QB*(DRIVE%WLREEL-DRIVE%WLCG) - DRIVE%RB*(DRIVE%BLREEL-DRIVE%BLCG) 
+   DRIVE%VREEL = DRIVE%VB + DRIVE%RB*(DRIVE%SLREEL-DRIVE%SLCG) - DRIVE%PB*(DRIVE%WLREEL-DRIVE%WLCG)
+   DRIVE%WREEL = DRIVE%WB + DRIVE%PB*(DRIVE%BLREEL-DRIVE%BLCG) - DRIVE%QB*(DRIVE%SLREEL-DRIVE%SLCG)
+
+   DRIVE%XREEL = DRIVE%XCG + DRIVE%TIS(1,1)*(DRIVE%SLREEL-DRIVE%SLCG) + DRIVE%TIS(1,2)*(DRIVE%BLREEL-DRIVE%BLCG) + DRIVE%TIS(1,3)*(DRIVE%WLREEL-DRIVE%WLCG)  
+   DRIVE%YREEL = DRIVE%YCG + DRIVE%TIS(2,1)*(DRIVE%SLREEL-DRIVE%SLCG) + DRIVE%TIS(2,2)*(DRIVE%BLREEL-DRIVE%BLCG) + DRIVE%TIS(2,3)*(DRIVE%WLREEL-DRIVE%WLCG)  
+   DRIVE%ZREEL = DRIVE%ZCG + DRIVE%TIS(3,1)*(DRIVE%SLREEL-DRIVE%SLCG) + DRIVE%TIS(3,2)*(DRIVE%BLREEL-DRIVE%BLCG) + DRIVE%TIS(3,3)*(DRIVE%WLREEL-DRIVE%WLCG)  
+
+   DRIVE%XREELDOT = DRIVE%TIS(1,1)*DRIVE%UREEL + DRIVE%TIS(1,2)*DRIVE%VREEL + DRIVE%TIS(1,3)*DRIVE%WREEL  
+   DRIVE%YREELDOT = DRIVE%TIS(2,1)*DRIVE%UREEL + DRIVE%TIS(2,2)*DRIVE%VREEL + DRIVE%TIS(2,3)*DRIVE%WREEL  
+   DRIVE%ZREELDOT = DRIVE%TIS(3,1)*DRIVE%UREEL + DRIVE%TIS(3,2)*DRIVE%VREEL + DRIVE%TIS(3,3)*DRIVE%WREEL  
+    
+  end if
+
+  ! This is pretty sloppy. Nemo wants this to run only once per rk4 function call
+  ! should probably just add these as states but this will do for now
+  ! What we will do is just divide everything out by 4 so when this runs 4 times we should
+  ! be good.
+  call COMPUTEINTEGRAL(DRIVE) ! Calls integral routine
+    
+  RETURN
+  
+end if
+  
+!!!!!!!!!!!!!!!!!!!!!! ECHO DATA iflag = 2 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ 
+ if (iflag .eq. 2) then
+ 
+  write(25,*) ' '
+  write(25,*) 'Driver'  
+  write(25,*) ' '
+  write(25,*) 'Driver Input File: '
+  write(25,*) trim(DRIVE%INPUTFILE)
+  write(25,*) ' '
+  write(25,*) 'Module off or on: ',DRIVE%OFFON
+  write(25,*) 'Model (0=Integration,1=Constant, 2=Table,3=6DOF Model): ',DRIVE%MODNO
+  if (DRIVE%MODNO .eq. 3) then
+     !Output driver stuff
+     write(25,*) 'Gravity Flag (0=Off, 1=On): ',DRIVE%GRAVOFFON
+     write(25,*) 'Aerodynamics Flag (0=Off, 1=On): ',DRIVE%AEROOFFON
+     write(25,*) 'Contact Flag (0=Off, 1=On): ',DRIVE%CONTOFFON
+     write(25,*) 'Mass (kg): ',DRIVE%MASS
+     write(25,*) 'Weight (N): ',DRIVE%WEIGHT
+     write(25,*) 'Stationline of Mass Center (m): ',DRIVE%SLCG
+     write(25,*) 'Buttline of Mass Center (m): ',DRIVE%BLCG
+     write(25,*) 'Waterline of Mass Center (m): ',DRIVE%WLCG
+     write(25,*) 'Ixx (kg m^2): ',DRIVE%IXX
+     write(25,*) 'Iyy (kg m^2): ',DRIVE%IYY
+     write(25,*) 'Izz (kg m^2): ',DRIVE%IZZ
+     write(25,*) 'Ixy (kg m^2): ',DRIVE%IXY
+     write(25,*) 'Ixz (kg m^2): ',DRIVE%IXZ
+     write(25,*) 'Iyz (kg m^2): ',DRIVE%IYZ
+     write(25,*) 'Ixx Inverse (1/(kg m^2)): ',DRIVE%IXXI
+     write(25,*) 'Iyy Inverse (1/(kg m^2)): ',DRIVE%IYYI
+     write(25,*) 'Izz Inverse (1/(kg m^2)): ',DRIVE%IZZI
+     write(25,*) 'Ixy Inverse (1/(kg m^2)): ',DRIVE%IXYI
+     write(25,*) 'Ixz Inverse (1/(kg m^2)): ',DRIVE%IXZI
+     write(25,*) 'Iyz Inverse (1/(kg m^2)): ',DRIVE%IYZI
+     write(25,*) 'Turn Radius of AC(m): ',  DRIVE%TURNRADIUS
+     write(25,*) 'Aero Parameter: ', DRIVE%ALC
+     write(25,*) 'Aero Parameter: ', DRIVE%ALS
+     write(25,*) 'Aero Parameter: ', DRIVE%DXD
+     write(25,*) 'Aero Parameter: ', DRIVE%DYD
+     write(25,*) 'Aero Parameter: ', DRIVE%RNEW
+     write(25,*) 'Aero Parameter: ', DRIVE%C_T
+     write(25,*) 'Aero Parameter: ', DRIVE%C_TAU
+     write(25,*) 'Aero Parameter: ', DRIVE%LPHI12
+     write(25,*) 'Aero Parameter: ', DRIVE%LPHI34
+     write(25,*) 'Aero Parameter: ', DRIVE%LTHETA12
+     write(25,*) 'Aero Parameter: ', DRIVE%LTHETA34
+     write(25,*) 'Aero Parameter: ', DRIVE%OMEGAMAX
+  else
+     write(25,*) ' '
+     write(25,*) 'Stationline of Tether Reel Point on Driver: ', DRIVE%SLREEL
+     write(25,*) 'Buttline of Tether Reel Point on Driver: ', DRIVE%BLREEL
+     write(25,*) 'Waterline of Tether Reel Point on Driver: ', DRIVE%WLREEL
+     write(25,*) 'Stationline of Airwake grid start on Driver: ', DRIVE%SLAIRWAKE
+     write(25,*) 'Buttline of Airwake grid start on Driver: ', DRIVE%BLAIRWAKE
+     write(25,*) 'Waterline of Airwake grid start on Driver: ', DRIVE%WLAIRWAKE
+     if ((DRIVE%MODNO .eq. 1) .or. (DRIVE%MODNO .eq. 0 )) then
+        write(25,*) 'Driver Speed from .DRIVER File(ft/s): ',DRIVE%FINALSPEED
+        write(25,*) 'Restart Speed from RESTART File (ft/s): ',DRIVE%RESTARTSPEED
+        write(25,*) 'Driver Azimuthal Direction (deg): ',57.3*DRIVE%PSI
+        write(25,*) 'Driver Initial X (ft): ',DRIVE%XCGINITIAL
+        write(25,*) 'Driver Initial Y (ft): ',DRIVE%YCGINITIAL
+        write(25,*) 'Driver Initial Z (ft): ',DRIVE%ZCGINITIAL
+        write(25,*) 'Driver Noise X (ft/s^2): ',DRIVE%XDDOTNOISE
+        write(25,*) 'Driver Noise Y (ft/s^2): ',DRIVE%YDDOTSCALE
+        write(25,*) 'Driver Noise Z (ft/s^2): ',DRIVE%YDDOTPERIOD
+        write(25,*) ' '
+     end if
+     if (DRIVE%MODNO .eq. 2) then
+        write(25,*) 'Time (s),      Xcg (ft),      Ycg (ft),      Zcg (ft)'
+        write(25,*) '----------------------------------------------------'
+        do i=1,DRIVE%TABSIZE  
+           write(25,fmt='(4e18.8)') DRIVE%TIMETAB(i),DRIVE%XCGTAB(i),DRIVE%YCGTAB(i),DRIVE%ZCGTAB(i)
+        end do
+        write(25,*) ' '
+        write(25,*) 'Time (s),    Phi (deg),  Theta (deg),    Psi (deg)'
+        write(25,*) '----------------------------------------------------'
+        do i=1,DRIVE%TABSIZE  
+           write(25,fmt='(4e18.8)') DRIVE%TIMETAB(i),57.3*DRIVE%PHITAB(i),57.3*DRIVE%THETATAB(i),57.3*DRIVE%PSITAB(i)
+        end do
+        write(25,*) ' '
+        write(25,*) 'Time (s),     Ub (ft/s),     Vb (ft/s),     Wb (ft/s)'
+        write(25,*) '----------------------------------------------------'
+        do i=1,DRIVE%TABSIZE   
+           write(25,fmt='(4e18.8)') DRIVE%TIMETAB(i),DRIVE%UBTAB(i),DRIVE%VBTAB(i),DRIVE%WBTAB(i)
+        end do
+        write(25,*) ' '
+        write(25,*) 'Time (s),     Pb (r/s),      Qb (r/s),    Rb (r/s)'
+        write(25,*) '----------------------------------------------------'
+        do i=1,DRIVE%TABSIZE  
+           write(25,fmt='(4e18.8)') DRIVE%TIMETAB(i),DRIVE%PBTAB(i),DRIVE%QBTAB(i),DRIVE%RBTAB(i)
+        end do
+        write(25,*) ' '
+     end if
+  end if
+  write(25,*) 'Data Quality Flag (nd, 0=Data Not Loaded Successfully, 1=Data Loaded Successfully): ',DRIVE%DQFLAG
+  
+  RETURN
+  
+ end if
+  
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!! LOAD DATA iflag = 1 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ 
+ if (iflag .eq. 1) then
+   
+  open(unit=94,file=DRIVE%INPUTFILE,status='old',iostat=openflag)
+  if (openflag .ne. 0) then
+     write(*,*) DRIVE%INPUTFILE
+   write(*,*) 'Error Opening Driver Input File => ',DRIVE%INPUTFILE,' <= ';PAUSE; STOP
+  end if
+  rewind(94)
+  read(unit=94,fmt=*,iostat=readflag) readreal; DRIVE%OFFON = readreal
+  read(unit=94,fmt=*,iostat=readflag) readreal; DRIVE%MODNO = readreal
+
+  if (DRIVE%MODNO .eq. 3) then
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%GRAVOFFON
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%AEROOFFON
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%CONTOFFON
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%WEIGHT
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%GRAVITY
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%SLCG
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%BLCG
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%WLCG
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%SLREEL
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%BLREEL
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%WLREEL
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%IXX
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%IYY
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%IZZ
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%IXY
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%IXZ
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%IYZ
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%TURNRADIUS
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%ALC
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%ALS
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%DXD
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%DYD
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%RNEW
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%C_T
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%C_TAU
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%LPHI12
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%LPHI34
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%LTHETA12
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%LTHETA34
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%OMEGAMAX
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%IRR
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%MS_MIN
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%MS_MAX
+     read(unit=94,fmt=*,iostat=readflag) readreal; DRIVE%CONTROLOFFON = int(readreal)
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KPXDRIVE
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KIXDRIVE
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KDXDRIVE
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KPYDRIVE
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KIYDRIVE
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KDYDRIVE
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KPZDRIVE
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KIZDRIVE
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KDZDRIVE
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KPPHI
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KIPHI
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KDPHI
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KPTHETA
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KITHETA
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KDTHETA
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KPPSI
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KIPSI
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%KDPSI
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%XINTEGRAL 
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%YINTEGRAL 
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%ZINTEGRAL
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%PHIINTEGRAL 
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%THETAINTEGRAL
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%PSIINTEGRAL
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%UCOMMAND !!Changed to UCOMMAND for forward flight 
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%YCOMMAND
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%ZCOMMAND
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%UINTEGRAL
+     !read(unit=94,fmt=*,iostat=readflag) DRIVE%WAYPOINT
+
+     DRIVE%WAYPOINT = 1
+
+     !!!DO SOME CALCULATIONS ON driver
+     DRIVE%MASS = DRIVE%WEIGHT/DRIVE%GRAVITY 
+     deti = + DRIVE%IXX*(DRIVE%IYY*DRIVE%IZZ-DRIVE%IYZ*DRIVE%IYZ) - DRIVE%IXY*(DRIVE%IXY*DRIVE%IZZ-DRIVE%IYZ*DRIVE%IXZ) + DRIVE%IXZ*(DRIVE%IXY*DRIVE%IYZ-DRIVE%IYY*DRIVE%IXZ)
+     DRIVE%IXXI = (DRIVE%IYY*DRIVE%IZZ-DRIVE%IYZ*DRIVE%IYZ)/deti
+     DRIVE%IXYI = (DRIVE%IYZ*DRIVE%IXZ-DRIVE%IXY*DRIVE%IZZ)/deti
+     DRIVE%IXZI = (DRIVE%IXY*DRIVE%IYZ-DRIVE%IYY*DRIVE%IXZ)/deti
+     DRIVE%IYYI = (DRIVE%IXX*DRIVE%IZZ-DRIVE%IXZ*DRIVE%IXZ)/deti
+     DRIVE%IYZI = (DRIVE%IXY*DRIVE%IXZ-DRIVE%IXX*DRIVE%IYZ)/deti
+     DRIVE%IZZI = (DRIVE%IXX*DRIVE%IYY-DRIVE%IXY*DRIVE%IXY)/deti
+  else     
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%SLREEL
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%BLREEL
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%WLREEL
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%AIRWAKE
+     !Read location of airwake data
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%AIRWAKEPATH
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%SLAIRWAKE
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%BLAIRWAKE
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%WLAIRWAKE
+
+     if (DRIVE%AIRWAKE .eq. 1) then
+
+        !Set TCOORD
+        do i = 1,NTIMES
+           DRIVE%TCOORD(i) = 0 + (i-1)*1.0D0
+        end do
+
+        !%%%%%%%Import Initial UVW matrices%%%%%%%%% */
+
+        write(number, '(i1)' )  1
+        letter = trim('U')
+        DRIVE%U0name = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+        letter = trim('V')
+        DRIVE%V0name = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+        letter = trim('W')
+        DRIVE%W0name = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+        write(number, '(i1)' )  2
+        letter = trim('U')
+        DRIVE%Udtname = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+        letter = trim('V')
+        DRIVE%Vdtname = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+        letter = trim('W')
+        DRIVE%Wdtname = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+
+        call IMPORTWAKE(DRIVE%UDRIVER,DRIVE%U0name);
+        call IMPORTWAKE(DRIVE%UDRIVERDT,DRIVE%Udtname);
+        call IMPORTWAKE(DRIVE%VDRIVER,DRIVE%V0name);
+        call IMPORTWAKE(DRIVE%VDRIVERDT,DRIVE%Vdtname);
+        call IMPORTWAKE(DRIVE%WDRIVER,DRIVE%W0name);
+        call IMPORTWAKE(DRIVE%WDRIVERDT,DRIVE%Wdtname);
+
+        !!Import X,Y,Z Grid data
+        xgridname = trim(DRIVE%AIRWAKEPATH)//'X_Grid.txt'
+        ygridname = trim(DRIVE%AIRWAKEPATH)//'Y_Grid.txt'
+        zgridname = trim(DRIVE%AIRWAKEPATH)//'Z_Grid.txt'
+
+        call IMPORTWAKE(DRIVE%XDRIVER,xgridname);
+        call IMPORTWAKE(DRIVE%YDRIVER,ygridname);
+        call IMPORTWAKE(DRIVE%ZDRIVER,zgridname);
+
+        do i = 1,IMAX
+           DRIVE%XCOORD(i) = DRIVE%XDRIVER(i,1,1);
+        end do
+
+        write(*,*) 'Wake Data Load Complete'
+     end if
+
+  end if
+  
+
+  if ((DRIVE%MODNO .eq. 1) .or. (DRIVE%MODNO .eq. 0)) then
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%XCGINITIAL
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%YCGINITIAL
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%ZCGINITIAL
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%FINALSPEED
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%PSI
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%DOWNWASHONOFF
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%DOWNWASH
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%DIAMETER
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%XDDOTNOISE
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%YDDOTSCALE
+     read(unit=94,fmt=*,iostat=readflag) DRIVE%YDDOTPERIOD
+  end if
+  if (DRIVE%MODNO .eq. 2) then
+   read(unit=94,fmt=*,iostat=readflag) readreal; DRIVE%TABSIZE = int(readreal)
+   do i=1,DRIVE%TABSIZE  
+    read(unit=94,fmt=*,iostat=readflag) DRIVE%TIMETAB(i),DRIVE%XCGTAB(i),DRIVE%YCGTAB(i),DRIVE%ZCGTAB(i),DRIVE%PHITAB(i),DRIVE%THETATAB(i),DRIVE%PSITAB(i), & 
+                                        DRIVE%UBTAB(i),DRIVE%VBTAB(i),DRIVE%WBTAB(i),DRIVE%PBTAB(i),DRIVE%QBTAB(i),DRIVE%RBTAB(i)
+   end do
+  end if
+
+  close(94) 
+  write(*,*) 'DRIVER Load Complete'
+
+  DRIVE%DQFLAG = 1
+
+      
+  RETURN
+   
+ end if
+   
+ RETURN
+END SUBROUTINE DRIVER
+
+!!Import routine to load data files placed in text files
+SUBROUTINE IMPORTWAKE(mat,filename)
+  use TOSIMDATATYPES
+  implicit none
+  integer uvw,time
+  integer ii,jj,kk,nii,njj,ierr;
+  real*8 mat(55,77,61),tempmat(77)
+  character*256 filename
+
+  write(*,*) 'Importing: ',filename
+  
+  open(unit=78,file=filename,status='old',iostat=ierr)
+  if (ierr .ne. 0) then 
+     write(*,*) 'Driver Airwake File defined incorrectly'
+     write(*,*) filename
+     PAUSE;
+     STOP;
+  endif
+  do kk=1,KMAX
+     do ii=1,IMAX
+        read(78,*) tempmat
+        !write(*,*) tempmat
+        do jj=1,JMAX
+           mat(ii,jj,kk) = tempmat(jj)
+        enddo
+     enddo
+  enddo
+  close(78)
+
+END SUBROUTINE IMPORTWAKE
+
+SUBROUTINE AIRWAKE(DRIVE,XI,YI,ZI)
+  use TOSIMDATATYPES
+  implicit none
+  integer stepX,stepY,stepZ,stepT,extrapX,extrapY,extrapZ,extrapT,cord2(2)
+  integer markX,markY,markZ,markT,gust,body,i,j,k
+  integer tinterp,x1,x2,y1,y2,z1,z2,tt,ii,coord1(4),coord2(4),cord1(2)
+  real*8 uvw(3,2),xpts2(2),ypts2(2),zpts2(2),zpts1,xpts1,ypts1,rx;
+  real*8 u8(8),v8(8),w8(8),u4(4),v4(4),w4(4),uslope,vslope,wslope;
+  real*8 u2(2),v2(2),w2(2),u,v,w,tpts(2),Lu,Lv,Lw,sigw,sigu,sigv,tstar,tshift;
+  real*8 ugo,vgo,wgo,vatm(3),xstar,ystar,zstar,xtemp,vtemp,counter,xwidth,ywidth
+  real*8 rI_I(3,1),rS_I(3,1),rAIRWAKE_S(3,1),rAwP_S(3,1),XI,YI,ZI
+  character*1 letter
+  character*10 number
+  type(DRIVERSTRUCTURE) DRIVE
+
+  !   /*   %%This function will take in x,y,z(ft),t(sec) and location and  */
+  !   /*   %return u,v,w(m/s). This uses a fast quad-linear interpolation */
+  ! using matrices XDRIVER,YDRIVER,ZDRIVER to interpolate against
+  !   /*   %so many globals must be defined. location is a string that */
+  !   /*   %contains the location of the data to be interpolated. */
+  
+  DRIVE%VWAKE(1) = 0
+  DRIVE%VWAKE(2) = 0
+  DRIVE%VWAKE(3) = 0
+
+  rI_I(1,1) = XI
+  rI_I(2,1) = YI
+  rI_I(3,1) = ZI
+  
+  rS_I(1,1) = DRIVE%XCG
+  rS_I(2,1) = DRIVE%YCG
+  rS_I(3,1) = DRIVE%ZCG
+
+  rAIRWAKE_S(1,1) = DRIVE%SLAIRWAKE
+  rAIRWAKE_S(2,1) = DRIVE%BLAIRWAKE
+  rAIRWAKE_S(3,1) = DRIVE%WLAIRWAKE
+
+  rAwP_S = matmul(transpose(DRIVE%TIS),rI_I-rS_I)-rAIRWAKE_S
+
+  xstar = -rAwP_S(1,1)
+  ystar = rAwP_S(2,1)
+  zstar = -rAwP_S(3,1)
+
+  !!Loop tstar
+  tstar = DRIVE%TIME
+  tshift = 0
+  if (tstar .gt. DRIVE%TCOORD(NTIMES)) then
+     tshift = -floor(abs(tstar-DRIVE%TCOORD(1))/DRIVE%TCOORD(NTIMES))
+  end if
+  tstar = tstar + tshift*DRIVE%TCOORD(NTIMES)
+  ! write(*,*) 'Tstar = ',tstar, 'tshift = ',tshift
+
+  stepX = 1;stepY = 1;stepZ = 1;stepT = 1;
+  extrapX = 0;extrapY = 0;extrapZ = 0;extrapT = 0;
+  if (zstar .lt. 0) then
+     zstar = -zstar
+  endif
+  tinterp = 2;
+
+  uvw(1,1)=0;uvw(2,1)=0;uvw(3,1)=0;
+  uvw(1,2)=0;uvw(2,2)=0;uvw(3,2)=0;
+
+  markX = DRIVE%markX
+  markY = DRIVE%markY
+  markZ = DRIVE%markZ
+  markT = DRIVE%markT
+
+  !%%Check X
+  if (markX .eq. IMAX) then
+     markX = markX - 1;
+  end if
+  if ((xstar .ge. DRIVE%XCOORD(markX)) .and. (xstar .le. DRIVE%XCOORD(markX+1))) then
+     !%%You're in between the markers so keep going
+  else
+     if (xstar .gt. DRIVE%XCOORD(IMAX)) then
+        markX = IMAX;
+        stepX = -1;
+        extrapX = 1;
+        ! write(*,*) 'Out of bounds on x'
+     elseif (xstar .lt. DRIVE%XCOORD(1)) then
+        markX = 1;
+        stepX = 1;
+        extrapX = 1;
+     else
+        call FINDGE(DRIVE%XCOORD,IMAX,xstar,markX)
+        if (markX .eq. IMAX) then
+           markX = markX - 1;
+        else if (markX .le. 0) then
+           markX = 1;
+        end if
+     end if
+  end if
+
+  ! write(*,*) 'markX = ',markX
+
+  !%%%Now that you have markX you can grab the y and z planes
+  ! write(*,*) 'Ycoord'
+  do j = 1,JMAX
+     DRIVE%YCOORD(j) = DRIVE%YDRIVER(markX,j,1); 
+     ! write(*,*) DRIVE%YCOORD(j)
+  end do
+  ! write(*,*) '------------'
+  do k = 1,KMAX
+     DRIVE%ZCOORD(k) = DRIVE%ZDRIVER(markX,1,k);    
+     ! write(*,*) DRIVE%ZCOORD(k)
+  end do
+
+  !%%Check Y
+  if (markY .eq. JMAX) then
+     markY = markY - 1;
+  end if
+  if ((ystar .ge. DRIVE%YCOORD(markY)) .and. (ystar .le. DRIVE%YCOORD(markY+1))) then
+     !%%You're in between the markers so keep going
+  else
+     if (ystar .gt. DRIVE%YCOORD(JMAX)) then
+        markY = JMAX;
+        stepY = -1;
+        extrapY = 1;
+     elseif (ystar .lt. DRIVE%YCOORD(1)) then
+        markY = 1;
+        stepY = 1;
+        extrapY = 1;
+     else
+        call FINDGE(DRIVE%YCOORD,JMAX,ystar,markY)
+        if (markY .eq. JMAX) then
+           markY = markY - 1;
+        else if (markY .le. 0) then
+           markY = 1;
+        end if
+     end if
+  end if
+
+  ! write(*,*) 'markY = ',markY
+
+  !%%Check Z
+  if (markZ .eq. KMAX) then
+     markZ = markZ - 1;
+  end if
+
+  if ((zstar .ge. DRIVE%ZCOORD(markZ)) .and. (zstar .le. DRIVE%ZCOORD(markZ+1))) then
+     !%%You're in between the markers so keep going
+  else
+     !%Find markZ
+     if (zstar .gt. DRIVE%ZCOORD(KMAX)) then
+        !%use endpt
+        markZ = KMAX;
+        stepZ = -1;
+        extrapZ = 1;
+        DRIVE%VWAKE(1) = 0
+        DRIVE%VWAKE(2) = 0
+        DRIVE%VWAKE(3) = 0
+        RETURN
+     else if (zstar .lt. DRIVE%ZCOORD(1)) then
+        markZ = 1;
+        stepZ = 1;
+        extrapZ = 1;
+     else
+        call FINDGE(DRIVE%ZCOORD,KMAX,zstar,markZ)
+        if (markZ .eq. KMAX) then
+           markZ = markZ - 1;
+        else if (markZ .eq. 0) then
+           markZ = 1;
+        end if
+     end if
+  end if
+
+  ! write(*,*) 'markZ = ',markZ
+
+  !%%Check T
+  if (markT .eq. NTIMES) then
+     markT = markT - 1;
+  end if
+  !write(*,*) tstar,markT,DRIVE%TCOORD(markT)
+  if ((tstar .ge. DRIVE%TCOORD(markT)) .and. (tstar .le. DRIVE%TCOORD(markT+1))) then
+     !%%You're in between the markers so keep going
+  else
+     !%Find markT
+     if (tstar .gt. DRIVE%TCOORD(NTIMES)) then
+        !%use endpt
+        markT = NTIMES;
+        extrapT = 1;
+     else if (tstar .lt. DRIVE%TCOORD(1)) then
+        !%use start pt
+        markT = 1;
+        extrapT = 1;
+     else
+        call FINDGE(DRIVE%TCOORD,NTIMES,tstar,markT)
+        if (markT .eq. NTIMES) then
+           markT = markT - 1;
+        else if (markT .eq. 0) then
+           markT = 1;
+        end if
+     end if
+
+     !%%Import U,V,W maps since markT changed
+     if (markT .lt. 10) then
+        write(number, '(i1)' )  markT
+     else
+        if (markT .le. 99) then
+           write(number, '(i2)' )  markT
+        else
+           write(number, '(i3)' )  markT
+        endif
+     endif
+     letter = trim('U')
+     DRIVE%U0name = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+     letter = trim('V')
+     DRIVE%V0name = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+     letter = trim('W')
+     DRIVE%W0name = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+     !%%only import at markT
+     call IMPORTWAKE(DRIVE%UDRIVER,DRIVE%U0name);
+     call IMPORTWAKE(DRIVE%VDRIVER,DRIVE%V0name);
+     call IMPORTWAKE(DRIVE%WDRIVER,DRIVE%W0name);
+     if (extrapT .eq. 1) then
+        tinterp = 1;
+     else
+        !%%import markT + 1
+        if (markT+1 .lt. 10) then
+           write(number, '(i1)' )  markT+1
+        else if (markT+1 .le. 99) then
+           write(number, '(i2)' )  markT+1
+        else
+           write(number, '(i3)' )  markT+1
+        endif
+        letter = trim('U')
+        DRIVE%Udtname = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+        letter = trim('V')
+        DRIVE%Vdtname = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+        letter = trim('W')
+        DRIVE%Wdtname = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+        !%%only import at markT
+        call IMPORTWAKE(DRIVE%UDRIVERDT,DRIVE%Udtname);
+        call IMPORTWAKE(DRIVE%VDRIVERDT,DRIVE%Vdtname);
+        call IMPORTWAKE(DRIVE%WDRIVERDT,DRIVE%Wdtname);
+     end if !(extrapT eq. 1 ) 
+  end if
+
+  ! write(*,*) 'markT = ',markT
+  ! write(*,*) 'tinterp = ',tinterp
+
+  !%%Interpolation Scheme
+  do tt = 1,tinterp 
+     !%Interpolate Spatially
+
+     !%%To start we have 8 discrete point (8 corners of a cube)
+     xpts2(1) = DRIVE%XCOORD(markX)
+     xpts2(2) = DRIVE%XCOORD(markX+stepX);
+     ypts2(1) = DRIVE%YCOORD(markY)
+     ypts2(2) = DRIVE%YCOORD(markY+stepY);
+     zpts2(1) = DRIVE%ZCOORD(markZ)
+     zpts2(2) = DRIVE%ZCOORD(markZ+stepZ);
+     x1 = markX;x2 = markX+stepX;
+     y1 = markY;y2 = (markY+stepY);
+     z1 = markZ;z2 = markZ+stepZ;
+     ! write(*,*) 'x1,x2,y1,y2,z1,z2 = ',x1,x2,y1,y2,z1,z2
+     if (tt .eq. 1) then
+        !%%Use UDRIVER,VDRIVER,WDRIVER
+        u8(1) = DRIVE%UDRIVER(x1,y1,z1);
+        u8(2) = DRIVE%UDRIVER(x2,y1,z1);
+        u8(3) = DRIVE%UDRIVER(x2,y2,z1);
+        u8(4) = DRIVE%UDRIVER(x1,y2,z1);
+        u8(5) = DRIVE%UDRIVER(x1,y1,z2);
+        u8(6) = DRIVE%UDRIVER(x2,y1,z2);
+        u8(7) = DRIVE%UDRIVER(x2,y2,z2);
+        u8(8) = DRIVE%UDRIVER(x1,y2,z2);
+        v8(1) = DRIVE%VDRIVER(x1,y1,z1);
+        v8(2) = DRIVE%VDRIVER(x2,y1,z1);
+        v8(3) = DRIVE%VDRIVER(x2,y2,z1);
+        v8(4) = DRIVE%VDRIVER(x1,y2,z1);
+        v8(5) = DRIVE%VDRIVER(x1,y1,z2);
+        v8(6) = DRIVE%VDRIVER(x2,y1,z2);
+        v8(7) = DRIVE%VDRIVER(x2,y2,z2);
+        v8(8) = DRIVE%VDRIVER(x1,y2,z2);
+        w8(1) = DRIVE%WDRIVER(x1,y1,z1);
+        w8(2) = DRIVE%WDRIVER(x2,y1,z1);
+        w8(3) = DRIVE%WDRIVER(x2,y2,z1);
+        w8(4) = DRIVE%WDRIVER(x1,y2,z1);
+        w8(5) = DRIVE%WDRIVER(x1,y1,z2);
+        w8(6) = DRIVE%WDRIVER(x2,y1,z2);
+        w8(7) = DRIVE%WDRIVER(x2,y2,z2);
+        w8(8) = DRIVE%WDRIVER(x1,y2,z2);
+        ! do i = 1,8
+        !    write(*,*) 'u8 = ',u8(i)
+        ! end do
+     else
+        !%%Use Udt,Vdt,Wdt
+        u8(1) = DRIVE%UDRIVERDT(x1,y1,z1);
+        u8(2) = DRIVE%UDRIVERDT(x2,y1,z1);
+        u8(3) = DRIVE%UDRIVERDT(x2,y2,z1);
+        u8(4) = DRIVE%UDRIVERDT(x1,y2,z1);
+        u8(5) = DRIVE%UDRIVERDT(x1,y1,z2);
+        u8(6) = DRIVE%UDRIVERDT(x2,y1,z2);
+        u8(7) = DRIVE%UDRIVERDT(x2,y2,z2);
+        u8(8) = DRIVE%UDRIVERDT(x1,y2,z2);
+        v8(1) = DRIVE%VDRIVERDT(x1,y1,z1);
+        v8(2) = DRIVE%VDRIVERDT(x2,y1,z1);
+        v8(3) = DRIVE%VDRIVERDT(x2,y2,z1);
+        v8(4) = DRIVE%VDRIVERDT(x1,y2,z1);
+        v8(5) = DRIVE%VDRIVERDT(x1,y1,z2);
+        v8(6) = DRIVE%VDRIVERDT(x2,y1,z2);
+        v8(7) = DRIVE%VDRIVERDT(x2,y2,z2);
+        v8(8) = DRIVE%VDRIVERDT(x1,y2,z2);
+        w8(1) = DRIVE%WDRIVERDT(x1,y1,z1);
+        w8(2) = DRIVE%WDRIVERDT(x2,y1,z1);
+        w8(3) = DRIVE%WDRIVERDT(x2,y2,z1);
+        w8(4) = DRIVE%WDRIVERDT(x1,y2,z1);
+        w8(5) = DRIVE%WDRIVERDT(x1,y1,z2);
+        w8(6) = DRIVE%WDRIVERDT(x2,y1,z2);
+        w8(7) = DRIVE%WDRIVERDT(x2,y2,z2);
+        w8(8) = DRIVE%WDRIVERDT(x1,y2,z2);
+     end if
+
+
+     !%%%%%interpZ%%%%%%%%%%%%
+
+     if (extrapZ .eq. 1) then
+        !%%You don't need to interpolate on z and you can just use
+        !%%the values at markZ or z1
+        zpts1 = zpts2(1);
+        u4(1) = u8(1);
+        u4(2) = u8(2);
+        u4(3) = u8(3);
+        u4(4) = u8(4);
+        v4(1) = v8(1);
+        v4(2) = v8(2);
+        v4(3) = v8(3);
+        v4(4) = v8(4);
+        w4(1) = w8(1);
+        w4(2) = w8(2);
+        w4(3) = w8(3);
+        w4(4) = w8(4);
+     else
+        !%%Interpolate Between Z points(interpolate pts 1-4 and 5-8)
+        !%Pts 1,5 : 2,6 : 3,7 : 4,8
+        coord1 = (/1,2,3,4/);
+        coord2 = (/5,6,7,8/);
+        do ii = 1,4
+           uslope = (u8(coord2(ii))-u8(coord1(ii)))/(zpts2(2)-zpts2(1));
+           vslope = (v8(coord2(ii))-v8(coord1(ii)))/(zpts2(2)-zpts2(1));
+           wslope = (w8(coord2(ii))-w8(coord1(ii)))/(zpts2(2)-zpts2(1));
+           u4(ii) = uslope*(zstar-zpts2(1))+u8(coord1(ii));
+           v4(ii) = vslope*(zstar-zpts2(1))+v8(coord1(ii));
+           w4(ii) = wslope*(zstar-zpts2(1))+w8(coord1(ii));
+        end do
+        zpts1 = zstar;
+     end if
+
+     !%%%%%interpY%%%%%%%%%%%
+
+     if (extrapY .eq. 1) then
+        !%%You don't need to interpolate on y
+        ypts1 = ypts2(1);
+        u2(1) = u4(1);
+        u2(2) = u4(2);
+        v2(1) = v4(1);
+        v2(2) = v4(2);
+        w2(1) = w4(1);
+        w2(2) = w4(2);
+     else
+        !%%Interpolate between Y points(interpolate pts 1-2 and 3-4)
+        !%%Pts 1,4 : 2,3
+        cord1 = (/1,2/);
+        cord2 = (/4,3/);
+        do ii = 1,2
+           uslope = (u4(cord2(ii))-u4(cord1(ii)))/(ypts2(2)-ypts2(1));
+           vslope = (v4(cord2(ii))-v4(cord1(ii)))/(ypts2(2)-ypts2(1));
+           wslope = (w4(cord2(ii))-w4(cord1(ii)))/(ypts2(2)-ypts2(1));
+           u2(ii) = uslope*(ystar-ypts2(1))+u4(cord1(ii));
+           v2(ii) = vslope*(ystar-ypts2(1))+v4(cord1(ii));
+           w2(ii) = wslope*(ystar-ypts2(1))+w4(cord1(ii));
+        end do
+        ypts1 = ystar;
+     end if
+
+     !%%%%interpX%%%%%%%%%%%%
+     if (extrapX .eq. 1) then
+        !%%You don't need to interpolate on x
+        xpts1 = xpts2(1);
+        u = u2(1);
+        v = v2(1);
+        w = w2(1);
+     else
+        !%%Interpolate between X points
+        uslope = (u2(2)-u2(1))/(xpts2(2)-xpts2(1));
+        vslope = (v2(2)-v2(1))/(xpts2(2)-xpts2(1));
+        wslope = (w2(2)-w2(1))/(xpts2(2)-xpts2(1));
+        u = uslope*(xstar-xpts2(1))+u2(1);
+        v = vslope*(xstar-xpts2(1))+v2(1);
+        w = wslope*(xstar-xpts2(1))+w2(1);
+        xpts1 = xstar;
+     end if
+
+     !%%%%Save wind values%%%%%
+
+     uvw(1,tt) = u;
+     uvw(2,tt) = v;
+     uvw(3,tt) = w;
+
+     ! write(*,*) 'tt = ',tt,' u,v,w = ',u,v,w
+
+  end do
+
+  if (extrapT .eq. 1) then
+     !//Answer is just first entry of uvw
+     vatm(1) = uvw(1,1);
+     vatm(2) = uvw(2,1);
+     vatm(3) = uvw(3,1);
+  else
+     !%%Interpolate on T
+     tpts(1) = DRIVE%TCOORD(markT)
+     tpts(2) = DRIVE%TCOORD(markT+1);
+     u2(1) = uvw(1,1);
+     u2(2) = uvw(1,2);
+     v2(1) = uvw(2,1);
+     v2(2) = uvw(2,2);
+     w2(1) = uvw(3,1);
+     w2(2) = uvw(3,2);
+     uslope = (u2(2)-u2(1))/(tpts(2)-tpts(1));
+     vslope = (v2(2)-v2(1))/(tpts(2)-tpts(1));
+     wslope = (w2(2)-w2(1))/(tpts(2)-tpts(1));  
+     u = uslope*(tstar-tpts(1))+u2(1);
+     v = vslope*(tstar-tpts(1))+v2(1);
+     w = wslope*(tstar-tpts(1))+w2(1);
+     vatm(1) = u;
+     vatm(2) = v;
+     vatm(3) = w;
+  end if
+
+  DRIVE%VWAKE(1) = -(vatm(1) - DRIVE%UDRIVER(markX,markY,KMAX))
+  DRIVE%VWAKE(2) = vatm(2)
+  DRIVE%VWAKE(3) = -vatm(3)
+
+  DRIVE%markX = markX
+  DRIVE%markY = markY
+  DRIVE%markZ = markZ
+  DRIVE%markT = markT
+
+END SUBROUTINE AIRWAKE
+
+SUBROUTINE DOWNWASH(DRIVE,STATE)
+  use TOSIMDATATYPES
+  implicit none
+  real*8 xcg,ycg,zcg,downwash_angle,zdownwash,delx,dely,delz,n,STATE(3)
+  type(DRIVERSTRUCTURE) DRIVE
+
+  DRIVE%VWAKE = 0
+
+  !Extract state of Towed Body
+  xcg = STATE(1)
+  ycg = STATE(2)
+  zcg = STATE(3)
+
+  !Compute z location of downwash
+  downwash_angle = atan2(DRIVE%DOWNWASH,DRIVE%SPEED)
+  zdownwash = delx*tan(downwash_angle)
+
+  !Check and see if the towed body is in Driver airwake
+  delx = abs(DRIVE%XCG - xcg)
+  dely = abs(DRIVE%YCG - ycg)
+  delz = abs(abs(DRIVE%ZCG - zcg) - zdownwash)
+
+  if ((dely .lt. DRIVE%DIAMETER) .and. (delz .lt. DRIVE%DIAMETER)) then
+     DRIVE%VWAKE(1) = 0.0
+     DRIVE%VWAKE(2) = 0.0
+     call RandUniform(n)
+     DRIVE%VWAKE(3) = DRIVE%DOWNWASH*(1+(1-2*n)*0.1D0)
+  end if
+
+END SUBROUTINE DOWNWASH
+
+SUBROUTINE DRIVER_CONTROL(DRIVE)
+  use TOSIMDATATYPES
+  implicit none
+  type(DRIVERSTRUCTURE) DRIVE
+  integer iflag,openflag,readflag,i,stateindex,now(3),ctr,j
+  integer , parameter :: nwp = 1
+  real*8 readreal,phicommand,deltheta,delpsi,dely,delydot,rAS_I(3,1),vAS_I(3,1),thetacommand, xcommand, ycommand, zcommand
+  ! real*8 rAS_A(3,1),vAS_A(3,1),lencommand,rGS_I(3,1),vGS_I(3,1),psicp,rGS_P(3,1),vGS_P(3,1),tension,len
+  real*8 angles(2,1),delphi,delphidot,ldotnom,ldot,n1,q0,q1,q2,q3,pb,qb,rb,vb,xcg,ycg,zcg,vaero,wb
+  real*8 delx,delz,phi,theta,psi,p,q,r,xdot,ydot,zdot,omegaNot,addpitch,addroll,addyaw
+  real*8 domegaLeft,omegaRight,domegaFront,omegaBack,domegaDiag,omegaOpp,omegaDiag,omegaFront
+  real*8 xwaypoint(nwp,1),ywaypoint(nwp,1),zwaypoint(nwp,1),Dwaypoint
+  real*8 delmu(4), munominal
+  LOGICAL :: DOUBLET = .FALSE.
+
+  if (DRIVE%CONTROLOFFON .eq. 1) then
+     !Quadcopter control
+     DRIVE%OMEGAVEC = 0
+     DRIVE%THRUSTVEC = 0
+     DRIVE%MUVEC = 0
+
+     !Get OMEGA0 and KT for DRIVE
+     DRIVE%KT = DRIVE%C_T*((4.0D0*DRIVE%DEN*(DRIVE%RNEW**4))/(qPI**2))
+     DRIVE%OMEGA0 = sqrt(DRIVE%WEIGHT/(4.0D0*DRIVE%KT))
+
+     xdot = DRIVE%STATEDOT(1)
+     ydot = DRIVE%STATEDOT(2)
+     zdot = DRIVE%STATEDOT(3)
+     phi = DRIVE%STATE(4)
+     theta = DRIVE%STATE(5)
+     psi = DRIVE%STATE(6)
+     p = DRIVE%STATE(10)
+     q = DRIVE%STATE(11)
+     r = DRIVE%STATE(12)
+
+     ! Don't forget to change 'nwp' in declaration block for number of waypoints
+
+     if (nwp .eq. 1) then
+        !! Just trying to stay in hover for now
+        xwaypoint = 0.0D0
+        ywaypoint = 0.0D0
+        zwaypoint = -20.0D0
+
+     elseif(nwp .eq. 2) then
+        ! Up & Down Test, 2
+        xwaypoint(1,1) = 0.0D0
+        xwaypoint(2,1) = 0.0D0
+
+        ywaypoint(1,1) = 0.0D0
+        ywaypoint(2,1) = 0.0D0
+
+        zwaypoint(1,1) = -85.0D0
+        zwaypoint(2,1) = -10.0D0
+     elseif (nwp .eq. 4) then
+        ! Square Pattern, 4
+
+        xwaypoint(1,1) = 40.0D0
+        xwaypoint(2,1) = 40.0D0
+        xwaypoint(3,1) = 0.0D0
+        xwaypoint(4,1) = 0.0D0
+
+        ywaypoint(1,1) = 0.0D0
+        ywaypoint(2,1) = 40.0D0
+        ywaypoint(3,1) = 40.0D0
+        ywaypoint(4,1) = 0.0D0
+
+        ! Keeping constant altitude
+        do ctr = 1,nwp
+           zwaypoint(ctr,1) = -20.0D0
+        end do
+
+     elseif (nwp .eq. 6) then
+        ! Square Pattern, 4
+
+        xwaypoint(1,1) = 100.0D0
+        xwaypoint(2,1) = 0.0D0
+        xwaypoint(3,1) = 0.0D0
+        xwaypoint(4,1) = 0.0D0
+        xwaypoint(5,1) = 0.0D0
+        xwaypoint(6,1) = 0.0D0
+
+        ywaypoint(1,1) = 0.0D0
+        ywaypoint(2,1) = 0.0D0
+        ywaypoint(3,1) = 100.0D0
+        ywaypoint(4,1) = 0.0D0
+        ywaypoint(5,1) = 0.0D0
+        ywaypoint(6,1) = 0.0D0
+
+        ! Keeping constant altitude
+        do ctr = 1,nwp-2
+           zwaypoint(ctr,1) = -10.0D0
+        end do
+        zwaypoint(5,1) = -70.0D0
+        zwaypoint(6,1) = -10.0D0
+
+     elseif (nwp .eq. 8) then
+        !      Octagon Pattern, 8
+        xwaypoint(1,1) = 0
+        xwaypoint(2,1) = 50.0D0
+        xwaypoint(3,1) = 150.0D0
+        xwaypoint(4,1) = 200.0D0
+        xwaypoint(5,1) = 200.0D0
+        xwaypoint(6,1) = 150.0D0
+        xwaypoint(7,1) = 50.0D0
+        xwaypoint(8,1) = 0.0D0
+
+        ywaypoint(1,1) = 100.0D0
+        ywaypoint(2,1) = 200.0D0
+        ywaypoint(3,1) = 200.0D0
+        ywaypoint(4,1) = 100.0D0
+        ywaypoint(5,1) = 0.0D0
+        ywaypoint(6,1) = -100.0D0
+        ywaypoint(7,1) = -100.0D0
+        ywaypoint(8,1) = 0.0D0
+
+        do ctr = 1,nwp
+           zwaypoint(ctr,1) = -10.0D0
+        end do
+     end if
+
+     ! gotocontrols
+     ! DRIVE%XCOMMAND =  xwaypoint(DRIVE%WAYPOINT,1)
+     ! DRIVE%YCOMMAND =  ywaypoint(DRIVE%WAYPOINT,1)
+     ! DRIVE%ZCOMMAND =  zwaypoint(DRIVE%WAYPOINT,1)
+
+     !DRIVE%ZCOMMAND = -30.0 -- these are now set in the input file 
+     !DRIVE%UCOMMAND = 28.93
+     !DRIVE%YCOMMAND = 0.0
+
+     !delx = (DRIVE%XCOMMAND - DRIVE%STATE(1))*-1.00D0
+     dely = (DRIVE%YCOMMAND - DRIVE%STATE(2))
+     !write(*,*) 'Zstuff = ',DRIVE%ZCOMMAND,DRIVE%STATE(3)
+     delz = (DRIVE%ZCOMMAND - DRIVE%STATE(3))*-1.00D0
+
+     ! Dwaypoint = sqrt((delx)**2 + (dely)**2 + (delz)**2)
+
+     ! Change this to 4(square) or 8(octagon) depending on the shape you want to simulate
+     ! if (Dwaypoint .lt. 1.0D0) then
+     !   DRIVE%WAYPOINT= DRIVE%WAYPOINT+1
+     !   if (DRIVE%WAYPOINT .gt. nwp) then
+     !     DRIVE%WAYPOINT=1
+     !   end if
+     ! end if
+
+     !!! Attitude Controller
+     DRIVE%PHICOMMAND = DRIVE%KPYDRIVE*dely + DRIVE%KIYDRIVE*DRIVE%YINTEGRAL - DRIVE%KDYDRIVE*ydot
+
+     !DRIVE%PHICOMMAND = 20.0*qPI/180.0
+     
+     ! REVISIT hardcoded xdotcommand = 40 ft/s
+     ! For now the KP and KD gains for 'x' is controlling the 'u' velocity at which the quad is travelling
+     ! Ok shit so the 'u' velocity couldn't really be controlled so -24.5 deg is what 
+     ! the quad needs to be to achieve this velocity
+     ! DRIVE%THETACOMMAND = -24.5*qPI/180!DRIVE%KPXDRIVE*(DRIVE%STATE(7) - 40.0) + DRIVE%KIXDRIVE*DRIVE%XINTEGRAL + DRIVE%KDXDRIVE*(DRIVE%STATEDOT(7))
+     ! DRIVE%THETACOMMAND = DRIVE%KPXDRIVE*delx + DRIVE%KIXDRIVE*DRIVE%XINTEGRAL - DRIVE%KDXDRIVE*xdot
+
+     DRIVE%THETACOMMAND = DRIVE%KPXDRIVE*(DRIVE%STATE(7) - DRIVE%UCOMMAND) + DRIVE%KIXDRIVE*DRIVE%UINTEGRAL
+
+     !write(*,*) 'integral = ',DRIVE%YINTEGRAL,DRIVE%XINTEGRAL
+
+     !DRIVE%THETACOMMAND = 0.0
+     
+     DRIVE%PSICOMMAND = 0.0
+
+     !write(*,*) 'Xcontrol = ',delx,DRIVE%XINTEGRAL,xdot
+     !write(*,*) 'ptpcom = ',DRIVE%PHICOMMAND,DRIVE%THETACOMMAND,DRIVE%PSICOMMAND
+
+     if (abs(DRIVE%THETACOMMAND) .gt. 30*qPI/180) then
+        DRIVE%THETACOMMAND = sign(30*qPI/180,DRIVE%THETACOMMAND)
+     end if
+     if (abs(DRIVE%PHICOMMAND) .gt. 30*qPI/180) then
+        DRIVE%PHICOMMAND = sign(30*qPI/180,DRIVE%PHICOMMAND)
+     end if
+     if (abs(DRIVE%PSICOMMAND) .gt. 30*qPI/180) then
+        DRIVE%PSICOMMAND = sign(30*qPI/180,DRIVE%PSICOMMAND)
+     end if
+
+     ! Hovering microseconds and altitude control
+     munominal = 1614.855 + DRIVE%KPZDRIVE*(delz) + DRIVE%KIZDRIVE*DRIVE%ZINTEGRAL +DRIVE%KDZDRIVE*zdot  ! Nominal microsecond pulse for hover
+
+     DRIVE%MS_ROLL = DRIVE%KPPHI*(DRIVE%PHICOMMAND-phi) + DRIVE%KIPHI*DRIVE%PHIINTEGRAL - DRIVE%KDPHI*p
+     DRIVE%MS_PITCH = DRIVE%KPTHETA*(DRIVE%THETACOMMAND - theta) + DRIVE%KITHETA*DRIVE%THETAINTEGRAL- DRIVE%KDTHETA*q
+     DRIVE%MS_YAW = DRIVE%KPPSI*(DRIVE%PSICOMMAND-psi) + DRIVE%KIPSI*DRIVE%PSIINTEGRAL - DRIVE%KDPSI*r
+
+     !write(*,*) 'Att = ',phi,theta,psi,p,q,r
+
+     DRIVE%MUVEC(1,1) = munominal + DRIVE%MS_ROLL + DRIVE%MS_PITCH + DRIVE%MS_YAW
+     DRIVE%MUVEC(2,1) = munominal - DRIVE%MS_ROLL + DRIVE%MS_PITCH - DRIVE%MS_YAW
+     DRIVE%MUVEC(3,1) = munominal - DRIVE%MS_ROLL - DRIVE%MS_PITCH + DRIVE%MS_YAW
+     DRIVE%MUVEC(4,1) = munominal + DRIVE%MS_ROLL - DRIVE%MS_PITCH - DRIVE%MS_YAW
+
+     !write(*,*) 'muvec = ',DRIVE%MUVEC
+
+     ! Now we saturate the microseconds so that it doesn't go over 1900 or under 1100
+     do j = 1,4
+        if (DRIVE%MUVEC(j,1) .gt. 1900.00D0) then
+           DRIVE%OMEGAVEC(j,1) = 1900.00D0
+        end if
+        if (DRIVE%MUVEC(j,1) .lt. 1100.00D0) then
+           DRIVE%MUVEC(j,1) = 1100.00D0
+        end if
+     end do
+
+  end if
+end SUBROUTINE DRIVER_CONTROL
+
+SUBROUTINE COMPUTEINTEGRAL(DRIVE)
+ use TOSIMDATATYPES
+ implicit none
+ type(DRIVERSTRUCTURE) DRIVE
+ ! Using trapezoidal rule(ish) to compute integral error term
+ ! REVISIT Replaced xintegral with u velocity term!!!!
+ ! The 1/4 is used because this is called once every rk4 call
+ ! and since we're using trap(ish) we need to divide by 4. Untested CJM - 2/13/2018
+ DRIVE%XINTEGRAL     = DRIVE%XINTEGRAL     + -(1.0/4.0)*((DRIVE%XCOMMAND     - DRIVE%STATE(1))/2)*DRIVE%DELTATIME
+ DRIVE%YINTEGRAL     = DRIVE%YINTEGRAL     + (1.0/4.0)*((DRIVE%YCOMMAND     - DRIVE%STATE(2))/2)*DRIVE%DELTATIME
+ DRIVE%ZINTEGRAL     = DRIVE%ZINTEGRAL     + -(1.0/4.0)*((DRIVE%ZCOMMAND     - DRIVE%STATE(3))/2)*DRIVE%DELTATIME
+ DRIVE%PHIINTEGRAL   = DRIVE%PHIINTEGRAL   +    (1.0/4.0)*((DRIVE%PHICOMMAND   - DRIVE%STATE(4))/2)*DRIVE%DELTATIME
+ DRIVE%THETAINTEGRAL = DRIVE%THETAINTEGRAL +    (1.0/4.0)*((DRIVE%THETACOMMAND - DRIVE%STATE(5))/2)*DRIVE%DELTATIME
+ DRIVE%PSIINTEGRAL   = DRIVE%PSIINTEGRAL   +    (1.0/4.0)*((DRIVE%PHICOMMAND   - DRIVE%STATE(6))/2)*DRIVE%DELTATIME
+ DRIVE%UINTEGRAL     = DRIVE%UINTEGRAL     + -(1.0/4.0)*((DRIVE%UCOMMAND     - DRIVE%STATE(7))/2)*DRIVE%DELTATIME
+END SUBROUTINE COMPUTEINTEGRAL !COMPUTEINTEGRAL
+
+SUBROUTINE PRINTINTEGRAL(DRIVE) !!When do I run this?
+ use TOSIMDATATYPES
+ implicit none
+ type(DRIVERSTRUCTURE) DRIVE
+ ! Using trapezoidal rule(ish) to compute integral error term
+ ! REVISIT Replaced xintegral with u velocity term!!!!
+ ! The 1/4 is used because this is called once every rk4 call
+ ! and since we're using trap(ish) we need to divide by 4. Untested CJM - 2/13/2018
+ write(*,*) DRIVE%XINTEGRAL,DRIVE%YINTEGRAL,DRIVE%ZINTEGRAL,DRIVE%PHIINTEGRAL,DRIVE%THETAINTEGRAL,DRIVE%PSIINTEGRAL,DRIVE%UINTEGRAL
+ !95713.325840134436       0.77060269505657364       -38.613821568062889        5.6208864356321653E-005  -3.6252368913735496E-003   1.5246634597683634E-002  -25.123939964081060 
+END SUBROUTINE PRINTINTEGRAL !PRINTINTEGRAL
+
+SUBROUTINE PWM2FORCE(DRIVE)
+  use TOSIMDATATYPES
+  implicit none
+  type(DRIVERSTRUCTURE) DRIVE
+  real*8 :: pp = 4
+
+   ! IF (abs(DRIVE%MS_ROLL) .gt. DRIVE%MS_MAX) then
+   !    DRIVE%MS_ROLL = sign(DRIVE%MS_MAX,DRIVE%MS_ROLL)
+   ! elseif (abs(DRIVE%MS_ROLL) .lt. DRIVE%MS_MIN) then
+   !    DRIVE%MS_ROLL = sign(DRIVE%MS_MIN,DRIVE%MS_ROLL)
+   ! end if
+
+   ! IF (abs(DRIVE%MS_PITCH) .gt. DRIVE%MS_MAX) then
+   !    DRIVE%MS_PITCH = sign(DRIVE%MS_MAX,DRIVE%MS_PITCH)
+   ! elseif (abs(DRIVE%MS_PITCH) .lt. DRIVE%MS_MIN) then
+   !    DRIVE%MS_PITCH = sign(DRIVE%MS_MIN,DRIVE%MS_PITCH)
+   ! end if
+
+   ! IF (abs(DRIVE%MS_YAW) .gt. DRIVE%MS_MAX) then
+   !    DRIVE%MS_YAW = sign(DRIVE%MS_MAX,DRIVE%MS_YAW)
+   ! elseif (abs(DRIVE%MS_YAW) .lt. DRIVE%MS_MIN) then
+   !    DRIVE%MS_YAW = sign(DRIVE%MS_MIN,DRIVE%MS_YAW)
+   ! end if
+   
+  ! DRIVE%MS_0 = 2.35252990909077E-06*DRIVE%MS_0**2 - (0.00487992485215825)*DRIVE%MS_0 + 1.74554459880932
+    do pp = 1,4
+      DRIVE%PWM2F(pp,1) = 2.35252990909077E-06*DRIVE%MUVEC(1,1)**2 - (0.00487992485215825)*DRIVE%MUVEC(1,1) + 1.74554459880932
+    end do
+END SUBROUTINE PWM2FORCE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!! SUBROUTINE TOWED !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
