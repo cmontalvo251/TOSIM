@@ -2638,8 +2638,7 @@ SUBROUTINE DRIVER(DRIVE,iflag)
     rCF_B(2,1) = DRIVE%BLREEL 
     rCF_B(3,1) = DRIVE%WLREEL
 
-    !- This is where we're going to hi-jack the model and compute the derivatives using Lisa Schibelius'
-    !DRIVEDRIVER MODEL
+    !- This is where we're going to hi-jack the model and compute the derivatives using Lisa Schibelius' quadcopter MODEL
     if (DRIVE%MODNO .eq. 3) then
 
        ! Unwrap State Vector - This is the same for the DRIVEDRIVER
@@ -2662,7 +2661,7 @@ SUBROUTINE DRIVER(DRIVE,iflag)
        DRIVE%TIC(2,3) = cphi * stheta * spsi - sphi * cpsi;
        DRIVE%TIC(3,3) = cphi * ctheta;
 
-       ! Inertial to Aircraft Transformation Matrix - Same for DRIVEDRIVER
+       ! Inertial to copter Transformation Matrix
        
        DRIVE%TCI = transpose(DRIVE%TIC)
   
@@ -2697,7 +2696,8 @@ SUBROUTINE DRIVER(DRIVE,iflag)
 
           V_A = sqrt(uaero**2 + vaero**2 + waero**2)
 
-          !Quadcopter Aerodynamic Model written by Lisa Schibelius - 12/2016
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Quadcopter Aerodynamic Model written by Lisa Schibelius - 12/2016!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
           !Recompute KT
           DRIVE%KT = DRIVE%C_T*((DRIVE%DEN*qPI*(DRIVE%RNEW**4)/4))
@@ -2761,7 +2761,6 @@ SUBROUTINE DRIVER(DRIVE,iflag)
              DRIVE%FZAERO = -thrust
           end if
 
-
           omegar = DRIVE%OMEGAVEC(1,1) - DRIVE%OMEGAVEC(2,1) + DRIVE%OMEGAVEC(3,1) - DRIVE%OMEGAVEC(4,1)
           Gammavec(1,1) = DRIVE%IRR * omegar * qb
           Gammavec(2,1) = -DRIVE%IRR * omegar * pb
@@ -2770,13 +2769,16 @@ SUBROUTINE DRIVER(DRIVE,iflag)
 
           !!!!!!!!! Aerodynamics
           bquad = DRIVE%C_TAU*((DRIVE%DEN*qPI*(DRIVE%RNEW**5)/4))
-	  
-	  !!! According to dynamic equations, a positive roll will have rotors 1,4 > 2,3. This was previously 2,3>1,4
+
+          !!! According to dynamic equations, a positive roll will have rotors 1,4 > 2,3. This was previously 2,3>1,4
           ! Since T3 = T1*Ltheta_front/Ltheta_back we're just going to do this for simplicity
           DRIVE%MXAERO = Gammavec(1,1) + (DRIVE%LPHI12*(TVEC(1) - TVEC(2)) + DRIVE%LPHI34*(TVEC(4) - TVEC(3)))
           DRIVE%MYAERO = Gammavec(2,1) + DRIVE%LTHETA12*(TVEC(1) +TVEC(2) - TVEC(3) -TVEC(4))
           DRIVE%MZAERO = Gammavec(3,1) + bquad*(DRIVE%OMEGAVEC(1,1)**2 - DRIVE%OMEGAVEC(2,1)**2 + DRIVE%OMEGAVEC(3,1)**2 - DRIVE%OMEGAVEC(4,1)**2)
           ! DRIVE%MZAERO = Gammavec(3,1) + bquad*(TVEC(1)**2 - TVEC(2)**2 + TVEC(3)**2 - TVEC(4)**2)
+
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!END OF QUADCOPTER AERODYNAMIC MODEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
           !At this point we should have F(XYZ)AERO and M(XYZ)AERO populated
 
@@ -3131,9 +3133,9 @@ SUBROUTINE DRIVER(DRIVE,iflag)
    DRIVE%YREELDOT = DRIVE%TIS(2,1)*DRIVE%UREEL + DRIVE%TIS(2,2)*DRIVE%VREEL + DRIVE%TIS(2,3)*DRIVE%WREEL  
    DRIVE%ZREELDOT = DRIVE%TIS(3,1)*DRIVE%UREEL + DRIVE%TIS(3,2)*DRIVE%VREEL + DRIVE%TIS(3,3)*DRIVE%WREEL  
     
-  end if
+  end if !MODNO = 2
 
-  ! This is pretty sloppy. Nemo wants this to run only once per rk4 function call
+  ! This is pretty sloppy. Nghia wants this to run only once per rk4 function call
   ! should probably just add these as states but this will do for now
   ! What we will do is just divide everything out by 4 so when this runs 4 times we should
   ! be good.
@@ -3433,7 +3435,7 @@ SUBROUTINE IMPORTWAKE(mat,filename)
   implicit none
   integer uvw,time
   integer ii,jj,kk,nii,njj,ierr;
-  real*8 mat(55,77,61),tempmat(77)
+  real*8 mat(IMAX,JMAX,KMAX),tempmat(77) !! mat is 55x77x61
   character*256 filename
 
   write(*,*) 'Importing: ',filename
@@ -4269,19 +4271,23 @@ SUBROUTINE TOWED(T,iflag)
   T%TOW%TAI = transpose(T%TOW%TIA)
 
   !Inertial Location of Tether Point
+
+  !First get location of CG
   rC_I(1,1) = xcg 
   rC_I(2,1) = ycg
-  rC_I(3,1) = zcg !!! REVISIT Nemo did -1 to make the connection point realistic
+  rC_I(3,1) = zcg !!! REVISIT Nghia did -1 to make the connection point realistic
 
+  !Then get location of tether in body frame
   rCF_B(1,1) = T%THR%SLTETHER 
   rCF_B(2,1) = T%THR%BLTETHER
   rCF_B(3,1) = T%THR%WLTETHER
 
+  !Then compute inertial location of tether connection point
   rF_I = rC_I + matmul(T%TOW%TIA,rCF_B)  !REVISIT DK 8/18/2015 - I've got a function for this too BodyToEarthTrans(quatVec,vb,vf)
 
   T%THR%XTETHER = rF_I(1,1)
   T%THR%YTETHER = rF_I(2,1)
-  T%THR%ZTETHER = rF_I(3,1) -(1/2)
+  T%THR%ZTETHER = rF_I(3,1) -(1/2) !Why is this 1/2 here???? 1/19/2024 - CJM
   
   ! Gravity Forces and Moments
   
@@ -4332,49 +4338,30 @@ SUBROUTINE TOWED(T,iflag)
   V_A = sqrt(uaero**2 + vaero**2 + waero**2)
 
   if (T%TOW%AEROFLAG .gt. 0) then !If AEROFLAG is greater than 0 it is either a 1 or a 2 - CM 8/16/2015
-     !Compute Atmopsheric density and winds
+    !Compute Atmopsheric density and winds
 
-     T%ATM%XI = xcg
-     T%ATM%YI = ycg
-     T%ATM%ZI = zcg
-     call ATMOSPHERE(T,3) !T%ATM%DEN
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!AIRCRAFT AERODYNAMIC MODEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-     vATM_I(1,1) = T%ATM%VXWIND
-     vATM_I(2,1) = T%ATM%VYWIND
-     vATM_I(3,1) = T%ATM%VZWIND
-
-     vATM_A = matmul(T%TOW%TAI,vATM_I)
-
-     !Add in atmospheric winds
-
-     uaero = ub - vATM_A(1,1)
-     vaero = vb - vATM_A(2,1)
-     waero = wb - vATM_A(3,1)
-
-     !Compute total velocity
-
-     V_A = sqrt(uaero**2 + vaero**2 + waero**2) 
-
-     if (V_A .eq. 0) then
-      V_A = uaero
+    if (V_A .eq. 0) then
+        V_A = uaero
     end if
-     !!Dynamic pressure
+    !!Dynamic pressure
 
-     q_inf = 0.5*T%ATM%DEN*(V_A**2)
-     q_inf_S = 0.5*T%ATM%DEN*(V_A**2)*T%TOW%SAREA  
+    q_inf = 0.5*T%ATM%DEN*(V_A**2)
+    q_inf_S = 0.5*T%ATM%DEN*(V_A**2)*T%TOW%SAREA  
 
-     !Mach number
-     T%ATM%SOS = 1086.336; !HARDCODED REVISIT REVISIT
-     MACH = V_A/T%ATM%SOS
+    !Mach number
+    T%ATM%SOS = 1086.336; !HARDCODED REVISIT REVISIT
+    MACH = V_A/T%ATM%SOS
 
-     !!Angle of attack and sideslip and alfahat/uhat/phat/qhat/rhat
+    !!Angle of attack and sideslip and alfahat/uhat/phat/qhat/rhat
 
-     if (abs(uaero) .gt. 0) then
+    if (abs(uaero) .gt. 0) then
         alfa = atan2(waero,uaero)
-     else
+    else
         alfa = 0
-     end if
-     if (V_A .gt. 0) then
+    end if
+    if (V_A .gt. 0) then
         beta = asin(vaero/V_A)
         wbdot = T%TOW%STATEDOT(10)
         alfadot = wbdot/V_A
@@ -4383,18 +4370,16 @@ SUBROUTINE TOWED(T,iflag)
         phat = pb*T%TOW%B    /(2*V_A)
         qhat = qb*T%TOW%C_BAR/(2*V_A)
         rhat = rb*T%TOW%B    /(2*V_A)
-        
-     else
+    else
         beta = 0
         alfahat = 0
         uhat = 0
         phat = 0
         qhat = 0
         rhat = 0
-     end if
-     calfa = cos(alfa)
-     salfa = sin(alfa)
-
+    end if
+    calfa = cos(alfa)
+    salfa = sin(alfa)
 
     if (T%TOW%AEROFLAG .eq. 1) then !linear expansion
 
@@ -4405,18 +4390,16 @@ SUBROUTINE TOWED(T,iflag)
         T_A = (T%TOW%T0 + T%TOW%TPRIME*V_A + T%TOW%TDBLPRIME*V_A**2)*(T%ATM%DEN/T%ATM%DEN)**T%TOW%DENEXP
 
         !!!Lift Drag and Side force
-
         T%TOW%C_L = T%TOW%C_L_M*MACH + T%TOW%C_L_ALPHAHAT*alfahat + T%TOW%C_L_0 + T%TOW%C_L_ALPHA*alfa + T%TOW%C_L_UHAT*uhat + T%TOW%C_L_Q*qhat + T%TOW%C_L_DE*T%TOW%ELEVATOR + T%TOW%C_L_DF*T%TOW%FLAPS
         C_Y = T%TOW%C_Y_BETA*beta + T%TOW%C_Y_P*phat + T%TOW%C_Y_R*rhat + T%TOW%C_Y_DR*T%TOW%RUDDER + T%TOW%C_Y_DA*T%TOW%AILERON
         T%TOW%C_D = T%TOW%C_D_M*MACH + T%TOW%C_D_ALPHAHAT*alfahat + T%TOW%C_D_0 + T%TOW%C_D_ALPHA2*alfa + (T%TOW%C_L**2)/(PI*AR) + T%TOW%C_D_UHAT*uhat + T%TOW%C_D_DE*T%TOW%ELEVATOR + T%TOW%C_D_Q*qhat + T%TOW%C_D_DF*T%TOW%FLAPS
 
         !!Roll,pitch and yaw coefficients
-
         T%TOW%Cll = T%TOW%C_roll_ALPHA*alfa + T%TOW%C_L_BETA*beta + T%TOW%C_L_P*phat + T%TOW%C_L_R*rhat + T%TOW%C_L_DR*T%TOW%RUDDER + T%TOW%C_L_DA*T%TOW%AILERON
         T%TOW%Cm = T%TOW%C_M_BETA*beta + T%TOW%C_M_M*MACH + T%TOW%C_M_ALPHAHAT*alfahat + T%TOW%C_M_0 + T%TOW%C_M_ALPHA*alfa + T%TOW%C_M_UHAT*uhat + T%TOW%C_M_Q*qhat + T%TOW%C_M_DE*T%TOW%ELEVATOR + T%TOW%C_M_DF*T%TOW%FLAPS
         T%TOW%Cn = T%TOW%C_N_ALPHA*alfa + T%TOW%C_N_BETA*beta + T%TOW%C_N_P*phat + T%TOW%C_N_R*rhat + T%TOW%C_N_DR*T%TOW%RUDDER + T%TOW%C_N_DA*T%TOW%AILERON
 
-        !!!!!!! DELETE THIS. Nemo was just messing around with the equations so he can understand it better.
+        !!!!!!! DELETE THIS. Nghia was just messing around with the equations so he can understand it better.
         ! T%TOW%C_L =  T%TOW%C_L_0 + T%TOW%C_L_ALPHA*alfa 
         ! C_Y = T%TOW%C_Y_BETA*beta 
         ! T%TOW%C_D =  T%TOW%C_D_0 + T%TOW%C_D_ALPHA2*alfa + (T%TOW%C_L**2)/(PI*AR) 
@@ -4462,18 +4445,14 @@ SUBROUTINE TOWED(T,iflag)
 
     else if ((T%TOW%AEROFLAG .eq. 2) .and. (V_A .gt. 0)) then ! AEROFLAG = 2, use Wings
         ! Check unites. 
-        
-        y      = (/ uaero,vaero,waero,pb,qb,rb /)
+        y = (/ uaero,vaero,waero,pb,qb,rb /)
         cntrl(0:10)  = (/ T%TOW%ELEVATOR,T%TOW%AILERON,T%TOW%RUDDER,0.,T%TOW%FLAPS,0.,0.,0.,0.,0.,0. /)
         ! write(*,*) y
         !write(*,*) 'Vinf,alfa,beta = ',V_A,alfa,beta
-
         !THIS HAS BEEN COMMENTED OUT BECAUSE WE NO LONGER HAVE THE CORRECT VERSION OF FORTRAN
         !CALL WingsX_ForceMoment(V_A,alfa,beta,y,cntrl,T%TOW%CXb,T%TOW%CYb,T%TOW%CZb,T%TOW%Cll,T%TOW%Cm,T%TOW%Cn,T%TOW%C_L,T%TOW%C_D)
         write(*,*) 'Functionality removed as of 1/2/2017 - Search WingsX_ForceMoment'
-        
         !write(*,*) 'CXb,CYb,CZb = ',T%TOW%CXb,T%TOW%CYb,T%TOW%CZb
-        
         !===INPUTS===>
         !      Vinf = Total airspeed (ft/s)
         !     alpha = Angle of attack (radians)
@@ -4488,7 +4467,6 @@ SUBROUTINE TOWED(T,iflag)
         !              cntrl(4)=throttle setting (0.0-1.0)
         !              cntrl(5)=flap deflection-positive down (rad)
         !              cntrl(6)=landing gear (0.0=up, 1.0=down)
-
         ! yout = Coef_table1(iExtrap,max_x1,n_x1,x1_array,C_table,x1_in)  (it's a function not a subroutine)
         ! iExtrap (0 = don't extrapolate, 1 extrapolate past x value bounds), integer
         ! max_x1 and n_x1 is the length of the x array, integer
@@ -4503,20 +4481,16 @@ SUBROUTINE TOWED(T,iflag)
         ! Cll = Coef_table1(0,SWEEPTABLE,SWEEPTABLE,T%TOW%AOATABLE,T%TOW%Cll_TABLE,alfa)
         ! Cm = Coef_table1(0,SWEEPTABLE,SWEEPTABLE,T%TOW%AOATABLE,T%TOW%Cm_TABLE,alfa)
         ! Cn = Coef_table1(0,SWEEPTABLE,SWEEPTABLE,T%TOW%AOATABLE,T%TOW%Cn_TABLE,alfa)
-
         T%TOW%FXAERO = -q_inf_S*T%TOW%CXb   !Do I need to use CL and CD as well? - CM 8/16/2015
         T%TOW%FYAERO =  q_inf_S*T%TOW%CYb
         T%TOW%FZAERO = -q_inf_S*T%TOW%CZb
         T%TOW%MXAERO =  q_inf_S*T%TOW%B*T%TOW%Cll
         T%TOW%MYAERO =  q_inf_S*T%TOW%C_BAR*T%TOW%Cm
         T%TOW%MZAERO =  q_inf_S*T%TOW%B*T%TOW%Cn
-        
     else if ((T%TOW%AEROFLAG .eq. 3) .and. (V_A .gt. 0)) then ! AEROFLAG = 3, use Wings Sim Tables
-       cntrl(0:10)  = (/ T%TOW%ELEVATOR,T%TOW%AILERON,T%TOW%RUDDER,0.,T%TOW%FLAPS,0.,0.,0.,0.,0.,0. /)
-
-       write(*,*) 'Functionality removed as of 1/2/2017 - Search SimTable_ForceMoment'
-       !CALL SimTable_ForceMoment(V_A,T%ATM%SOS,alfa,beta,phat,qhat,rhat,cntrl,T%TOW%CXb,T%TOW%CYb,T%TOW%CZb,T%TOW%Cll,T%TOW%Cm,T%TOW%Cn,T%TOW%C_L,T%TOW%C_D)
-        
+        cntrl(0:10)  = (/ T%TOW%ELEVATOR,T%TOW%AILERON,T%TOW%RUDDER,0.,T%TOW%FLAPS,0.,0.,0.,0.,0.,0. /)
+        write(*,*) 'Functionality removed as of 1/2/2017 - Search SimTable_ForceMoment'
+        !CALL SimTable_ForceMoment(V_A,T%ATM%SOS,alfa,beta,phat,qhat,rhat,cntrl,T%TOW%CXb,T%TOW%CYb,T%TOW%CZb,T%TOW%Cll,T%TOW%Cm,T%TOW%Cn,T%TOW%C_L,T%TOW%C_D)
         ! T%TOW%FXAERO = -q_inf_S*T%TOW%CXb   !Do I need to use CL and CD as well? - CM 8/16/2015
         ! T%TOW%FYAERO =  q_inf_S*T%TOW%CYb
         ! T%TOW%FZAERO = -q_inf_S*T%TOW%CZb
@@ -4527,10 +4501,11 @@ SUBROUTINE TOWED(T,iflag)
         T%TOW%MXAERO =  q_inf_S*T%TOW%B*T%TOW%Cll
         T%TOW%MYAERO =  q_inf_S*T%TOW%C_BAR*T%TOW%Cm
         T%TOW%MZAERO =  q_inf_S*T%TOW%B*T%TOW%Cn
-
     end if
-
   end if !AEROFORCES
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!END OF AIRCRAFT AERODYNAMIC FORCES AND MOMENTS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   ! Tether Forces and Moments
 
@@ -4653,11 +4628,7 @@ SUBROUTINE TOWED(T,iflag)
  
  if (iflag .eq. 2) then 
   write(25,*) ' '
-  write(25,*) 'AAAA IIII RRR  CCCC RRR  AAAA FFFF TTTT'
-  write(25,*) 'A  A  II  RR R CC   RR R A  A FF    TT '
-  write(25,*) 'AAAA  II  RRRR CC   RRRR AAAA FFFF  TT '
-  write(25,*) 'A  A  II  RRR  CC   RRR  A  A FF    TT '
-  write(25,*) 'A  A IIII RR R CCCC RR R A  A FF    TT '
+  write(25,*) 'Towed System'
   write(25,*) ' '
   write(25,*) 'Towed Input File: '
   write(25,*) trim(T%TOWEDINPUTFILE)

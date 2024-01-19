@@ -15,6 +15,7 @@ source/TOSIM.o: source/TOSIM.f90
 	rm -rf *.o *.exe
 	$(CC) $(MAINFLAGS) source/TOSIM.f90
 	mv TOSIM.o source/TOSIM.o
+	mv tosimdatatypes.mod source/tosimdatatypes.mod
 clean:
 	rm -rf *.o *.exe *.mod
 	rm -rf source/*.o source/*.mod
