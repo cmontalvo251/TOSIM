@@ -11,9 +11,9 @@ import sixdof as SIX
 if len(sys.argv) > 1:
     SIMULATE = int(sys.argv[1])
 else:
-    print 'Need SIMULATE flag. Put a 0 or 1 if you want to simulate or not'
-    sys.exit()
-
+    print('Need SIMULATE flag. Put a 0 or 1 if you want to simulate or not. Defaulting to 0')
+    SIMULATE = 0
+    
 if SIMULATE == 1:
     ##Compile the code
     os.system('make')
@@ -24,12 +24,14 @@ if SIMULATE == 1:
     #os.system('./LinuxRun.exe Input_Files/Hovering/TOMAD.ifiles')
     os.system('./Simulation.exe Input_Files/Hovering/TOSIM.ifiles')
 else:
-    print 'Skipping Simulation and just plotting'
+    print('Skipping Simulation and just plotting')
 
 #Kick off pdf saver
 pp = PDF(0,plt)
 
-state_data = M.dlmread('Output_Files/State.OUT',delimiter=' ')
+state_data = np.loadtxt('Output_Files/State.OUT')
+[r,c] = np.shape(state_data)
+print('Rows,Cols = ',r,c)
 
 fontSize = 14
 
@@ -98,7 +100,9 @@ for n in beads:
 #The final 8 states are the new quadcopter thrust states which I don't have plotted yet
 
 #I have found that it's easier to plot the misc file so we'll plot that instead
-misc_data = M.dlmread('Output_Files/Misc.OUT',delimiter=' ')
+misc_data = np.loadtxt('Output_Files/Misc.OUT')
+[r,c] = np.shape(misc_data)
+print('Rows,Cols = ',r,c)
 tension = misc_data[:,NBEADS*7+5] #the plus 5 comes from t,vx,vy,vz
 print('Plotting Tether State = T',0)
 plti = P.plottool(fontSize,'Time(sec)','T (lbs)','Tether')
@@ -118,7 +122,9 @@ plti.plot(time,delx,'k-',linewidth=2)
 pp.savefig()
 
 ##Control Out File
-control_data = M.dlmread('Output_Files/Controls.OUT',delimiter=' ')
+control_data = np.loadtxt('Output_Files/Controls.OUT')
+[r,c] = np.shape(control_data)
+print('Rows,Cols = ',r,c)
 time_control = control_data[:,0]
 #aileron = control_data[:,1]
 #elevator = control_data[:,2]
@@ -131,6 +137,4 @@ for i in range(1,5):
     plt.gcf().subplots_adjust(left=0.20)
     plti.plot(time,control_data[:,i]*180.0/np.pi,'k-',linewidth=2)
     pp.savefig()
-
-
 pp.close()
