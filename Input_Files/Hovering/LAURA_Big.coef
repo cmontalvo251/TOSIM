@@ -2,12 +2,12 @@
 1		!Gravity on(1) or off(0)                      
 1		!Aerodynamics on(1) or off(0) or Wings(2) or Wings Sim Tables(3)                     
 0		!Run Alpha Sweeps? on (1) off (0)                      
-0.498		!Reference area (ft^2) [wing area]                      
-0.995		!Lateral reference length (ft) [wing span]                      
+0.498		!Reference area (ft^2) [wing area]                    
+0.995		!Lateral reference length (ft) [wing span]                   
 0.5			!Longitudinal reference length (ft) [wing chord]                      
 0.000		!Reference airspeed (ft/sec)                      
 0.23630E-02	!Reference air density (slug/ft^3)                      
-1.0		!Weight? (lbf) ~roughly 453.592 grams
+3.0		!Weight? (lbf) ~roughly 453.592 grams
 0.0000		!Reference angle of attack (deg)              
 0.000174655	!Reference Ixx (slug-ft^2)                      
 0.003300591	!Reference Iyy (slug-ft^2)                      
