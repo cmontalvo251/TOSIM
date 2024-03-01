@@ -325,6 +325,7 @@ type ATMOSPHERESTRUCTURE
   real*8 :: OMEGAVEC(4,1) = 0                      ! Driver aero parameter
   real*8 :: THRUSTVEC(4,1) = 0                     ! Driver aero parameter
   real*8 :: MUVEC(4,1) = 0                         ! Driver aero parameter
+  real*8 :: AILERON = 0                            ! Adding an aileron parameter just in case we want a airplane being towed
   real*8 :: KT = 0                                 ! Driver Aero Parameter
   real*8 :: OMEGA0 = 0                             ! Driver Aero Parameter
   real*8 :: IRR = 0                                ! Driver Aero Parameter
@@ -2580,6 +2581,8 @@ SUBROUTINE DRIVER(DRIVE,iflag)
        
        DRIVE%FXAERO = 0.0; DRIVE%FYAERO = 0.0; DRIVE%FZAERO = 0.0;
        DRIVE%MXAERO = 0.0; DRIVE%MYAERO = 0.0; DRIVE%MZAERO = 0.0;
+
+       DRIVE%FXAERO = DRIVE%C_T*DRIVE%MUTHROTTLE
        
        if (DRIVE%AEROOFFON .eq. 1) then
           vATM_I(1,1) = DRIVE%VXWIND
@@ -2596,221 +2599,141 @@ SUBROUTINE DRIVER(DRIVE,iflag)
           !Compute total velocity
 
           V_A = sqrt(uaero**2 + vaero**2 + waero**2)
+          q_inf = 0.5*T%ATM%DEN*(V_A**2) !This assumes the reference area is 1
+          S = 1.0
+          q_inf_S = q_inf*S
 
-          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Quadcopter Aerodynamic Model written by Lisa Schibelius - 12/2016!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          DRIVE%FXAERO = DRIVE%FXAERO - q_inf_S*DRIVE%DXD
 
-          !Recompute KT
-          DRIVE%KT = DRIVE%C_T*((DRIVE%DEN*qPI*(DRIVE%RNEW**4)/4))
+       end if !Aerodynamic forces
 
-          !Compute Thrust
+       !At this point we should have F(XYZ)AERO and M(XYZ)AERO populated
+       DRIVE%FXCONT = 0.0; DRIVE%FYCONT = 0.0; DRIVE%FZCONT = 0.0;          
+       DRIVE%MXCONT = 0.0; DRIVE%MYCONT = 0.0; DRIVE%MZCONT = 0.0;
 
-          ! call PWM2FORCE(T)
-          sigmaF = 0.000437554764978899 !0.000437554764978899
-          omegaF = 45.42   !18.65
-          zetaF  = 0.942     !0.8533
-
-          !write(*,*) 'MUvec = ',DRIVE%MUVEC
-
-          !!! Second order filter
-          do idx = 1,4
-              C1F(idx) = -2*zetaF*TDOTVEC(idx)
-              C2F(idx) = -(omegaF)*TVEC(idx)
-              C3F(idx) = DRIVE%MUVEC(idx,1)*sigmaF*omegaF   ! replaced sigma with force
-              TDBLDOTVEC(idx) = omegaF*(C1F(idx) + C2F(idx) + C3F(idx))
-              DRIVE%THRUSTVEC(idx,1) = TVEC(idx)
-          end do
-
-          DRIVE%OMEGAVEC = sqrt(DRIVE%THRUSTVEC/DRIVE%KT)
-          sumomega = sum(DRIVE%OMEGAVEC)
-
-          !!! Make sure angular velocities of rotor does not go beyond the limit
-          IF (sumomega .ge. DRIVE%OMEGAMAX*4) then
-            do j = 1,4
-              if (DRIVE%OMEGAVEC(j,1) .gt. DRIVE%OMEGAMAX) then
-              DRIVE%OMEGAVEC(j,1) = DRIVE%OMEGAMAX
-              end if
-              if (DRIVE%OMEGAVEC(j,1) .lt. 0.00D0) then
-                DRIVE%OMEGAVEC(j,1) = 0.00D0
-              end if
-            end do
-            sumomega = sum(DRIVE%OMEGAVEC)
-            DRIVE%THRUSTVEC = DRIVE%KT*DRIVE%OMEGAVEC**2
-            do j = 1,4
-              TVEC(idx) = DRIVE%THRUSTVEC(idx,1)
-            end do
-          ENDIF
-          forcevec = DRIVE%THRUSTVEC
-          thrust = sum(DRIVE%THRUSTVEC)
-
-          !write(*,*) 'Rotor Thrust = ',forcevec,thrust
-
-          !!! Adding constraint to run Monte Carlo
-          !!! This constraint actually messed up my altitude controller
-          ! if (thrust .gt. DRIVE%WEIGHT/cos(30.0*qPI/180)) then !You need to put in theta of the quad 
-          !   thrust = DRIVE%WEIGHT/cos(30.0*qPI/180) !!Not just a static 30 degrees. That's why this didn't work.
-          ! end if
-          ! I was thinking this would be better.
-          ! if (thrust .lt. DRIVE%WEIGHT/cos(theta)) then
-          ! Increase thrust by the difference/4
-          ! Make sense?
-
-          !Aerodynamic Forces
-          if (sumomega .gt. 1e-2) then
-             DRIVE%FXAERO = -thrust*(((DRIVE%ALC/(sumomega*DRIVE%RNEW))+DRIVE%DXD)*uaero - ((DRIVE%ALS)/(sumomega*DRIVE%RNEW))*vaero)
-             DRIVE%FYAERO = -thrust*(((DRIVE%ALS)/(sumomega*DRIVE%RNEW))*uaero + (((DRIVE%ALC)/(sumomega*DRIVE%RNEW))+DRIVE%DYD)*vaero)
-             DRIVE%FZAERO = -thrust
-          end if
-
-          omegar = DRIVE%OMEGAVEC(1,1) - DRIVE%OMEGAVEC(2,1) + DRIVE%OMEGAVEC(3,1) - DRIVE%OMEGAVEC(4,1)
-          Gammavec(1,1) = DRIVE%IRR * omegar * qb
-          Gammavec(2,1) = -DRIVE%IRR * omegar * pb
-          Gammavec(3,1) = 0
-          !gotodynamics
-
-          !!!!!!!!! Aerodynamics
-          bquad = DRIVE%C_TAU*((DRIVE%DEN*qPI*(DRIVE%RNEW**5)/4))
-
-          !!! According to dynamic equations, a positive roll will have rotors 1,4 > 2,3. This was previously 2,3>1,4
-          ! Since T3 = T1*Ltheta_front/Ltheta_back we're just going to do this for simplicity
-          DRIVE%MXAERO = Gammavec(1,1) + (DRIVE%LPHI12*(TVEC(1) - TVEC(2)) + DRIVE%LPHI34*(TVEC(4) - TVEC(3)))
-          DRIVE%MYAERO = Gammavec(2,1) + DRIVE%LTHETA12*(TVEC(1) +TVEC(2) - TVEC(3) -TVEC(4))
-          DRIVE%MZAERO = Gammavec(3,1) + bquad*(DRIVE%OMEGAVEC(1,1)**2 - DRIVE%OMEGAVEC(2,1)**2 + DRIVE%OMEGAVEC(3,1)**2 - DRIVE%OMEGAVEC(4,1)**2)
-          ! DRIVE%MZAERO = Gammavec(3,1) + bquad*(TVEC(1)**2 - TVEC(2)**2 + TVEC(3)**2 - TVEC(4)**2)
-
-          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!END OF QUADCOPTER AERODYNAMIC MODEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-          !At this point we should have F(XYZ)AERO and M(XYZ)AERO populated
-
-          DRIVE%FXCONT = 0.0; DRIVE%FYCONT = 0.0; DRIVE%FZCONT = 0.0;          
-          DRIVE%MXCONT = 0.0; DRIVE%MYCONT = 0.0; DRIVE%MZCONT = 0.0;
-
-          !Don't forget to add Tether forces
-          if ((DRIVE%THR_DYNOFFON .eq. 1) .and. (DRIVE%THR_ELASOFFON .eq. 1)) then
-             if (isnan(DRIVE%FTETHERX) .or. isnan(DRIVE%FTETHERY)) then
-                write(*,*) 'Sorry dude Nans in tether model detected - I suggest lowering your timestep'
-                write(*,*) 'Current Time = ',DRIVE%TIME
-                write(*,*) 'Tether Forces = ',DRIVE%FTETHERX,DRIVE%FTETHERY
-                STOP
-             else
-                C_Ftether_I(1,1) = DRIVE%FTETHERX
-                C_Ftether_I(2,1) = DRIVE%FTETHERY
-                C_Ftether_I(3,1) = DRIVE%FTETHERZ
-                C_Ftether_B = matmul(DRIVE%TCI,C_Ftether_I)
-                DRIVE%FXCONT = C_Ftether_B(1,1)
-                DRIVE%FYCONT = C_Ftether_B(2,1)
-                DRIVE%FZCONT = C_Ftether_B(3,1)
+       !Don't forget to add Tether forces
+       if ((DRIVE%THR_DYNOFFON .eq. 1) .and. (DRIVE%THR_ELASOFFON .eq. 1)) then
+          if (isnan(DRIVE%FTETHERX) .or. isnan(DRIVE%FTETHERY)) then
+             write(*,*) 'Sorry dude Nans in tether model detected - I suggest lowering your timestep'
+             write(*,*) 'Current Time = ',DRIVE%TIME
+             write(*,*) 'Tether Forces = ',DRIVE%FTETHERX,DRIVE%FTETHERY
+             STOP
+          else
+             C_Ftether_I(1,1) = DRIVE%FTETHERX
+             C_Ftether_I(2,1) = DRIVE%FTETHERY
+             C_Ftether_I(3,1) = DRIVE%FTETHERZ
+             C_Ftether_B = matmul(DRIVE%TCI,C_Ftether_I)
+             DRIVE%FXCONT = C_Ftether_B(1,1)
+             DRIVE%FYCONT = C_Ftether_B(2,1)
+             DRIVE%FZCONT = C_Ftether_B(3,1)
                 
-                !Skew symmetric operator on cradle cg to tether connection point
+             !Skew symmetric operator on cradle cg to tether connection point
     
-                S_rCF_B(1,1) = 0.0
-                S_rCF_B(1,2) = -rCF_B(3,1)
-                S_rCF_B(1,3) = rCF_B(2,1)
-                S_rCF_B(2,1) = rCF_B(3,1)
-                S_rCF_B(2,2) = 0.0
-                S_rCF_B(2,3) = -rCF_B(1,1)
-                S_rCF_B(3,1) = -rCF_B(2,1)
-                S_rCF_B(3,2) = rCF_B(1,1)
-                S_rCF_B(3,3) = 0.0
+             S_rCF_B(1,1) = 0.0
+             S_rCF_B(1,2) = -rCF_B(3,1)
+             S_rCF_B(1,3) = rCF_B(2,1)
+             S_rCF_B(2,1) = rCF_B(3,1)
+             S_rCF_B(2,2) = 0.0
+             S_rCF_B(2,3) = -rCF_B(1,1)
+             S_rCF_B(3,1) = -rCF_B(2,1)
+             S_rCF_B(3,2) = rCF_B(1,1)
+             S_rCF_B(3,3) = 0.0
 
-                C_Mtether_B = matmul(S_rCF_B,C_Ftether_B)
-        
-                DRIVE%MXCONT = C_Mtether_B(1,1)
-                DRIVE%MYCONT = C_Mtether_B(2,1)
-                DRIVE%MZCONT = C_Mtether_B(3,1)
-             end if
+             C_Mtether_B = matmul(S_rCF_B,C_Ftether_B)
+
+             DRIVE%MXCONT = C_Mtether_B(1,1)
+             DRIVE%MYCONT = C_Mtether_B(2,1)
+             DRIVE%MZCONT = C_Mtether_B(3,1)
           end if
+       end if
 
-          ! Total Forces and Moments
-
-          DRIVE%FXTOTAL = DRIVE%FXGRAV + DRIVE%FXAERO + DRIVE%FXCONT
-          DRIVE%FYTOTAL = DRIVE%FYGRAV + DRIVE%FYAERO + DRIVE%FYCONT
-          !write(*,*) 'Z Force = ',DRIVE%FZGRAV,DRIVE%FZAERO,DRIVE%FZCONT
-          DRIVE%FZTOTAL = DRIVE%FZGRAV + DRIVE%FZAERO + DRIVE%FZCONT
-          DRIVE%MXTOTAL = DRIVE%MXGRAV + DRIVE%MXAERO + DRIVE%MXCONT
-          DRIVE%MYTOTAL = DRIVE%MYGRAV + DRIVE%MYAERO + DRIVE%MYCONT
-          DRIVE%MZTOTAL = DRIVE%MZGRAV + DRIVE%MZAERO + DRIVE%MZCONT
-
-          ! State Derivatives
-  
-          xcgdot = DRIVE%TIC(1,1)*ub + DRIVE%TIC(1,2)*vb + DRIVE%TIC(1,3)*wb
-          ycgdot = DRIVE%TIC(2,1)*ub + DRIVE%TIC(2,2)*vb + DRIVE%TIC(2,3)*wb
-          zcgdot = DRIVE%TIC(3,1)*ub + DRIVE%TIC(3,2)*vb + DRIVE%TIC(3,3)*wb  
-
-          phidot = pb + sphi * ttheta * qb + cphi * ttheta * rb;
-          thetadot = cphi * qb - sphi * rb;
-          psidot = (sphi / ctheta) * qb + (cphi / ctheta) * rb;
-          ubdot = DRIVE%FXTOTAL/DRIVE%MASS + rb*vb - qb*wb
-          vbdot = DRIVE%FYTOTAL/DRIVE%MASS + pb*wb - rb*ub
-          !write(*,*) 'Weight and Z =',DRIVE%FZTOTAL,DRIVE%MASS
-          wbdot = DRIVE%FZTOTAL/DRIVE%MASS + qb*ub - pb*vb
-          
-          c1 = DRIVE%MXTOTAL - pb*(qb*DRIVE%IXZ-rb*DRIVE%IXY) - qb*(qb*DRIVE%IYZ-rb*DRIVE%IYY) - rb*(qb*DRIVE%IZZ-rb*DRIVE%IYZ)
-          c2 = DRIVE%MYTOTAL - pb*(rb*DRIVE%IXX-pb*DRIVE%IXZ) - qb*(rb*DRIVE%IXY-pb*DRIVE%IYZ) - rb*(rb*DRIVE%IXZ-pb*DRIVE%IZZ)
-          c3 = DRIVE%MZTOTAL - pb*(pb*DRIVE%IXY-qb*DRIVE%IXX) - qb*(pb*DRIVE%IYY-qb*DRIVE%IXY) - rb*(pb*DRIVE%IYZ-qb*DRIVE%IXZ)
-          pbdot = DRIVE%IXXI*c1 + DRIVE%IXYI*c2 + DRIVE%IXZI*c3
-          qbdot = DRIVE%IXYI*c1 + DRIVE%IYYI*c2 + DRIVE%IYZI*c3
-          rbdot = DRIVE%IXZI*c1 + DRIVE%IYZI*c2 + DRIVE%IZZI*c3
-
-          ! Wrap State Derivatives
-  
-          DRIVE%STATEDOT(1) = xcgdot
-          DRIVE%STATEDOT(2) = ycgdot
-          DRIVE%STATEDOT(2) = ycgdot
-          DRIVE%STATEDOT(3) = zcgdot
-          DRIVE%STATEDOT(4) = phidot
-          DRIVE%STATEDOT(5) = thetadot
-          DRIVE%STATEDOT(6) = psidot
-          DRIVE%STATEDOT(7) = ubdot
-          DRIVE%STATEDOT(8) = vbdot
-          DRIVE%STATEDOT(9) = wbdot
-          DRIVE%STATEDOT(10) = pbdot 
-          DRIVE%STATEDOT(11) = qbdot 
-          DRIVE%STATEDOT(12) = rbdot
-          DRIVE%STATEDOT(13) = TDOTVEC(1)
-          DRIVE%STATEDOT(14) = TDBLDOTVEC(1)
-          DRIVE%STATEDOT(15) = TDOTVEC(2)
-          DRIVE%STATEDOT(16) = TDBLDOTVEC(2)
-          DRIVE%STATEDOT(17) = TDOTVEC(3)
-          DRIVE%STATEDOT(18) = TDBLDOTVEC(3)
-          DRIVE%STATEDOT(19) = TDOTVEC(4)
-          DRIVE%STATEDOT(20) = TDBLDOTVEC(4)
-
-          !write(*,*) 'Statedot = ',DRIVE%STATEDOT
+       ! Total Forces and Moments
        
-          !!Save some stuff for Tether model
-          DRIVE%XDOT = xcgdot
-          DRIVE%YDOT = ycgdot
-          DRIVE%ZDOT = zcgdot
+       DRIVE%FXTOTAL = DRIVE%FXGRAV + DRIVE%FXAERO + DRIVE%FXCONT
+       DRIVE%FYTOTAL = DRIVE%FYGRAV + DRIVE%FYAERO + DRIVE%FYCONT
+       !write(*,*) 'Z Force = ',DRIVE%FZGRAV,DRIVE%FZAERO,DRIVE%FZCONT
+       DRIVE%FZTOTAL = DRIVE%FZGRAV + DRIVE%FZAERO + DRIVE%FZCONT
+       DRIVE%MXTOTAL = DRIVE%MXGRAV + DRIVE%MXAERO + DRIVE%MXCONT
+       DRIVE%MYTOTAL = DRIVE%MYGRAV + DRIVE%MYAERO + DRIVE%MYCONT
+       DRIVE%MZTOTAL = DRIVE%MZGRAV + DRIVE%MZAERO + DRIVE%MZCONT
 
-          !Compute Reel Locations - r_reel = r_cg + TIB*r_body
-          rCG_I(1,1) = xcg 
-          rCG_I(2,1) = ycg
-          rCG_I(3,1) = zcg ! + (1/3) !REVISIT
-          rReel_I = rCG_I + matmul(DRIVE%TIC,rCF_B)
-          DRIVE%XREEL = rReel_I(1,1)
-          DRIVE%YREEL = rReel_I(2,1)
-          DRIVE%ZREEL = rReel_I(3,1)
-          !Compute Reel Dot - v_reel = v_cg + TIB*(omega x r_body)
-          v_CG_I(1,1) = xcgdot
-          v_CG_I(2,1) = ycgdot
-          v_CG_I(3,1) = zcgdot
-          S_wt_B(1,1) = 0.0
-          S_wt_B(1,2) = -rb
-          S_wt_B(1,3) = qb
-          S_wt_B(2,1) = rb
-          S_wt_B(2,2) = 0.0
-          S_wt_B(2,3) = -pb
-          S_wt_B(3,1) = -qb
-          S_wt_B(3,2) = pb
-          S_wt_B(3,3) = 0.0
-          v_Reel_I = v_CG_I + matmul(DRIVE%TIC,matmul(S_wt_B,rCF_B))
-          DRIVE%XREELDOT = v_Reel_I(1,1)
-          DRIVE%YREELDOT = v_Reel_I(2,1)
-          DRIVE%ZREELDOT = v_Reel_I(3,1)
-       end if !AEROOFFON
+       ! State Derivatives
 
+       xcgdot = DRIVE%TIC(1,1)*ub + DRIVE%TIC(1,2)*vb + DRIVE%TIC(1,3)*wb
+       ycgdot = DRIVE%TIC(2,1)*ub + DRIVE%TIC(2,2)*vb + DRIVE%TIC(2,3)*wb
+       zcgdot = DRIVE%TIC(3,1)*ub + DRIVE%TIC(3,2)*vb + DRIVE%TIC(3,3)*wb  
+
+       phidot = pb + sphi * ttheta * qb + cphi * ttheta * rb;
+       thetadot = cphi * qb - sphi * rb;
+       psidot = (sphi / ctheta) * qb + (cphi / ctheta) * rb;
+       ubdot = DRIVE%FXTOTAL/DRIVE%MASS + rb*vb - qb*wb
+       vbdot = DRIVE%FYTOTAL/DRIVE%MASS + pb*wb - rb*ub
+       !write(*,*) 'Weight and Z =',DRIVE%FZTOTAL,DRIVE%MASS
+       wbdot = DRIVE%FZTOTAL/DRIVE%MASS + qb*ub - pb*vb
+
+       c1 = DRIVE%MXTOTAL - pb*(qb*DRIVE%IXZ-rb*DRIVE%IXY) - qb*(qb*DRIVE%IYZ-rb*DRIVE%IYY) - rb*(qb*DRIVE%IZZ-rb*DRIVE%IYZ)
+       c2 = DRIVE%MYTOTAL - pb*(rb*DRIVE%IXX-pb*DRIVE%IXZ) - qb*(rb*DRIVE%IXY-pb*DRIVE%IYZ) - rb*(rb*DRIVE%IXZ-pb*DRIVE%IZZ)
+       c3 = DRIVE%MZTOTAL - pb*(pb*DRIVE%IXY-qb*DRIVE%IXX) - qb*(pb*DRIVE%IYY-qb*DRIVE%IXY) - rb*(pb*DRIVE%IYZ-qb*DRIVE%IXZ)
+       pbdot = DRIVE%IXXI*c1 + DRIVE%IXYI*c2 + DRIVE%IXZI*c3
+       qbdot = DRIVE%IXYI*c1 + DRIVE%IYYI*c2 + DRIVE%IYZI*c3
+       rbdot = DRIVE%IXZI*c1 + DRIVE%IYZI*c2 + DRIVE%IZZI*c3
+
+       ! Wrap State Derivatives
+
+       DRIVE%STATEDOT(1) = xcgdot
+       DRIVE%STATEDOT(2) = ycgdot
+       DRIVE%STATEDOT(2) = ycgdot
+       DRIVE%STATEDOT(3) = zcgdot
+       DRIVE%STATEDOT(4) = phidot
+       DRIVE%STATEDOT(5) = thetadot
+       DRIVE%STATEDOT(6) = psidot
+       DRIVE%STATEDOT(7) = ubdot
+       DRIVE%STATEDOT(8) = vbdot
+       DRIVE%STATEDOT(9) = wbdot
+       DRIVE%STATEDOT(10) = pbdot 
+       DRIVE%STATEDOT(11) = qbdot 
+       DRIVE%STATEDOT(12) = rbdot
+       DRIVE%STATEDOT(13) = TDOTVEC(1)
+       DRIVE%STATEDOT(14) = TDBLDOTVEC(1)
+       DRIVE%STATEDOT(15) = TDOTVEC(2)
+       DRIVE%STATEDOT(16) = TDBLDOTVEC(2)
+       DRIVE%STATEDOT(17) = TDOTVEC(3)
+       DRIVE%STATEDOT(18) = TDBLDOTVEC(3)
+       DRIVE%STATEDOT(19) = TDOTVEC(4)
+       DRIVE%STATEDOT(20) = TDBLDOTVEC(4)
+
+       !write(*,*) 'Statedot = ',DRIVE%STATEDOT
+
+       !!Save some stuff for Tether model
+       DRIVE%XDOT = xcgdot
+       DRIVE%YDOT = ycgdot
+       DRIVE%ZDOT = zcgdot
+
+       !Compute Reel Locations - r_reel = r_cg + TIB*r_body
+       rCG_I(1,1) = xcg 
+       rCG_I(2,1) = ycg
+       rCG_I(3,1) = zcg ! + (1/3) !REVISIT
+       rReel_I = rCG_I + matmul(DRIVE%TIC,rCF_B)
+       DRIVE%XREEL = rReel_I(1,1)
+       DRIVE%YREEL = rReel_I(2,1)
+       DRIVE%ZREEL = rReel_I(3,1)
+       !Compute Reel Dot - v_reel = v_cg + TIB*(omega x r_body)
+       v_CG_I(1,1) = xcgdot
+       v_CG_I(2,1) = ycgdot
+       v_CG_I(3,1) = zcgdot
+       S_wt_B(1,1) = 0.0
+       S_wt_B(1,2) = -rb
+       S_wt_B(1,3) = qb
+       S_wt_B(2,1) = rb
+       S_wt_B(2,2) = 0.0
+       S_wt_B(2,3) = -pb
+       S_wt_B(3,1) = -qb
+       S_wt_B(3,2) = pb
+       S_wt_B(3,3) = 0.0
+       v_Reel_I = v_CG_I + matmul(DRIVE%TIC,matmul(S_wt_B,rCF_B))
+       DRIVE%XREELDOT = v_Reel_I(1,1)
+       DRIVE%YREELDOT = v_Reel_I(2,1)
+       DRIVE%ZREELDOT = v_Reel_I(3,1)
     end if !End MODNO
     ! Integration Model 
     if (DRIVE%MODNO .eq. 0) then
@@ -3065,9 +2988,13 @@ end if
      write(25,*) 'Contact Flag (0=Off, 1=On): ',DRIVE%CONTOFFON
      write(25,*) 'Mass (kg): ',DRIVE%MASS
      write(25,*) 'Weight (N): ',DRIVE%WEIGHT
+     write(25,*) 'Gravity (ft/s^2): ',DRIVE%GRAVITY
      write(25,*) 'Stationline of Mass Center (m): ',DRIVE%SLCG
      write(25,*) 'Buttline of Mass Center (m): ',DRIVE%BLCG
      write(25,*) 'Waterline of Mass Center (m): ',DRIVE%WLCG
+     write(25,*) 'Stationline of Tether Reel Point on Driver: ', DRIVE%SLREEL
+     write(25,*) 'Buttline of Tether Reel Point on Driver: ', DRIVE%BLREEL
+     write(25,*) 'Waterline of Tether Reel Point on Driver: ', DRIVE%WLREEL
      write(25,*) 'Ixx (kg m^2): ',DRIVE%IXX
      write(25,*) 'Iyy (kg m^2): ',DRIVE%IYY
      write(25,*) 'Izz (kg m^2): ',DRIVE%IZZ
@@ -3081,23 +3008,10 @@ end if
      write(25,*) 'Ixz Inverse (1/(kg m^2)): ',DRIVE%IXZI
      write(25,*) 'Iyz Inverse (1/(kg m^2)): ',DRIVE%IYZI
      write(25,*) 'Turn Radius of AC(m): ',  DRIVE%TURNRADIUS
-     write(25,*) 'Aero Parameter: ', DRIVE%ALC
-     write(25,*) 'Aero Parameter: ', DRIVE%ALS
      write(25,*) 'Aero Parameter: ', DRIVE%DXD
-     write(25,*) 'Aero Parameter: ', DRIVE%DYD
-     write(25,*) 'Aero Parameter: ', DRIVE%RNEW
      write(25,*) 'Aero Parameter: ', DRIVE%C_T
-     write(25,*) 'Aero Parameter: ', DRIVE%C_TAU
-     write(25,*) 'Aero Parameter: ', DRIVE%LPHI12
-     write(25,*) 'Aero Parameter: ', DRIVE%LPHI34
-     write(25,*) 'Aero Parameter: ', DRIVE%LTHETA12
-     write(25,*) 'Aero Parameter: ', DRIVE%LTHETA34
-     write(25,*) 'Aero Parameter: ', DRIVE%OMEGAMAX
   else
      write(25,*) ' '
-     write(25,*) 'Stationline of Tether Reel Point on Driver: ', DRIVE%SLREEL
-     write(25,*) 'Buttline of Tether Reel Point on Driver: ', DRIVE%BLREEL
-     write(25,*) 'Waterline of Tether Reel Point on Driver: ', DRIVE%WLREEL
      write(25,*) 'Stationline of Airwake grid start on Driver: ', DRIVE%SLAIRWAKE
      write(25,*) 'Buttline of Airwake grid start on Driver: ', DRIVE%BLAIRWAKE
      write(25,*) 'Waterline of Airwake grid start on Driver: ', DRIVE%WLAIRWAKE
@@ -3156,6 +3070,7 @@ end if
    write(*,*) 'Error Opening Driver Input File => ',DRIVE%INPUTFILE,' <= ';PAUSE; STOP
   end if
   rewind(94)
+
   read(unit=94,fmt=*,iostat=readflag) readreal; DRIVE%OFFON = readreal
   read(unit=94,fmt=*,iostat=readflag) readreal; DRIVE%MODNO = readreal
 
@@ -3178,53 +3093,22 @@ end if
      read(unit=94,fmt=*,iostat=readflag) DRIVE%IXZ
      read(unit=94,fmt=*,iostat=readflag) DRIVE%IYZ
      read(unit=94,fmt=*,iostat=readflag) DRIVE%TURNRADIUS
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%ALC
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%ALS
      read(unit=94,fmt=*,iostat=readflag) DRIVE%DXD
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%DYD
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%RNEW
      read(unit=94,fmt=*,iostat=readflag) DRIVE%C_T
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%C_TAU
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%LPHI12
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%LPHI34
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%LTHETA12
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%LTHETA34
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%OMEGAMAX
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%IRR
      read(unit=94,fmt=*,iostat=readflag) DRIVE%MS_MIN
      read(unit=94,fmt=*,iostat=readflag) DRIVE%MS_MAX
      read(unit=94,fmt=*,iostat=readflag) readreal; DRIVE%CONTROLOFFON = int(readreal)
      read(unit=94,fmt=*,iostat=readflag) DRIVE%KPXDRIVE
      read(unit=94,fmt=*,iostat=readflag) DRIVE%KIXDRIVE
      read(unit=94,fmt=*,iostat=readflag) DRIVE%KDXDRIVE
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KPYDRIVE
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KIYDRIVE
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KDYDRIVE
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KPZDRIVE
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KIZDRIVE
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KDZDRIVE
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KPPHI
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KIPHI
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KDPHI
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KPTHETA
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KITHETA
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KDTHETA
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KPPSI
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KIPSI
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KDPSI
      read(unit=94,fmt=*,iostat=readflag) DRIVE%XINTEGRAL 
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%YINTEGRAL 
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%ZINTEGRAL
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%PHIINTEGRAL 
      read(unit=94,fmt=*,iostat=readflag) DRIVE%THETAINTEGRAL
      read(unit=94,fmt=*,iostat=readflag) DRIVE%PSIINTEGRAL
      read(unit=94,fmt=*,iostat=readflag) DRIVE%UCOMMAND !!Changed to UCOMMAND for forward flight 
      read(unit=94,fmt=*,iostat=readflag) DRIVE%YCOMMAND
      read(unit=94,fmt=*,iostat=readflag) DRIVE%ZCOMMAND
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%UINTEGRAL
-     !read(unit=94,fmt=*,iostat=readflag) DRIVE%WAYPOINT
 
-     DRIVE%WAYPOINT = 1
+     DRIVE%WAYPOINT = 1 !This is always defaulted to 1
 
      !!!DO SOME CALCULATIONS ON driver
      DRIVE%MASS = DRIVE%WEIGHT/DRIVE%GRAVITY 
@@ -3321,8 +3205,7 @@ end if
   write(*,*) 'DRIVER Load Complete'
 
   DRIVE%DQFLAG = 1
-
-      
+  
   RETURN
    
  end if
@@ -4241,7 +4124,7 @@ SUBROUTINE TOWED(T,iflag)
   if (T%TOW%AEROFLAG .gt. 0) then !If AEROFLAG is greater than 0 it is either a 1 or a 2 - CM 8/16/2015
     !Compute Atmopsheric density and winds
 
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!AIRCRAFT AERODYNAMIC MODEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TOWED AERODYNAMIC MODEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     if (V_A .eq. 0) then
         V_A = uaero
@@ -4249,160 +4132,92 @@ SUBROUTINE TOWED(T,iflag)
     !!Dynamic pressure
 
     q_inf = 0.5*T%ATM%DEN*(V_A**2)
-    q_inf_S = 0.5*T%ATM%DEN*(V_A**2)*T%TOW%SAREA  
+    q_inf_S = 0.5*T%ATM%DEN*(V_A**2)*T%TOW%SAREA
 
-    !Mach number
-    T%ATM%SOS = 1086.336; !HARDCODED REVISIT REVISIT
-    MACH = V_A/T%ATM%SOS
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Quadcopter Aerodynamic Model written by Lisa Schibelius - 12/2016!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    !!Angle of attack and sideslip and alfahat/uhat/phat/qhat/rhat
+    !Recompute KT
+    T%TOW%KT = T%TOW%C_T*((T%TOW%DEN*qPI*(T%TOW%RNEW**4)/4))
+    
+    !Compute Thrust
+    
+    ! call PWM2FORCE(T)
+    sigmaF = 0.000437554764978899 !0.000437554764978899
+    omegaF = 45.42   !18.65
+    zetaF  = 0.942     !0.8533
 
-    if (abs(uaero) .gt. 0) then
-        alfa = atan2(waero,uaero)
-    else
-        alfa = 0
+    !write(*,*) 'MUvec = ',T%TOW%MUVEC
+
+    !!! Second order filter
+    do idx = 1,4
+       C1F(idx) = -2*zetaF*TDOTVEC(idx)
+       C2F(idx) = -(omegaF)*TVEC(idx)
+       C3F(idx) = T%TOW%MUVEC(idx,1)*sigmaF*omegaF   ! replaced sigma with force
+       TDBLDOTVEC(idx) = omegaF*(C1F(idx) + C2F(idx) + C3F(idx))
+       T%TOW%THRUSTVEC(idx,1) = TVEC(idx)
+    end do
+
+    T%TOW%OMEGAVEC = sqrt(T%TOW%THRUSTVEC/T%TOW%KT)
+    sumomega = sum(T%TOW%OMEGAVEC)
+
+    !!! Make sure angular velocities of rotor does not go beyond the limit
+    IF (sumomega .ge. T%TOW%OMEGAMAX*4) then
+       do j = 1,4
+          if (T%TOW%OMEGAVEC(j,1) .gt. T%TOW%OMEGAMAX) then
+             T%TOW%OMEGAVEC(j,1) = T%TOW%OMEGAMAX
+          end if
+          if (T%TOW%OMEGAVEC(j,1) .lt. 0.00D0) then
+             T%TOW%OMEGAVEC(j,1) = 0.00D0
+          end if
+       end do
+       sumomega = sum(T%TOW%OMEGAVEC)
+       T%TOW%THRUSTVEC = T%TOW%KT*T%TOW%OMEGAVEC**2
+       do j = 1,4
+          TVEC(idx) = T%TOW%THRUSTVEC(idx,1)
+       end do
+    ENDIF
+    forcevec = T%TOW%THRUSTVEC
+    thrust = sum(T%TOW%THRUSTVEC)
+
+    !write(*,*) 'Rotor Thrust = ',forcevec,thrust
+
+    !!! Adding constraint to run Monte Carlo
+    !!! This constraint actually messed up my altitude controller
+    ! if (thrust .gt. T%TOW%WEIGHT/cos(30.0*qPI/180)) then !You need to put in theta of the quad 
+    !   thrust = T%TOW%WEIGHT/cos(30.0*qPI/180) !!Not just a static 30 degrees. That's why this didn't work.
+    ! end if
+    ! I was thinking this would be better.
+    ! if (thrust .lt. T%TOW%WEIGHT/cos(theta)) then
+    ! Increase thrust by the difference/4
+    ! Make sense?
+
+    !Aerodynamic Forces
+    if (sumomega .gt. 1e-2) then
+       T%TOW%FXAERO = -thrust*(((T%TOW%ALC/(sumomega*T%TOW%RNEW))+T%TOW%DXD)*uaero - ((T%TOW%ALS)/(sumomega*T%TOW%RNEW))*vaero)
+       T%TOW%FYAERO = -thrust*(((T%TOW%ALS)/(sumomega*T%TOW%RNEW))*uaero + (((T%TOW%ALC)/(sumomega*T%TOW%RNEW))+T%TOW%DYD)*vaero)
+       T%TOW%FZAERO = -thrust
     end if
-    if (V_A .gt. 0) then
-        beta = asin(vaero/V_A)
-        wbdot = T%TOW%STATEDOT(10)
-        alfadot = wbdot/V_A
-        alfahat = alfadot * T%TOW%C_BAR / (2*V_A)
-        uhat = uaero/V_A
-        phat = pb*T%TOW%B    /(2*V_A)
-        qhat = qb*T%TOW%C_BAR/(2*V_A)
-        rhat = rb*T%TOW%B    /(2*V_A)
-    else
-        beta = 0
-        alfahat = 0
-        uhat = 0
-        phat = 0
-        qhat = 0
-        rhat = 0
-    end if
-    calfa = cos(alfa)
-    salfa = sin(alfa)
 
-    if (T%TOW%AEROFLAG .eq. 1) then !linear expansion
+    omegar = T%TOW%OMEGAVEC(1,1) - T%TOW%OMEGAVEC(2,1) + T%TOW%OMEGAVEC(3,1) - T%TOW%OMEGAVEC(4,1)
+    Gammavec(1,1) = T%TOW%IRR * omegar * qb
+    Gammavec(2,1) = -T%TOW%IRR * omegar * pb
+    Gammavec(3,1) = 0
+    !gotodynamics
 
-        !!Aspect Ratio
-        AR = (T%TOW%B**2)/T%TOW%SAREA
-        
-        !!THRUST MODEL
-        T_A = (T%TOW%T0 + T%TOW%TPRIME*V_A + T%TOW%TDBLPRIME*V_A**2)*(T%ATM%DEN/T%ATM%DEN)**T%TOW%DENEXP
+    !!!!!!!!! Aerodynamics
+    bquad = T%TOW%C_TAU*((T%TOW%DEN*qPI*(T%TOW%RNEW**5)/4))
 
-        !!!Lift Drag and Side force
-        T%TOW%C_L = T%TOW%C_L_M*MACH + T%TOW%C_L_ALPHAHAT*alfahat + T%TOW%C_L_0 + T%TOW%C_L_ALPHA*alfa + T%TOW%C_L_UHAT*uhat + T%TOW%C_L_Q*qhat + T%TOW%C_L_DE*T%TOW%ELEVATOR + T%TOW%C_L_DF*T%TOW%FLAPS
-        C_Y = T%TOW%C_Y_BETA*beta + T%TOW%C_Y_P*phat + T%TOW%C_Y_R*rhat + T%TOW%C_Y_DR*T%TOW%RUDDER + T%TOW%C_Y_DA*T%TOW%AILERON
-        T%TOW%C_D = T%TOW%C_D_M*MACH + T%TOW%C_D_ALPHAHAT*alfahat + T%TOW%C_D_0 + T%TOW%C_D_ALPHA2*alfa + (T%TOW%C_L**2)/(PI*AR) + T%TOW%C_D_UHAT*uhat + T%TOW%C_D_DE*T%TOW%ELEVATOR + T%TOW%C_D_Q*qhat + T%TOW%C_D_DF*T%TOW%FLAPS
+    !!! According to dynamic equations, a positive roll will have rotors 1,4 > 2,3. This was previously 2,3>1,4
+    ! Since T3 = T1*Ltheta_front/Ltheta_back we're just going to do this for simplicity
+    T%TOW%MXAERO = Gammavec(1,1) + (T%TOW%LPHI12*(TVEC(1) - TVEC(2)) + T%TOW%LPHI34*(TVEC(4) - TVEC(3)))
+    T%TOW%MYAERO = Gammavec(2,1) + T%TOW%LTHETA12*(TVEC(1) +TVEC(2) - TVEC(3) -TVEC(4))
+    T%TOW%MZAERO = Gammavec(3,1) + bquad*(T%TOW%OMEGAVEC(1,1)**2 - T%TOW%OMEGAVEC(2,1)**2 + T%TOW%OMEGAVEC(3,1)**2 - T%TOW%OMEGAVEC(4,1)**2)
+    ! T%TOW%MZAERO = Gammavec(3,1) + bquad*(TVEC(1)**2 - TVEC(2)**2 + TVEC(3)**2 - TVEC(4)**2)
 
-        !!Roll,pitch and yaw coefficients
-        T%TOW%Cll = T%TOW%C_roll_ALPHA*alfa + T%TOW%C_L_BETA*beta + T%TOW%C_L_P*phat + T%TOW%C_L_R*rhat + T%TOW%C_L_DR*T%TOW%RUDDER + T%TOW%C_L_DA*T%TOW%AILERON
-        T%TOW%Cm = T%TOW%C_M_BETA*beta + T%TOW%C_M_M*MACH + T%TOW%C_M_ALPHAHAT*alfahat + T%TOW%C_M_0 + T%TOW%C_M_ALPHA*alfa + T%TOW%C_M_UHAT*uhat + T%TOW%C_M_Q*qhat + T%TOW%C_M_DE*T%TOW%ELEVATOR + T%TOW%C_M_DF*T%TOW%FLAPS
-        T%TOW%Cn = T%TOW%C_N_ALPHA*alfa + T%TOW%C_N_BETA*beta + T%TOW%C_N_P*phat + T%TOW%C_N_R*rhat + T%TOW%C_N_DR*T%TOW%RUDDER + T%TOW%C_N_DA*T%TOW%AILERON
-
-        !!!!!!! DELETE THIS. Nghia was just messing around with the equations so he can understand it better.
-        ! T%TOW%C_L =  T%TOW%C_L_0 + T%TOW%C_L_ALPHA*alfa 
-        ! C_Y = T%TOW%C_Y_BETA*beta 
-        ! T%TOW%C_D =  T%TOW%C_D_0 + T%TOW%C_D_ALPHA2*alfa + (T%TOW%C_L**2)/(PI*AR) 
-
-        ! T%TOW%Cll =  T%TOW%C_L_P*phat
-        ! T%TOW%Cm =  T%TOW%C_M_0 + T%TOW%C_M_ALPHA*alfa + T%TOW%C_M_Q*qhat 
-        ! T%TOW%Cn =  T%TOW%C_N_BETA*beta + T%TOW%C_N_R*rhat
-        ! write(*,*) V_A
-
-        ! write(*,*) T%TOW%C_BAR
-
-        !!!!! Aircraft forces and moment model
-        T%TOW%FXAERO = -q_inf_S*(calfa*(T%TOW%C_D) - salfa*T%TOW%C_L) + T_A
-        T%TOW%FYAERO =  q_inf_S*C_Y
-        T%TOW%FZAERO = -q_inf_S*(salfa*(T%TOW%C_D) + calfa*T%TOW%C_L)
-        T%TOW%MXAERO =  q_inf_S*T%TOW%B*T%TOW%Cll
-        T%TOW%MYAERO =  q_inf_S*T%TOW%C_BAR*T%TOW%Cm
-        T%TOW%MZAERO =  q_inf_S*T%TOW%B*T%TOW%Cn
-
-        !!!!!! REVISIT need the correct values or ballpark estimates.
-        !!!!! BOX aerodynamic forces and moment model
-        ! xcgcp = 1
-        ! ycgcp = 1 
-        ! zcgcp = 1
-
-        ! T%TOW%C_X_BOX = T%TOW%C_D_0 
-        ! T%TOW%C_Y_BOX = T%TOW%C_L_M 
-        ! T%TOW%C_Z_BOX = T%TOW%C_D_M 
-        ! T%TOW%C_L_BOX = T%TOW%C_M_M 
-        ! T%TOW%C_M_BOX = T%TOW%C_L_ALPHA
-        ! T%TOW%C_N_BOX = T%TOW%C_D_ALPHA2
-        ! T%TOW%C_L_P_BOX = T%TOW%C_roll_ALPHA 
-        ! T%TOW%C_M_Q_BOX = T%TOW%C_M_ALPHA  
-        ! T%TOW%C_N_R_BOX = T%TOW%C_N_ALPHA
-
-        ! T%TOW%FXAERO = q_inf_S*T%TOW%C_X_BOX 
-        ! T%TOW%FYAERO = q_inf_S*T%TOW%C_Y_BOX
-        ! T%TOW%FZAERO = q_inf_S*T%TOW%C_Z_BOX
-        ! T%TOW%MXAERO =  q_inf_S*T%TOW%B*(T%TOW%C_L_BOX + T%TOW%C_L_P_BOX*phat) -zcgcp*T%TOW%FYAERO + ycgcp*T%TOW%FZAERO
-        ! T%TOW%MYAERO =  q_inf_S*T%TOW%C_BAR*(T%TOW%C_M_BOX + T%TOW%C_M_Q_BOX*qhat) + zcgcp*T%TOW%FXAERO - xcgcp*T%TOW%FZAERO
-        ! T%TOW%MZAERO =  q_inf_S*T%TOW%B*(T%TOW%C_N_BOX + T%TOW%C_N_R_BOX*rhat)  -ycgcp*T%TOW%FXAERO + xcgcp*T%TOW%FYAERO
-
-
-    else if ((T%TOW%AEROFLAG .eq. 2) .and. (V_A .gt. 0)) then ! AEROFLAG = 2, use Wings
-        ! Check unites. 
-        y = (/ uaero,vaero,waero,pb,qb,rb /)
-        cntrl(0:10)  = (/ T%TOW%ELEVATOR,T%TOW%AILERON,T%TOW%RUDDER,0.,T%TOW%FLAPS,0.,0.,0.,0.,0.,0. /)
-        ! write(*,*) y
-        !write(*,*) 'Vinf,alfa,beta = ',V_A,alfa,beta
-        !THIS HAS BEEN COMMENTED OUT BECAUSE WE NO LONGER HAVE THE CORRECT VERSION OF FORTRAN
-        !CALL WingsX_ForceMoment(V_A,alfa,beta,y,cntrl,T%TOW%CXb,T%TOW%CYb,T%TOW%CZb,T%TOW%Cll,T%TOW%Cm,T%TOW%Cn,T%TOW%C_L,T%TOW%C_D)
-        write(*,*) 'Functionality removed as of 1/2/2017 - Search WingsX_ForceMoment'
-        !write(*,*) 'CXb,CYb,CZb = ',T%TOW%CXb,T%TOW%CYb,T%TOW%CZb
-        !===INPUTS===>
-        !      Vinf = Total airspeed (ft/s)
-        !     alpha = Angle of attack (radians)
-        !      beta = Sideslip angle (radians)
-        !      y(6) = State-variable vector
-        !                 y( 1) = u  ; y( 2) = v  ; y( 3) = w  (ft/s)
-        !                 y( 4) = p  ; y( 5) = q  ; y( 6) = r  (rad/s)
-        !  cntrl(6) = Control status vector
-        !              cntrl(1)=elevator deflection-positive downward (rad)
-        !              cntrl(2)=aileron deflection-positive left (rad)
-        !              cntrl(3)=rudder deflection-positive left (rad)
-        !              cntrl(4)=throttle setting (0.0-1.0)
-        !              cntrl(5)=flap deflection-positive down (rad)
-        !              cntrl(6)=landing gear (0.0=up, 1.0=down)
-        ! yout = Coef_table1(iExtrap,max_x1,n_x1,x1_array,C_table,x1_in)  (it's a function not a subroutine)
-        ! iExtrap (0 = don't extrapolate, 1 extrapolate past x value bounds), integer
-        ! max_x1 and n_x1 is the length of the x array, integer
-        ! x1_array is the x input array, real(max_x1)
-        ! C_table is the y input array, real(max_x1)
-        ! x1_in is the point to interpolate, real
-        !! REVISIT - Need to make this a 2-D interpolator otherwise we won't get the effect of beta
-        !! Furthermore, we need to make a sim table for CYb, Cll, Cm and Cn otherwise there is no point
-        ! CXb = Coef_table1(0,SWEEPTABLE,SWEEPTABLE,T%TOW%AOATABLE,T%TOW%CXb_TABLE,alfa)
-        ! CYb = Coef_table1(0,SWEEPTABLE,SWEEPTABLE,T%TOW%AOATABLE,T%TOW%CYb_TABLE,alfa)
-        ! CZb = Coef_table1(0,SWEEPTABLE,SWEEPTABLE,T%TOW%AOATABLE,T%TOW%CZb_TABLE,alfa)
-        ! Cll = Coef_table1(0,SWEEPTABLE,SWEEPTABLE,T%TOW%AOATABLE,T%TOW%Cll_TABLE,alfa)
-        ! Cm = Coef_table1(0,SWEEPTABLE,SWEEPTABLE,T%TOW%AOATABLE,T%TOW%Cm_TABLE,alfa)
-        ! Cn = Coef_table1(0,SWEEPTABLE,SWEEPTABLE,T%TOW%AOATABLE,T%TOW%Cn_TABLE,alfa)
-        T%TOW%FXAERO = -q_inf_S*T%TOW%CXb   !Do I need to use CL and CD as well? - CM 8/16/2015
-        T%TOW%FYAERO =  q_inf_S*T%TOW%CYb
-        T%TOW%FZAERO = -q_inf_S*T%TOW%CZb
-        T%TOW%MXAERO =  q_inf_S*T%TOW%B*T%TOW%Cll
-        T%TOW%MYAERO =  q_inf_S*T%TOW%C_BAR*T%TOW%Cm
-        T%TOW%MZAERO =  q_inf_S*T%TOW%B*T%TOW%Cn
-    else if ((T%TOW%AEROFLAG .eq. 3) .and. (V_A .gt. 0)) then ! AEROFLAG = 3, use Wings Sim Tables
-        cntrl(0:10)  = (/ T%TOW%ELEVATOR,T%TOW%AILERON,T%TOW%RUDDER,0.,T%TOW%FLAPS,0.,0.,0.,0.,0.,0. /)
-        write(*,*) 'Functionality removed as of 1/2/2017 - Search SimTable_ForceMoment'
-        !CALL SimTable_ForceMoment(V_A,T%ATM%SOS,alfa,beta,phat,qhat,rhat,cntrl,T%TOW%CXb,T%TOW%CYb,T%TOW%CZb,T%TOW%Cll,T%TOW%Cm,T%TOW%Cn,T%TOW%C_L,T%TOW%C_D)
-        ! T%TOW%FXAERO = -q_inf_S*T%TOW%CXb   !Do I need to use CL and CD as well? - CM 8/16/2015
-        ! T%TOW%FYAERO =  q_inf_S*T%TOW%CYb
-        ! T%TOW%FZAERO = -q_inf_S*T%TOW%CZb
-        ! Changed to Lift and Drag to be more like the linear aero routine (NOW the SIM Table work) - CM 11/9/2015
-        T%TOW%FXAERO = -q_inf_S*(calfa*(T%TOW%C_D) - salfa*T%TOW%C_L)
-        T%TOW%FYAERO =  q_inf_S*T%TOW%CYb
-        T%TOW%FZAERO = -q_inf_S*(salfa*(T%TOW%C_D) + calfa*T%TOW%C_L)
-        T%TOW%MXAERO =  q_inf_S*T%TOW%B*T%TOW%Cll
-        T%TOW%MYAERO =  q_inf_S*T%TOW%C_BAR*T%TOW%Cm
-        T%TOW%MZAERO =  q_inf_S*T%TOW%B*T%TOW%Cn
-    end if
+   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!END OF QUADCOPTER AERODYNAMIC MODEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   
   end if !AEROFORCES
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!END OF AIRCRAFT AERODYNAMIC FORCES AND MOMENTS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4533,129 +4348,86 @@ SUBROUTINE TOWED(T,iflag)
   write(25,*) ' '
   write(25,*) 'Towed Input File: '
   write(25,*) trim(T%TOWEDINPUTFILE)
-  write(25,*) ' '  
-  write(25,*) 'Dynamics Flag (0=Off, 1=On): ',T%TOW%DYNOFFON
+  write(25,*) ' '
+
+  write(25,*) 'Module off or on: ',T%TOW%OFFON
   write(25,*) 'Gravity Flag (0=Off, 1=On): ',T%TOW%GRAVOFFON
-  write(25,*) 'Aerodynamics Flag (0=Off, 1=On, 2=Wings): ',T%TOW%AEROFLAG
-  write(25,*) 'Sweeps Flag (0=Off, 1=On): ',T%TOW%SWEEPOFFON
-  if (T%TOW%AEROFLAG .eq. 2) then
-     write(25,*) 'Wings X Input File: ',T%WINGSXINPUTFILE
-     write(25,*) 'nd Number of Non-linear lifting nodes for us in WingsX',T%TOW%numNodesNLL
-     write(25,*) T%TOW%Rde ,'nd Reynolds number in WingsX'
-     write(25,*) T%TOW%CL0 ,'nd Zero-AOA lift coefficient WingsX'
-     write(25,*) T%TOW%Sw ,' Reference area (ft^2) - WingsX'
-     write(25,*) T%TOW%bw ,' Reference wingspan (ft) - WingsX'
-     write(25,*) T%TOW%cw ,' Reference chord (ft) - WingsX'
-     write(25,*) T%TOW%Vflt ,' Reference Flight speed (ft/s) - WingsX'
-     write(25,*) T%TOW%IXX ,' Moment of inertia (slugs-ft^2) - WingsX'
-     write(25,*) T%TOW%IYY ,' ...'
-     write(25,*) T%TOW%IZZ ,' ...'
-     write(25,*) T%TOW%IXY ,' ...'
-     write(25,*) T%TOW%IXZ ,' ...'
-     write(25,*) T%TOW%IYZ ,' ...'
-     write(25,*) T%TOW%hx ,' Reference length??? (ft) - WingsX'
-     write(25,*) T%TOW%hy ,' Reference length??? (ft) - WingsX'
-     write(25,*) T%TOW%hz ,' Reference length??? (ft) - WingsX'
-  end if
-  !write(25,*) 'Contact Flag (0=Off, 1=On): ',T%TOW%CONTOFFON
-  write(25,*) 'Reference area of aircraft (ft^2): ',  T%TOW%SAREA
-  write(25,*) 'Wingspan of aircraft(ft): ',  T%TOW%B 
-  write(25,*) 'Mean chord of aircraft(ft): ',  T%TOW%C_BAR
-  write(25,*) 'Trim Velocity of Towed(ft/s): ',  T%TOW%V_T
-  write(25,*) 'Density of the air (slug/ft^3): ',  T%ATM%DEN
-  write(25,*) 'Mass (slug): ',T%TOW%MASS
-  write(25,*) 'Weight (lbf): ',T%TOW%WEIGHT
-  write(25,*) 'Reference Angle of Attack: ',  T%TOW%AOAREF
+  write(25,*) 'Aerodynamics Flag (0=Off, 1=On): ',T%TOW%AEROFLAG
+  write(25,*) 'Mass (kg): ',T%TOW%MASS
+  write(25,*) 'Weight (N): ',T%TOW%WEIGHT
+  write(25,*) 'Gravity (ft/s^2): ', T%TOW%GRAVITY
+  write(25,*) 'Stationline of Mass Center (m): ',T%TOW%SLCG
+  write(25,*) 'Buttline of Mass Center (m): ',T%TOW%BLCG
+  write(25,*) 'Waterline of Mass Center (m): ',T%TOW%WLCG
+  write(25,*) 'Stationline of Tether Reel Point on Tow: ', T%TOW%SLREEL
+  write(25,*) 'Buttline of Tether Reel Point on Tow: ', T%TOW%BLREEL
+  write(25,*) 'Waterline of Tether Reel Point on Tow: ', T%TOW%WLREEL
   write(25,*) 'Ixx (kg m^2): ',T%TOW%IXX
   write(25,*) 'Iyy (kg m^2): ',T%TOW%IYY
   write(25,*) 'Izz (kg m^2): ',T%TOW%IZZ
   write(25,*) 'Ixy (kg m^2): ',T%TOW%IXY
   write(25,*) 'Ixz (kg m^2): ',T%TOW%IXZ
   write(25,*) 'Iyz (kg m^2): ',T%TOW%IYZ
-  write(25,*) 'Ixx Inverse (1/(slug-ft^2)): ',T%TOW%IXXI
-  write(25,*) 'Iyy Inverse (1/(slug-ft^2)): ',T%TOW%IYYI
-  write(25,*) 'Izz Inverse (1/(slug-ft^2)): ',T%TOW%IZZI
-  write(25,*) 'Ixy Inverse (1/(slug-ft^2)): ',T%TOW%IXYI
-  write(25,*) 'Ixz Inverse (1/(slug-ft^2)): ',T%TOW%IXZI
-  write(25,*) 'Iyz Inverse (1/(slug-ft^2)): ',T%TOW%IYZI
-  write(25,*) 'Stationline of Mass Center (ft): ',T%TOW%SLCG
-  write(25,*) 'Buttline of Mass Center (ft): ',T%TOW%BLCG
-  write(25,*) 'Waterline of Mass Center (ft): ',T%TOW%WLCG
-
-  write(25,*) 'zero lift slope: ',  T%TOW%C_L_0
-  write(25,*) 'zero lift drag: ',  T%TOW%C_D_0 
-  write(25,*) 'zero lift moment: ',  T%TOW%C_M_0 
-
-  write(25,*) 'Lift w.r.t mach number: ',  T%TOW%C_L_M
-  write(25,*) 'Drag w.r.t mach number: ',  T%TOW%C_D_M
-  write(25,*) 'Moment w.r.t mach number: ',  T%TOW%C_M_M
-
-  write(25,*) 'lift curve slope: ',  T%TOW%C_L_ALPHA
-  write(25,*) 'drag polar: ',  T%TOW%C_D_ALPHA2
-  write(25,*) 'roll moment w.r.t AOA: ',  T%TOW%C_roll_ALPHA
-  write(25,*) 'pitch moment curve: ',  T%TOW%C_M_ALPHA
-  write(25,*) 'yaw moment w.r.t. alpha: ',  T%TOW%C_N_ALPHA
-
-  write(25,*) 'dynamic lift curve slope: ',  T%TOW%C_L_ALPHAHAT
-  write(25,*) 'dynamic drag polar: ',  T%TOW%C_D_ALPHAHAT
-  write(25,*) 'dynamic pitch moment curve: ',  T%TOW%C_M_ALPHAHAT
-
-  write(25,*) 'increase in lift with speed: ',  T%TOW%C_L_UHAT 
-  write(25,*) 'increase in drag with speed: ',  T%TOW%C_D_UHAT 
-  write(25,*) 'increase in pitch moment w.r.t speed: ',  T%TOW%C_M_UHAT
-
-  write(25,*) 'side force w.r.t sideslip: ',  T%TOW%C_Y_BETA
-  write(25,*) 'roll moment w.r.t beta: ',  T%TOW%C_L_BETA  
-  write(25,*) 'pitch moment w.r.t. beta: ',  T%TOW%C_M_BETA
-  write(25,*) 'yaw moment w.r.t. beta: ',  T%TOW%C_N_BETA
-
-  write(25,*) 'increase in lift with q: ',  T%TOW%C_L_Q 
-  write(25,*) 'increase in drag with q: ',  T%TOW%C_D_Q 
-  write(25,*) 'pitch moment w.r.t. q: ',  T%TOW%C_M_Q
-
-  write(25,*) 'side force w.r.t roll rate: ',  T%TOW%C_Y_P 
-  write(25,*) 'roll moment w.r.t roll rate: ',  T%TOW%C_L_P 
-  write(25,*) 'yaw moment w.r.t. roll rate: ',  T%TOW%C_N_P 
-
-  write(25,*) 'side force w.r.t. yaw rate: ',  T%TOW%C_Y_R 
-  write(25,*) 'roll moment w.r.t. yaw rate: ',  T%TOW%C_L_R 
-  write(25,*) 'yaw moment w.r.t. yaw rate: ',  T%TOW%C_N_R 
-  
-  write(25,*) 'increase in lift with elevator: ',  T%TOW%C_L_DE
-  write(25,*) 'inrease in drag with elevator: ',  T%TOW%C_D_DE  
-  write(25,*) 'pitch moment w.r.t elevator: ',  T%TOW%C_M_DE
-
-  write(25,*) 'side force w.r.t. aileron: ',  T%TOW%C_Y_DA
-  write(25,*) 'roll moment w.r.t. aileron: ',  T%TOW%C_L_DA
-  write(25,*) 'yaw moment w.r.t. aileron: ',  T%TOW%C_N_DA
-
-  write(25,*) 'side force w.r.t. rudder: ',  T%TOW%C_Y_DR  
-  write(25,*) 'roll moment w.r.t. rudder: ',  T%TOW%C_L_DR
-  write(25,*) 'yaw moment w.r.t. rudder: ',  T%TOW%C_N_DR
-
-  write(25,*) 'increase in lift with flaps: ',  T%TOW%C_L_DF
-  write(25,*) 'inrease in drag with flaps: ',  T%TOW%C_D_DF
-  write(25,*) 'pitch moment w.r.t flaps: ',  T%TOW%C_M_DF
-
-  write(25,*) 'Reference Elevator trim deflection (deg): ', T%TOW%ELEVTRIM*180/PI
-  write(25,*) 'Maximum lift coefficient: ', T%TOW%CLMAX
-  write(25,*) 'Angle of attack at which CLmax occurs (deg): ', T%TOW%AOAMAX*180/PI
-  write(25,*) 'Angle of upper limit of linear lift (deg): ',T%TOW%AOALINEARMAX*180/PI
-  write(25,*) 'Post-CLmax lift slope (per radian): ', T%TOW%CLASTALLMAX
-  write(25,*) 'Minimum lift coefficient: ', T%TOW%CLMIN
-  write(25,*) 'Angle of attack at which CLmin occurs (deg): ', T%TOW%AOAMIN*180/PI
-  write(25,*) 'Angle of lower limit of linear lift (deg): ', T%TOW%AOALINEARMIN*180/PI
-  write(25,*) 'Post-CLmin lift slope (per radian) ', T%TOW%CLASTALLMIN
-  write(25,*) 'T0: Full-throttle static thrust at STP (lbf): ', T%TOW%T0
-  write(25,*) 'T'': Coefficient of V for thrust at STP (lbf-sec/ft): ', T%TOW%TPRIME
-  write(25,*) 'T'''': Coefficient of V^2 for thrust at STP (lbf-sec^2/ft^2): ', T%TOW%TDBLPRIME
-  write(25,*) 'a: density exponent T=throttle[(T0+T''V+T''''V^2)(rho/rho0)^a]: ', T%TOW%DENEXP
-  write(25,*) 'Thrust offset, positive below CG (ft): ', T%TOW%TOFFSET
-  write(25,*) 'Thrust slope, dT/dV (lbf-sec/ft): ', T%TOW%TSLOPE
-
-  write(25,*) ' '
+  write(25,*) 'Ixx Inverse (1/(kg m^2)): ',T%TOW%IXXI
+  write(25,*) 'Iyy Inverse (1/(kg m^2)): ',T%TOW%IYYI
+  write(25,*) 'Izz Inverse (1/(kg m^2)): ',T%TOW%IZZI
+  write(25,*) 'Ixy Inverse (1/(kg m^2)): ',T%TOW%IXYI
+  write(25,*) 'Ixz Inverse (1/(kg m^2)): ',T%TOW%IXZI
+  write(25,*) 'Iyz Inverse (1/(kg m^2)): ',T%TOW%IYZI
+  write(25,*) 'Turn Radius of AC(m): ',  T%TOW%TURNRADIUS
+  write(25,*) 'Aero Parameter: ', T%TOW%ALC
+  write(25,*) 'Aero Parameter: ', T%TOW%ALS
+  write(25,*) 'Aero Parameter: ', T%TOW%DXD
+  write(25,*) 'Aero Parameter: ', T%TOW%DYD
+  write(25,*) 'Aero Parameter: ', T%TOW%RNEW
+  write(25,*) 'Aero Parameter: ', T%TOW%C_T
+  write(25,*) 'Aero Parameter: ', T%TOW%C_TAU
+  write(25,*) 'Aero Parameter: ', T%TOW%LPHI12
+  write(25,*) 'Aero Parameter: ', T%TOW%LPHI34
+  write(25,*) 'Aero Parameter: ', T%TOW%LTHETA12
+  write(25,*) 'Aero Parameter: ', T%TOW%LTHETA34
+  write(25,*) 'Aero Parameter: ', T%TOW%OMEGAMAX
+  if ((T%TOW%MODNO .eq. 1) .or. (T%TOW%MODNO .eq. 0 )) then
+     write(25,*) 'Driver Speed from .DRIVER File(ft/s): ',T%TOW%FINALSPEED
+     write(25,*) 'Restart Speed from RESTART File (ft/s): ',T%TOW%RESTARTSPEED
+     write(25,*) 'Driver Azimuthal Direction (deg): ',57.3*T%TOW%PSI
+     write(25,*) 'Driver Initial X (ft): ',T%TOW%XCGINITIAL
+     write(25,*) 'Driver Initial Y (ft): ',T%TOW%YCGINITIAL
+     write(25,*) 'Driver Initial Z (ft): ',T%TOW%ZCGINITIAL
+     write(25,*) 'Driver Noise X (ft/s^2): ',T%TOW%XDDOTNOISE
+     write(25,*) 'Driver Noise Y (ft/s^2): ',T%TOW%YDDOTSCALE
+     write(25,*) 'Driver Noise Z (ft/s^2): ',T%TOW%YDDOTPERIOD
+     write(25,*) ' '
+  end if
+  if (T%TOW%MODNO .eq. 2) then
+     write(25,*) 'Time (s),      Xcg (ft),      Ycg (ft),      Zcg (ft)'
+     write(25,*) '----------------------------------------------------'
+     do i=1,T%TOW%TABSIZE  
+        write(25,fmt='(4e18.8)') T%TOW%TIMETAB(i),T%TOW%XCGTAB(i),T%TOW%YCGTAB(i),T%TOW%ZCGTAB(i)
+     end do
+     write(25,*) ' '
+     write(25,*) 'Time (s),    Phi (deg),  Theta (deg),    Psi (deg)'
+     write(25,*) '----------------------------------------------------'
+     do i=1,T%TOW%TABSIZE  
+        write(25,fmt='(4e18.8)') T%TOW%TIMETAB(i),57.3*T%TOW%PHITAB(i),57.3*T%TOW%THETATAB(i),57.3*T%TOW%PSITAB(i)
+     end do
+     write(25,*) ' '
+     write(25,*) 'Time (s),     Ub (ft/s),     Vb (ft/s),     Wb (ft/s)'
+     write(25,*) '----------------------------------------------------'
+     do i=1,T%TOW%TABSIZE   
+        write(25,fmt='(4e18.8)') T%TOW%TIMETAB(i),T%TOW%UBTAB(i),T%TOW%VBTAB(i),T%TOW%WBTAB(i)
+     end do
+     write(25,*) ' '
+     write(25,*) 'Time (s),     Pb (r/s),      Qb (r/s),    Rb (r/s)'
+     write(25,*) '----------------------------------------------------'
+     do i=1,T%TOW%TABSIZE  
+        write(25,fmt='(4e18.8)') T%TOW%TIMETAB(i),T%TOW%PBTAB(i),T%TOW%QBTAB(i),T%TOW%RBTAB(i)
+     end do
+        write(25,*) ' '
+     end if
+  end if
   write(25,*) 'Data Quality Flag (nd, 0=Data Not Loaded Successfully, 1=Data Loaded Successfully): ',T%TOW%DQFLAG
-
+ 
   RETURN
 
  end if
@@ -4669,121 +4441,71 @@ SUBROUTINE TOWED(T,iflag)
    write(*,*) 'Error Opening Towed Input File: ',T%TOWEDINPUTFILE; PAUSE; STOP
   end if
   rewind(94)
-  
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%DYNOFFON
+
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%OFFON
   read(unit=94,fmt=*,iostat=readflag) T%TOW%GRAVOFFON
   read(unit=94,fmt=*,iostat=readflag) T%TOW%AEROFLAG
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%SWEEPOFFON
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%SAREA
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%B 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_BAR
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%V_T
-  read(unit=94,fmt=*,iostat=readflag) T%ATM%DEN
-  read(unit=94,fmt=*,iostat=readflag) readreal; T%TOW%MASS = readreal/T%GRAVITY !Reference level flight lift???
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%AOAREF !reference angle of attack not used
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%WEIGHT
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%GRAVITY
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%SLCG
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%BLCG
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%WLCG
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%SLREEL
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%BLREEL
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%WLREEL
   read(unit=94,fmt=*,iostat=readflag) T%TOW%IXX
   read(unit=94,fmt=*,iostat=readflag) T%TOW%IYY
   read(unit=94,fmt=*,iostat=readflag) T%TOW%IZZ
   read(unit=94,fmt=*,iostat=readflag) T%TOW%IXY
   read(unit=94,fmt=*,iostat=readflag) T%TOW%IXZ
   read(unit=94,fmt=*,iostat=readflag) T%TOW%IYZ
-
-  !!!REVISIT REVISIT REVISIT HUGE BAD PROGRAMMING FOR MONTECARLO
-  ! T%TOW%IXX = T%TOW%IXX*T%TOW%MASS*T%GRAVITY/2.0D0
-  ! T%TOW%IYY = T%TOW%IYY*T%TOW%MASS*T%GRAVITY/2.0D0
-  ! T%TOW%IZZ = T%TOW%IZZ*T%TOW%MASS*T%GRAVITY/2.0D0
-  ! T%TOW%IXY = T%TOW%IXY*T%TOW%MASS*T%GRAVITY/2.0D0
-  ! T%TOW%IXZ = T%TOW%IXZ*T%TOW%MASS*T%GRAVITY/2.0D0
-  ! T%TOW%IYZ = T%TOW%IYZ*T%TOW%MASS*T%GRAVITY/2.0D0
-
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%SLCG
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%BLCG
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%WLCG
-
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_0 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_M 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_M 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_M 
-
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_ALPHA
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_ALPHA2
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_roll_ALPHA 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_ALPHA  
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_N_ALPHA 
-  
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_ALPHAHAT 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_ALPHAHAT 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_ALPHAHAT 
-
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_UHAT 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_UHAT 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_UHAT 
-
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_Y_BETA
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_BETA
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_BETA
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_N_BETA
-  
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_Q 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_Q
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_Q
-  
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_Y_P 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_P 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_N_P 
-  
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_Y_R 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_R   
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_N_R   
-  
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_DE
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_DE
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_DE
-
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_Y_DA
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_DA
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_N_DA
-
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_Y_DR
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_DR
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_N_DR
-
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_DF 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_DF 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_DF 
-
-  !read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_0 <---what do I do about these?
-  T%TOW%C_L_0 = 0.0065    ! REVISIT Nemo hardcoded this for Laura aircraft
-  !read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_0 
-  T%TOW%C_M_0 = 0.0
-  
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%ELEVTRIM !not hooked up
-  T%TOW%ELEVTRIM = T%TOW%ELEVTRIM*PI/180
-  read(unit=94,fmt=*,iostat=readflag) readreal; !Dummy variable
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%CLMAX !not hooked up
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%AOAMAX !not hooked up
-  T%TOW%AOAMAX = T%TOW%AOAMAX*PI/180
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%AOALINEARMAX !not hooked up
-  T%TOW%AOALINEARMAX = T%TOW%AOALINEARMAX*PI/180
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%CLASTALLMAX !not hooked up
-
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%CLMIN !not hooked up
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%AOAMIN !not hooked up
-  T%TOW%AOAMIN = T%TOW%AOAMIN*PI/180
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%AOALINEARMIN !not hooked up
-  T%TOW%AOALINEARMIN = T%TOW%AOALINEARMIN*PI/180
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%CLASTALLMIN !not hooked up
-
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%T0 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%TPRIME 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%TDBLPRIME 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%DENEXP 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%TOFFSET !Not hooked up 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%TSLOPE !Not hooked up 
-
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%TURNRADIUS
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%ALC
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%ALS
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%DXD
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%DYD
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%RNEW
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_T
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_TAU
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%LPHI12
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%LPHI34
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%LTHETA12
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%LTHETA34
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%OMEGAMAX
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%IRR
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%MS_MIN
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%MS_MAX
+  read(unit=94,fmt=*,iostat=readflag) readreal; T%TOW%CONTROLOFFON = int(readreal)
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KPXDRIVE
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KIXDRIVE
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KDXDRIVE
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KPYDRIVE
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KIYDRIVE
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KDYDRIVE
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KPZDRIVE
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KIZDRIVE
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KDZDRIVE
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KPPHI
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KIPHI
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KDPHI
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KPTHETA
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KITHETA
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KDTHETA
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KPPSI
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KIPSI
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%KDPSI
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%XINTEGRAL 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%YINTEGRAL 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%ZINTEGRAL
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%PHIINTEGRAL 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%THETAINTEGRAL
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%PSIINTEGRAL
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%UCOMMAND !!Changed to UCOMMAND for forward flight 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%YCOMMAND
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%ZCOMMAND
   close(94) 
    
-  T%TOW%WEIGHT = T%GRAVITY*T%TOW%MASS
+  T%TOW%MASS = T%TOW%WEIGHT/T%GRAVITY
   deti = + T%TOW%IXX*(T%TOW%IYY*T%TOW%IZZ-T%TOW%IYZ*T%TOW%IYZ) - T%TOW%IXY*(T%TOW%IXY*T%TOW%IZZ-T%TOW%IYZ*T%TOW%IXZ) + T%TOW%IXZ*(T%TOW%IXY*T%TOW%IYZ-T%TOW%IYY*T%TOW%IXZ)
   T%TOW%IXXI = (T%TOW%IYY*T%TOW%IZZ-T%TOW%IYZ*T%TOW%IYZ)/deti
   T%TOW%IXYI = (T%TOW%IYZ*T%TOW%IXZ-T%TOW%IXY*T%TOW%IZZ)/deti
@@ -4791,43 +4513,6 @@ SUBROUTINE TOWED(T,iflag)
   T%TOW%IYYI = (T%TOW%IXX*T%TOW%IZZ-T%TOW%IXZ*T%TOW%IXZ)/deti
   T%TOW%IYZI = (T%TOW%IXY*T%TOW%IXZ-T%TOW%IXX*T%TOW%IYZ)/deti
   T%TOW%IZZI = (T%TOW%IXX*T%TOW%IYY-T%TOW%IXY*T%TOW%IXY)/deti
-
-    !CM - If in the .coef file AERO is set to 2 we will read in the data we require - CM 8/16/2015
-    !DK - Confirm this is only run on startup once correct? DK 10/29/2015
-    if (T%TOW%AEROFLAG .eq. 2) then
-        write(*,*) 'Reading WingsX Input File: ',T%WINGSXINPUTFILE
-         ! 8/11/2015
-         !This needs to be placed somewhere where AircraftDataFile can be set to the appropriate .wings file.
-         !Only inputs required are  AircraftDataFile,numNodesNLL, the remaining variabls are outputs for reference.
-         !I can make a lite version of this function that doesn't return anything or only specific parts if you'd prefer. 
-        write(*,*) 'Wings file:', T%WINGSXINPUTFILE
-
-        write(*,*) 'Functionality removed as of 1/2/2017 - Search WingsX_SimInit'
-
-        STOP
-
-        !call WingsX_SimInit(T%WINGSXINPUTFILE,T%TOW%numNodesNLL,T%TOW%Rde,T%TOW%CL0,T%TOW%Sw,T%TOW%bw,T%TOW%cw,T%TOW%Vflt,T%TOW%IXX,T%TOW%IYY,T%TOW%IZZ,T%TOW%IXY,T%TOW%IXZ,T%TOW%IYZ,T%TOW%hx,T%TOW%hy,T%TOW%hz) 
-
-         ! write(*,*) 'Reading WingsX Sim Tables: ','Input_Files/TOWED/SWEEPS_WingsX.OUT' !Revisit - Carlos Montalvo - hardcoded input file
-         ! open(unit=101,file=T%AOASWEEPOUTPUTFILE,iostat=openflag,status='old')
-         ! if (openflag .ne. 0) then
-         !    write(*,*) 'Error Opening WingsX Sim Tables: ','Input_Files/TOWED/SWEEPS_WingsX.OUT'
-         ! end if
-         ! do i = 1,SWEEPTABLE
-         !    read(unit=94,fmt=*,iostat=readflag) T%TOW%AOATABLE(i),T%TOW%STATE(8),T%TOW%STATE(10),T%TOW%C_L_TABLE(i),T%TOW%C_D_TABLE(i),T%TOW%CXb_TABLE(i),T%TOW%CYb_TABLE(i),T%TOW%CZb_TABLE(i),T%TOW%Cll_TABLE(i),T%TOW%Cm_TABLE(i),T%TOW%Cn_TABLE(i)
-         ! end do
-         ! close(101)
-    else if (T%TOW%AEROFLAG .eq. 3) then
-        write(*,*) 'Reading WingsX Sim Table Input File: ' ,T%WINGSXINPUTFILE
-        !call Read_SimTables(1,T%WINGSXINPUTFILE,T%WINGSXINPUTDIR,ierror,emsge)
-        write(*,*) 'Functionality removed as of 1/2/2017 - Search Read_SimTables'
-        STOP
-        if(ierror.ne.0) then
-            write(*,*) emsge ; PAUSE; STOP !REVISIT Do we want it to pause/stop here?  DK 10/29/2015
-            !Stop?
-        end if 
-        
-    end if
 
   write(*,*) 'TOWED Load Complete'
  

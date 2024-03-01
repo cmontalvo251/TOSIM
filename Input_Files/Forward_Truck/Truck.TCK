@@ -1,5 +1,6 @@
 1		!Turn module off(0) or on(1)
-1		!Truck Module Type(0=Integration Model(Very simple, not 6DOF),1=Constant Speed,2=Table Lookup,3=Truck 6DOF Model)
+3		!Truck Module Type(0=Integration Model(Very simple, not 6DOF),1=Constant Speed,2=Table Lookup,3=Truck 6DOF Model)
+1		!Gravity on (1) of off (0)
 1		!Aerodynamics on(1) or off(0)
 0		!Contact Forces on(1) or off(0)
 2.82635		!Weight (lbf) OR 1.282 (kg) 
@@ -21,6 +22,7 @@
 0.0335291245362469	!C_T Thrust factor
 1100		! PWM_min (microseconds)
 1900		! PWM_max (microseconds)
+1		!Controller on (1) off (0)
 0.005		!kpx (truck)
 0.0125		!kix (truck) - used for forward velocity
 0.015      	!kdx  (truck)
@@ -33,5 +35,4 @@
 0.0		!UCOMMAND x setpoint, truck (ft)
 0.0		!YCOMMAND y setpoint, truck (ft)
 0.0		!ZCOMMAND z setpoint, truck (ft)
-1 		!WAYPOINT waypoint index
 
