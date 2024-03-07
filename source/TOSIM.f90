@@ -295,7 +295,6 @@ type ATMOSPHERESTRUCTURE
      real*8 :: PSIINTEGRAL = 0.0                      ! Units: 'ft', Desc: 'PSI integral term in PID Controller'
      real*8 :: UINTEGRAL = 0.0
      real*8 :: DELTATIME = 0.0                        ! Simulation timestep
-     real*8 :: OMEGAVEC = 0                           ! set this so the error of switching to a truck is fixed
      real*8 :: MUTHROTTLE = 0                         ! Was throwing an error
      real*8 :: CONTOFFON = 0                          ! was throwing an error
      real*8 :: DOWNWASH = 0                           ! Was throwing an error 
@@ -316,8 +315,10 @@ type ATMOSPHERESTRUCTURE
  type TOWEDSTRUCTURE
   integer :: DYNOFFON = 0                          ! Units: 'nd', Desc: 'Dynamics Flag (0=Off, 1=On)'
   integer :: GRAVOFFON = 0                         ! Units: 'nd', Desc: 'Gravity Flag (0=Off, 1=On)'
+  integer :: CONTROLOFFON = 0                      ! Units: 'nd', Desc: 'Control Flag (0=off, 1=On)'
   integer :: AEROFLAG = 0                          ! Units: 'nd', Desc: 'Aerodynamics Flag (0=Off, 1=On)'
   integer :: DQFLAG = 0                            ! Units: 'nd', Desc: 'Data Quality Flag (0=Data Not Loaded Successfully, 1=Data Loaded Successfully)'
+  real*8 :: GRAVITY = 32.2                         ! Gravity constant on Earth (ft/s^2)
   real*8 :: ALC = 0                                ! Driver aero parameter
   real*8 :: ALS = 0                                ! Driver aero parameter
   real*8 :: DXD = 0                                ! Driver aero parameter
@@ -339,8 +340,9 @@ type ATMOSPHERESTRUCTURE
   real*8 :: FLAPS = 0                              ! Adding flaps parameter in case we use an airplane later
   real*8 :: DELTHRUST = 0                          ! Adding incase we use an airplane later
   real*8 :: SWEEPOFFON = 0                         ! Adding incase we use an airplane later
-  real*8 :: V_T = 0                                !Was throwing an error so I did this
-  real*8 :: C_L = 0                                !Was throwing an error so I did this
+  real*8 :: TURNRADIUS = 0
+  real*8 :: V_T = 0                                ! Velocity (ft/s)
+  real*8 :: C_L = 0                                !Was throwing an error so I did this - ZMM
   real*8 :: C_D = 0                                ! Was throwing an error so I did this
   real*8 :: CXB = 0                                ! Was throwing an error so I did this
   real*8 :: CYB = 0                                !Was throwing an error so I did this
@@ -349,7 +351,7 @@ type ATMOSPHERESTRUCTURE
   real*8 :: CM = 0                                 ! Was throwing an error
   real*8 :: CN = 0                                 ! Was throwing an error
   real*8 :: SAREA = 0                              !Was throwing an error so I did this
-  real*8 ::DEN = 0                                 !Was throwing an error so I did this
+  real*8 :: DEN = 0                                 !Was throwing an error so I did this
   real*8 :: KT = 0                                 ! Driver Aero Parameter
   real*8 :: OMEGA0 = 0                             ! Driver Aero Parameter
   real*8 :: IRR = 0                                ! Driver Aero Parameter
@@ -451,6 +453,9 @@ type ATMOSPHERESTRUCTURE
   real*8 :: MS_YAW = 0.0                           ! Units: 'us', Desc: Microsecond impulse to yaw   // REVISIT can take this out later
   real*8 :: PWM2F(4,1) = 0.0                       ! Units: 'lbf',Desc: Force converted as a function of input microsecond pulse
   real*8 :: DELTATIME = 0.0                        ! Simulation timestep
+  real*8 :: SLTETHER = 0.0                         ! Units: 'ft', Desc: Stationline distance from center of mass to tether connection point on towed system
+  real*8 :: BLTETHER = 0.0                         ! Units: 'ft', Desc: buttline distance from center of mass to tether connection point on towed system
+  real*8 :: WLTETHER = 0.0                         ! Units: 'ft', Desc: waterline distance from center of mass to tether connection point on towed system
  end type TOWEDSTRUCTURE
  
 !!!!!!!!!!!!!!!!!!!!!!!!!!!! TETHER STRUCTURE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -548,9 +553,6 @@ type ATMOSPHERESTRUCTURE
   real*8 :: LDOTCOMMAND = 0.0                      ! Units: 'ft/s', Desc: Pay Out Rate Command
   real*8 :: LDOTNOMINAL = 0.0                      ! Units: 'ft/s', Desc: Nominal Pay Out Rate
   real*8 :: LDOTFACTOR = 1.0                       ! Units: 'ft/s', Desc: Nominal Pay Out Rate
-  real*8 :: SLTETHER = 0.0                         ! Units: 'ft', Desc: Stationline distance from center of mass to tether connection point on towed system
-  real*8 :: BLTETHER = 0.0                         ! Units: 'ft', Desc: buttline distance from center of mass to tether connection point on towed system
-  real*8 :: WLTETHER = 0.0                         ! Units: 'ft', Desc: waterline distance from center of mass to tether connection point on towed system
  end type TETHERSTRUCTURE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!! SIMULATION STRUCTURE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -946,7 +948,7 @@ SUBROUTINE SIMULATION(T,iflag)
     ! T%SIM%TIME,T%TOW%VXWIND,T%TOW%VYWIND,T%TOW%VZWIND,T%THR%NBEADS*1.0D0,T%TOW%FXCONT,T%TOW%FYCONT,T%TOW%FZCONT,T%TOW%MXCONT,T%TOW%MYCONT,T%TOW%MZCONT
       ! T%SIM%STATE(T%SIM%NOSTATES-7:T%SIM%NOSTATES),T%SIM%STATEDOT(T%SIM%NOSTATES-7:T%SIM%NOSTATES)
       !Control OUT File
-    write(91,fmt='(1000F30.10)') T%SIM%TIME,T%TOW%AILERON,T%TOW%ELEVATOR,T%TOW%RUDDER,T%TOW%FLAPS,T%DRIVER%OMEGAVEC(1:4,1), T%DRIVER%FYGRAV, T%DRIVER%FYAERO, T%DRIVER%FYCONT
+    write(91,fmt='(1000F30.10)') T%SIM%TIME,T%TOW%AILERON,T%TOW%ELEVATOR,T%TOW%RUDDER,T%TOW%FLAPS,T%TOW%OMEGAVEC(1:4,1), T%DRIVER%FYGRAV, T%DRIVER%FYAERO, T%DRIVER%FYCONT
       !Force Vector File
     write(83,fmt='(1000F30.10)') T%SIM%TIME,T%THR%FXGRAV(1:T%THR%NBEADS),T%THR%FYGRAV(1:T%THR%NBEADS),T%THR%FZGRAV(1:T%THR%NBEADS),T%THR%FXELAS(1:T%THR%NBEADS),T%THR%FYELAS(1:T%THR%NBEADS),T%THR%FZELAS(1:T%THR%NBEADS),T%THR%FXAERO(1:T%THR%NBEADS),T%THR%FYAERO(1:T%THR%NBEADS),T%THR%FZAERO(1:T%THR%NBEADS)
       !Error Outputfile
@@ -1817,65 +1819,8 @@ SUBROUTINE CONTROL(T,iflag)
 
     call TETHERPROPERTIES(T)
 
-    !Aircraft Control
-    T%TOW%RUDDER = 0
-    T%TOW%AILERON = 0
-    T%TOW%ELEVATOR = 0.0
-    T%TOW%DELTHRUST = 0
-    T%TOW%FLAPS = 0
-    if (T%CS%TOWEDCONTROLOFFON .eq. 1) then
-       !Assume perfect feedback for now
-       T%TOW%STATE(1:13) = T%SIM%STATE(1:13)
-       xcg= T%TOW%STATE(1) 
-       ycg= T%TOW%STATE(2) 
-       zcg= T%TOW%STATE(3) 
-       q0 = T%TOW%STATE(4) 
-       q1 = T%TOW%STATE(5)
-       q2 = T%TOW%STATE(6)
-       q3 = T%TOW%STATE(7)
-       vb = T%TOW%STATE(9)
-       wb = T%TOW%STATE(10)
-       pb = T%TOW%STATE(11) 
-       qb = T%TOW%STATE(12)
-       rb = T%TOW%STATE(13)
-       T%TOW%PHI   = atan2(2.*(q0*q1 + q2*q3),1.-2.*(q1**2 + q2**2));
-       T%TOW%THETA = asin (2.*(q0*q2 - q3*q1));
-       T%TOW%PSI   = atan2(2.*(q0*q3 + q1*q2),1.-2.*(q2**2 + q3**2));
-       !!Elevator on Pitch angle
-       T%TOW%ELEVATOR = T%CS%KPZ*(T%TOW%THETA - T%TOW%INITIALTHETA) + T%CS%KDZ*qb
-       !!Aileron on Roll Angle
-       T%TOW%AILERON = T%CS%KPP*(T%TOW%PHI) + T%CS%KDP*pb
-       !!Rudder on Sideslip
-       ! Measure wind
-       ! T%ATM%XI = xcg
-       ! T%ATM%YI = ycg
-       ! T%ATM%ZI = zcg
-       ! call ATMOSPHERE(T,3) !T%ATM%DEN
-       ! vaero = vb - T%ATM%VYWIND
-       T%TOW%RUDDER = T%CS%KV*rb
-
-       !!Flaperon Control
-       T%TOW%FLAPS = T%CS%KPY*(zcg - 44.41) + T%CS%KDY*(wb)
-
-       MAXANGLE = 15.0*PI/180.0
-
-       !Check for saturation of control surfaces
-       if (abs(T%TOW%RUDDER) .gt. MAXANGLE) then
-          T%TOW%RUDDER = sign(MAXANGLE,T%TOW%RUDDER);
-       end if
-       if (abs(T%TOW%ELEVATOR) .gt. MAXANGLE) then
-          T%TOW%ELEVATOR = sign(MAXANGLE,T%TOW%ELEVATOR);
-       end if
-       if (abs(T%TOW%AILERON) .gt. MAXANGLE) then
-          T%TOW%AILERON = sign(MAXANGLE,T%TOW%AILERON)
-       end if
-       if (abs(T%TOW%FLAPS) .gt. MAXANGLE) then
-          T%TOW%FLAPS = sign(MAXANGLE,T%TOW%FLAPS)
-       end if
-    end if
-
-    !! Controller for DRIVER
-    call DRIVER_CONTROL(T%DRIVER)
+    !! Controller for TOW
+    call TOWED_CONTROL(T%TOW)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   RETURN
@@ -2515,7 +2460,7 @@ SUBROUTINE DRIVER(DRIVE,iflag)
  real*8 Gammavec(3,1),bquad,C_Ftether_I(3,1),C_Ftether_B(3,1),S_rCF_B(3,3),C_Mtether_B(3,1)
  real*8 xcgdot,ycgdot,zcgdot,phidot,thetadot,psidot,ubdot,vbdot,wbdot,c1,c2,c3,pbdot,qbdot,rbdot
  real*8 rReel_I(3,1),rCG_I(3,1),v_CG_I(3,1),S_wt_B(3,3),v_Reel_I(3,1),deti
- real*8 TVEC(4),TDOTVEC(4),TDBLDOTVEC(4)
+ real*8 TVEC(4),TDOTVEC(4),TDBLDOTVEC(4),S,q_inf_S,q_inf
  real*8 sigmaF,omegaF,zetaF,C1F(4),C2F(4),C3F(4),idx,W2Tpwm(4,1),W0,j
  character*256 xgridname,ygridname,zgridname
  character*1 letter
@@ -2623,7 +2568,7 @@ SUBROUTINE DRIVER(DRIVE,iflag)
           !Compute total velocity
 
           V_A = sqrt(uaero**2 + vaero**2 + waero**2)
-          q_inf = 0.5*T%ATM%DEN*(V_A**2) !This assumes the reference area is 1
+          q_inf = 0.5*DRIVE%DEN*(V_A**2) !This assumes the reference area is 1
           S = 1.0
           q_inf_S = q_inf*S
 
@@ -3739,10 +3684,10 @@ SUBROUTINE DOWNWASH(DRIVE,STATE)
 
 END SUBROUTINE DOWNWASH
 
-SUBROUTINE DRIVER_CONTROL(DRIVE)
+SUBROUTINE TOWED_CONTROL(TOW)
   use TOSIMDATATYPES
   implicit none
-  type(DRIVERSTRUCTURE) DRIVE
+  type(TOWEDSTRUCTURE) TOW
   integer iflag,openflag,readflag,i,stateindex,now(3),ctr,j
   integer , parameter :: nwp = 1
   real*8 readreal,phicommand,deltheta,delpsi,dely,delydot,rAS_I(3,1),vAS_I(3,1),thetacommand, xcommand, ycommand, zcommand
@@ -3754,25 +3699,25 @@ SUBROUTINE DRIVER_CONTROL(DRIVE)
   real*8 delmu(4), munominal
   LOGICAL :: DOUBLET = .FALSE.
 
-  if (DRIVE%CONTROLOFFON .eq. 1) then
+  if (TOW%CONTROLOFFON .eq. 1) then
      !Quadcopter control
-     DRIVE%OMEGAVEC = 0
-     DRIVE%THRUSTVEC = 0
-     DRIVE%MUVEC = 0
+     TOW%OMEGAVEC = 0
+     TOW%THRUSTVEC = 0
+     TOW%MUVEC = 0
 
      !Get OMEGA0 and KT for DRIVE
-     DRIVE%KT = DRIVE%C_T*((4.0D0*DRIVE%DEN*(DRIVE%RNEW**4))/(qPI**2))
-     DRIVE%OMEGA0 = sqrt(DRIVE%WEIGHT/(4.0D0*DRIVE%KT))
+     TOW%KT = TOW%C_T*((4.0D0*TOW%DEN*(TOW%RNEW**4))/(qPI**2))
+     TOW%OMEGA0 = sqrt(TOW%WEIGHT/(4.0D0*TOW%KT))
 
-     xdot = DRIVE%STATEDOT(1)
-     ydot = DRIVE%STATEDOT(2)
-     zdot = DRIVE%STATEDOT(3)
-     phi = DRIVE%STATE(4)
-     theta = DRIVE%STATE(5)
-     psi = DRIVE%STATE(6)
-     p = DRIVE%STATE(10)
-     q = DRIVE%STATE(11)
-     r = DRIVE%STATE(12)
+     xdot = TOW%STATEDOT(1)
+     ydot = TOW%STATEDOT(2)
+     zdot = TOW%STATEDOT(3)
+     phi = TOW%STATE(4)
+     theta = TOW%STATE(5)
+     psi = TOW%STATE(6)
+     p = TOW%STATE(10)
+     q = TOW%STATE(11)
+     r = TOW%STATE(12)
 
      ! Don't forget to change 'nwp' in declaration block for number of waypoints
 
@@ -3857,93 +3802,92 @@ SUBROUTINE DRIVER_CONTROL(DRIVE)
         do ctr = 1,nwp
            zwaypoint(ctr,1) = -10.0D0
         end do
-     end if
+     end if !Endif waypoints
 
      ! gotocontrols
-     ! DRIVE%XCOMMAND =  xwaypoint(DRIVE%WAYPOINT,1)
-     ! DRIVE%YCOMMAND =  ywaypoint(DRIVE%WAYPOINT,1)
-     ! DRIVE%ZCOMMAND =  zwaypoint(DRIVE%WAYPOINT,1)
+     ! TOW%XCOMMAND =  xwaypoint(TOW%WAYPOINT,1)
+     ! TOW%YCOMMAND =  ywaypoint(TOW%WAYPOINT,1)
+     ! TOW%ZCOMMAND =  zwaypoint(TOW%WAYPOINT,1)
 
-     !DRIVE%ZCOMMAND = -30.0 -- these are now set in the input file 
-     !DRIVE%UCOMMAND = 28.93
-     !DRIVE%YCOMMAND = 0.0
+     !TOW%ZCOMMAND = -30.0 -- these are now set in the input file 
+     !TOW%UCOMMAND = 28.93
+     !TOW%YCOMMAND = 0.0
 
-     !delx = (DRIVE%XCOMMAND - DRIVE%STATE(1))*-1.00D0
-     dely = (DRIVE%YCOMMAND - DRIVE%STATE(2))
-     !write(*,*) 'Zstuff = ',DRIVE%ZCOMMAND,DRIVE%STATE(3)
-     delz = (DRIVE%ZCOMMAND - DRIVE%STATE(3))*-1.00D0
+     !delx = (TOW%XCOMMAND - TOW%STATE(1))*-1.00D0
+     dely = (TOW%YCOMMAND - TOW%STATE(2))
+     !write(*,*) 'Zstuff = ',TOW%ZCOMMAND,TOW%STATE(3)
+     delz = (TOW%ZCOMMAND - TOW%STATE(3))*-1.00D0
 
      ! Dwaypoint = sqrt((delx)**2 + (dely)**2 + (delz)**2)
 
      ! Change this to 4(square) or 8(octagon) depending on the shape you want to simulate
      ! if (Dwaypoint .lt. 1.0D0) then
-     !   DRIVE%WAYPOINT= DRIVE%WAYPOINT+1
-     !   if (DRIVE%WAYPOINT .gt. nwp) then
-     !     DRIVE%WAYPOINT=1
+     !   TOW%WAYPOINT= TOW%WAYPOINT+1
+     !   if (TOW%WAYPOINT .gt. nwp) then
+     !     TOW%WAYPOINT=1
      !   end if
      ! end if
 
      !!! Attitude Controller
-     DRIVE%PHICOMMAND = DRIVE%KPYDRIVE*dely + DRIVE%KIYDRIVE*DRIVE%YINTEGRAL - DRIVE%KDYDRIVE*ydot
+     TOW%PHICOMMAND = TOW%KPYDRIVE*dely + TOW%KIYDRIVE*TOW%YINTEGRAL - TOW%KDYDRIVE*ydot
 
-     !DRIVE%PHICOMMAND = 20.0*qPI/180.0
+     !TOW%PHICOMMAND = 20.0*qPI/180.0
      
      ! REVISIT hardcoded xdotcommand = 40 ft/s
      ! For now the KP and KD gains for 'x' is controlling the 'u' velocity at which the quad is travelling
      ! Ok shit so the 'u' velocity couldn't really be controlled so -24.5 deg is what 
      ! the quad needs to be to achieve this velocity
-     ! DRIVE%THETACOMMAND = -24.5*qPI/180!DRIVE%KPXDRIVE*(DRIVE%STATE(7) - 40.0) + DRIVE%KIXDRIVE*DRIVE%XINTEGRAL + DRIVE%KDXDRIVE*(DRIVE%STATEDOT(7))
-     ! DRIVE%THETACOMMAND = DRIVE%KPXDRIVE*delx + DRIVE%KIXDRIVE*DRIVE%XINTEGRAL - DRIVE%KDXDRIVE*xdot
+     ! TOW%THETACOMMAND = -24.5*qPI/180!TOW%KPXDRIVE*(TOW%STATE(7) - 40.0) + TOW%KIXDRIVE*TOW%XINTEGRAL + TOW%KDXDRIVE*(TOW%STATEDOT(7))
+     ! TOW%THETACOMMAND = TOW%KPXDRIVE*delx + TOW%KIXDRIVE*TOW%XINTEGRAL - TOW%KDXDRIVE*xdot
 
-     DRIVE%THETACOMMAND = DRIVE%KPXDRIVE*(DRIVE%STATE(7) - DRIVE%UCOMMAND) + DRIVE%KIXDRIVE*DRIVE%UINTEGRAL
+     TOW%THETACOMMAND = TOW%KPXDRIVE*(TOW%STATE(7) - TOW%UCOMMAND) + TOW%KIXDRIVE*TOW%UINTEGRAL
 
-     !write(*,*) 'integral = ',DRIVE%YINTEGRAL,DRIVE%XINTEGRAL
+     !write(*,*) 'integral = ',TOW%YINTEGRAL,TOW%XINTEGRAL
 
-     !DRIVE%THETACOMMAND = 0.0
+     !TOW%THETACOMMAND = 0.0
      
-     DRIVE%PSICOMMAND = 0.0
+     TOW%PSICOMMAND = 0.0
 
-     !write(*,*) 'Xcontrol = ',delx,DRIVE%XINTEGRAL,xdot
-     !write(*,*) 'ptpcom = ',DRIVE%PHICOMMAND,DRIVE%THETACOMMAND,DRIVE%PSICOMMAND
+     !write(*,*) 'Xcontrol = ',delx,TOW%XINTEGRAL,xdot
+     !write(*,*) 'ptpcom = ',TOW%PHICOMMAND,TOW%THETACOMMAND,TOW%PSICOMMAND
 
-     if (abs(DRIVE%THETACOMMAND) .gt. 30*qPI/180) then
-        DRIVE%THETACOMMAND = sign(30*qPI/180,DRIVE%THETACOMMAND)
+     if (abs(TOW%THETACOMMAND) .gt. 30*qPI/180) then
+        TOW%THETACOMMAND = sign(30*qPI/180,TOW%THETACOMMAND)
      end if
-     if (abs(DRIVE%PHICOMMAND) .gt. 30*qPI/180) then
-        DRIVE%PHICOMMAND = sign(30*qPI/180,DRIVE%PHICOMMAND)
+     if (abs(TOW%PHICOMMAND) .gt. 30*qPI/180) then
+        TOW%PHICOMMAND = sign(30*qPI/180,TOW%PHICOMMAND)
      end if
-     if (abs(DRIVE%PSICOMMAND) .gt. 30*qPI/180) then
-        DRIVE%PSICOMMAND = sign(30*qPI/180,DRIVE%PSICOMMAND)
+     if (abs(TOW%PSICOMMAND) .gt. 30*qPI/180) then
+        TOW%PSICOMMAND = sign(30*qPI/180,TOW%PSICOMMAND)
      end if
 
      ! Hovering microseconds and altitude control
-     munominal = 1614.855 + DRIVE%KPZDRIVE*(delz) + DRIVE%KIZDRIVE*DRIVE%ZINTEGRAL +DRIVE%KDZDRIVE*zdot  ! Nominal microsecond pulse for hover
+     munominal = 1614.855 + TOW%KPZDRIVE*(delz) + TOW%KIZDRIVE*TOW%ZINTEGRAL +TOW%KDZDRIVE*zdot  ! Nominal microsecond pulse for hover
 
-     DRIVE%MS_ROLL = DRIVE%KPPHI*(DRIVE%PHICOMMAND-phi) + DRIVE%KIPHI*DRIVE%PHIINTEGRAL - DRIVE%KDPHI*p
-     DRIVE%MS_PITCH = DRIVE%KPTHETA*(DRIVE%THETACOMMAND - theta) + DRIVE%KITHETA*DRIVE%THETAINTEGRAL- DRIVE%KDTHETA*q
-     DRIVE%MS_YAW = DRIVE%KPPSI*(DRIVE%PSICOMMAND-psi) + DRIVE%KIPSI*DRIVE%PSIINTEGRAL - DRIVE%KDPSI*r
+     TOW%MS_ROLL = TOW%KPPHI*(TOW%PHICOMMAND-phi) + TOW%KIPHI*TOW%PHIINTEGRAL - TOW%KDPHI*p
+     TOW%MS_PITCH = TOW%KPTHETA*(TOW%THETACOMMAND - theta) + TOW%KITHETA*TOW%THETAINTEGRAL- TOW%KDTHETA*q
+     TOW%MS_YAW = TOW%KPPSI*(TOW%PSICOMMAND-psi) + TOW%KIPSI*TOW%PSIINTEGRAL - TOW%KDPSI*r
 
      !write(*,*) 'Att = ',phi,theta,psi,p,q,r
 
-     DRIVE%MUVEC(1,1) = munominal + DRIVE%MS_ROLL + DRIVE%MS_PITCH + DRIVE%MS_YAW
-     DRIVE%MUVEC(2,1) = munominal - DRIVE%MS_ROLL + DRIVE%MS_PITCH - DRIVE%MS_YAW
-     DRIVE%MUVEC(3,1) = munominal - DRIVE%MS_ROLL - DRIVE%MS_PITCH + DRIVE%MS_YAW
-     DRIVE%MUVEC(4,1) = munominal + DRIVE%MS_ROLL - DRIVE%MS_PITCH - DRIVE%MS_YAW
+     TOW%MUVEC(1,1) = munominal + TOW%MS_ROLL + TOW%MS_PITCH + TOW%MS_YAW
+     TOW%MUVEC(2,1) = munominal - TOW%MS_ROLL + TOW%MS_PITCH - TOW%MS_YAW
+     TOW%MUVEC(3,1) = munominal - TOW%MS_ROLL - TOW%MS_PITCH + TOW%MS_YAW
+     TOW%MUVEC(4,1) = munominal + TOW%MS_ROLL - TOW%MS_PITCH - TOW%MS_YAW
 
-     !write(*,*) 'muvec = ',DRIVE%MUVEC
+     !write(*,*) 'muvec = ',TOW%MUVEC
 
      ! Now we saturate the microseconds so that it doesn't go over 1900 or under 1100
      do j = 1,4
-        if (DRIVE%MUVEC(j,1) .gt. 1900.00D0) then
-           DRIVE%OMEGAVEC(j,1) = 1900.00D0
+        if (TOW%MUVEC(j,1) .gt. 1900.00D0) then
+           TOW%OMEGAVEC(j,1) = 1900.00D0
         end if
-        if (DRIVE%MUVEC(j,1) .lt. 1100.00D0) then
-           DRIVE%MUVEC(j,1) = 1100.00D0
+        if (TOW%MUVEC(j,1) .lt. 1100.00D0) then
+           TOW%MUVEC(j,1) = 1100.00D0
         end if
      end do
-
-  end if
-end SUBROUTINE DRIVER_CONTROL
+ end if
+END SUBROUTINE TOWED_CONTROL
 
 SUBROUTINE COMPUTEINTEGRAL(DRIVE)
  use TOSIMDATATYPES
@@ -3960,7 +3904,8 @@ SUBROUTINE COMPUTEINTEGRAL(DRIVE)
  DRIVE%THETAINTEGRAL = DRIVE%THETAINTEGRAL +    (1.0/4.0)*((DRIVE%THETACOMMAND - DRIVE%STATE(5))/2)*DRIVE%DELTATIME
  DRIVE%PSIINTEGRAL   = DRIVE%PSIINTEGRAL   +    (1.0/4.0)*((DRIVE%PHICOMMAND   - DRIVE%STATE(6))/2)*DRIVE%DELTATIME
  DRIVE%UINTEGRAL     = DRIVE%UINTEGRAL     + -(1.0/4.0)*((DRIVE%UCOMMAND     - DRIVE%STATE(7))/2)*DRIVE%DELTATIME
-END SUBROUTINE COMPUTEINTEGRAL !COMPUTEINTEGRAL
+
+END SUBROUTINE COMPUTEINTEGRAL
 
 SUBROUTINE PRINTINTEGRAL(DRIVE) !!When do I run this?
  use TOSIMDATATYPES
@@ -3974,10 +3919,10 @@ SUBROUTINE PRINTINTEGRAL(DRIVE) !!When do I run this?
  !95713.325840134436       0.77060269505657364       -38.613821568062889        5.6208864356321653E-005  -3.6252368913735496E-003   1.5246634597683634E-002  -25.123939964081060 
 END SUBROUTINE PRINTINTEGRAL !PRINTINTEGRAL
 
-SUBROUTINE PWM2FORCE(DRIVE)
+SUBROUTINE PWM2FORCE(T)
   use TOSIMDATATYPES
   implicit none
-  type(DRIVERSTRUCTURE) DRIVE
+  type(TOSIMSTRUCTURE) T
   real*8 :: pp = 4
 
    ! IF (abs(DRIVE%MS_ROLL) .gt. DRIVE%MS_MAX) then
@@ -4000,7 +3945,7 @@ SUBROUTINE PWM2FORCE(DRIVE)
    
   ! DRIVE%MS_0 = 2.35252990909077E-06*DRIVE%MS_0**2 - (0.00487992485215825)*DRIVE%MS_0 + 1.74554459880932
     do pp = 1,4
-      DRIVE%PWM2F(pp,1) = 2.35252990909077E-06*DRIVE%MUVEC(1,1)**2 - (0.00487992485215825)*DRIVE%MUVEC(1,1) + 1.74554459880932
+      T%TOW%PWM2F(pp,1) = 2.35252990909077E-06*T%TOW%MUVEC(1,1)**2 - (0.00487992485215825)*T%TOW%MUVEC(1,1) + 1.74554459880932
     end do
 END SUBROUTINE PWM2FORCE
 
@@ -4025,7 +3970,9 @@ SUBROUTINE TOWED(T,iflag)
  real*8 fxloc,fyloc,fzloc,ct,J,T_0,T_A,Q_A,V_A,omega,rps,alfa,beta,C_Y,C_n,C_m,uaero,vaero,waero
  real*8 C_Ftether_I(3,1),C_Ftether_B(3,1),alfahat,alfadot,MACH,C_Mtether_B(3,1),rCF_B(3,1),S_rCF_B(3,3)
  real*8 vF_I(3,1),vC_I(3,1),rC_I(3,1),rF_I(3,1),S_wt_B(3,3),phat,rhat,qhat,uhat,AR
- real*8 xcgcp, ycgcp, zcgcp
+ real*8 xcgcp, ycgcp, zcgcp,TVEC(4),TDOTVEC(4),TDBLDOTVEC(4),Gammavec(3,1),zetaF
+ real*8 thrust,sumomega,sigmaF,omegar,omegaF,C3F(4),C2F(4),C1F(4),bquad,forcevec(4,1)
+ integer idx
  type(TOSIMSTRUCTURE) T
  REAL:: y(6), cntrl(0:10)
  REAL:: CXb,CYb,CZb,CL,CD,Cll,Cm,Cn
@@ -4050,6 +3997,14 @@ SUBROUTINE TOWED(T,iflag)
   pb = T%TOW%STATE(11) 
   qb = T%TOW%STATE(12)
   rb = T%TOW%STATE(13)
+  TVEC(1)    = T%TOW%STATE(13)
+  TDOTVEC(1) = T%TOW%STATE(14)
+  TVEC(2)    = T%TOW%STATE(15)
+  TDOTVEC(2) = T%TOW%STATE(16)
+  TVEC(3)    = T%TOW%STATE(17)
+  TDOTVEC(3) = T%TOW%STATE(18)
+  TVEC(4)    = T%TOW%STATE(19)
+  TDOTVEC(4) = T%TOW%STATE(20)
 
   !Compute phi,theta,psi
   !REVISIT - I've got a function for that -DK 8/18/2015 - It even checks for gimbal lock state
@@ -4086,9 +4041,9 @@ SUBROUTINE TOWED(T,iflag)
   rC_I(3,1) = zcg !!! REVISIT Nghia did -1 to make the connection point realistic
 
   !Then get location of tether in body frame
-  rCF_B(1,1) = T%THR%SLTETHER 
-  rCF_B(2,1) = T%THR%BLTETHER
-  rCF_B(3,1) = T%THR%WLTETHER
+  rCF_B(1,1) = T%TOW%SLTETHER 
+  rCF_B(2,1) = T%TOW%BLTETHER
+  rCF_B(3,1) = T%TOW%WLTETHER
 
   !Then compute inertial location of tether connection point
   rF_I = rC_I + matmul(T%TOW%TIA,rCF_B)  !REVISIT DK 8/18/2015 - I've got a function for this too BodyToEarthTrans(quatVec,vb,vf)
@@ -4362,7 +4317,7 @@ SUBROUTINE TOWED(T,iflag)
    
   RETURN
   
- end if
+ end if !!For the compute flag
   
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ECHO DATA iflag = 2 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
@@ -4374,7 +4329,7 @@ SUBROUTINE TOWED(T,iflag)
   write(25,*) trim(T%TOWEDINPUTFILE)
   write(25,*) ' '
 
-  write(25,*) 'Module off or on: ',T%TOW%OFFON
+  write(25,*) 'Module off or on: ',T%TOW%DYNOFFON
   write(25,*) 'Gravity Flag (0=Off, 1=On): ',T%TOW%GRAVOFFON
   write(25,*) 'Aerodynamics Flag (0=Off, 1=On): ',T%TOW%AEROFLAG
   write(25,*) 'Mass (kg): ',T%TOW%MASS
@@ -4383,9 +4338,9 @@ SUBROUTINE TOWED(T,iflag)
   write(25,*) 'Stationline of Mass Center (m): ',T%TOW%SLCG
   write(25,*) 'Buttline of Mass Center (m): ',T%TOW%BLCG
   write(25,*) 'Waterline of Mass Center (m): ',T%TOW%WLCG
-  write(25,*) 'Stationline of Tether Reel Point on Tow: ', T%TOW%SLREEL
-  write(25,*) 'Buttline of Tether Reel Point on Tow: ', T%TOW%BLREEL
-  write(25,*) 'Waterline of Tether Reel Point on Tow: ', T%TOW%WLREEL
+  write(25,*) 'Stationline of Tether Reel Point on Tow: ', T%TOW%SLTETHER
+  write(25,*) 'Buttline of Tether Reel Point on Tow: ', T%TOW%BLTETHER
+  write(25,*) 'Waterline of Tether Reel Point on Tow: ', T%TOW%WLTETHER
   write(25,*) 'Ixx (kg m^2): ',T%TOW%IXX
   write(25,*) 'Iyy (kg m^2): ',T%TOW%IYY
   write(25,*) 'Izz (kg m^2): ',T%TOW%IZZ
@@ -4411,50 +4366,11 @@ SUBROUTINE TOWED(T,iflag)
   write(25,*) 'Aero Parameter: ', T%TOW%LTHETA12
   write(25,*) 'Aero Parameter: ', T%TOW%LTHETA34
   write(25,*) 'Aero Parameter: ', T%TOW%OMEGAMAX
-  if ((T%TOW%MODNO .eq. 1) .or. (T%TOW%MODNO .eq. 0 )) then
-     write(25,*) 'Driver Speed from .DRIVER File(ft/s): ',T%TOW%FINALSPEED
-     write(25,*) 'Restart Speed from RESTART File (ft/s): ',T%TOW%RESTARTSPEED
-     write(25,*) 'Driver Azimuthal Direction (deg): ',57.3*T%TOW%PSI
-     write(25,*) 'Driver Initial X (ft): ',T%TOW%XCGINITIAL
-     write(25,*) 'Driver Initial Y (ft): ',T%TOW%YCGINITIAL
-     write(25,*) 'Driver Initial Z (ft): ',T%TOW%ZCGINITIAL
-     write(25,*) 'Driver Noise X (ft/s^2): ',T%TOW%XDDOTNOISE
-     write(25,*) 'Driver Noise Y (ft/s^2): ',T%TOW%YDDOTSCALE
-     write(25,*) 'Driver Noise Z (ft/s^2): ',T%TOW%YDDOTPERIOD
-     write(25,*) ' '
-  end if
-  if (T%TOW%MODNO .eq. 2) then
-     write(25,*) 'Time (s),      Xcg (ft),      Ycg (ft),      Zcg (ft)'
-     write(25,*) '----------------------------------------------------'
-     do i=1,T%TOW%TABSIZE  
-        write(25,fmt='(4e18.8)') T%TOW%TIMETAB(i),T%TOW%XCGTAB(i),T%TOW%YCGTAB(i),T%TOW%ZCGTAB(i)
-     end do
-     write(25,*) ' '
-     write(25,*) 'Time (s),    Phi (deg),  Theta (deg),    Psi (deg)'
-     write(25,*) '----------------------------------------------------'
-     do i=1,T%TOW%TABSIZE  
-        write(25,fmt='(4e18.8)') T%TOW%TIMETAB(i),57.3*T%TOW%PHITAB(i),57.3*T%TOW%THETATAB(i),57.3*T%TOW%PSITAB(i)
-     end do
-     write(25,*) ' '
-     write(25,*) 'Time (s),     Ub (ft/s),     Vb (ft/s),     Wb (ft/s)'
-     write(25,*) '----------------------------------------------------'
-     do i=1,T%TOW%TABSIZE   
-        write(25,fmt='(4e18.8)') T%TOW%TIMETAB(i),T%TOW%UBTAB(i),T%TOW%VBTAB(i),T%TOW%WBTAB(i)
-     end do
-     write(25,*) ' '
-     write(25,*) 'Time (s),     Pb (r/s),      Qb (r/s),    Rb (r/s)'
-     write(25,*) '----------------------------------------------------'
-     do i=1,T%TOW%TABSIZE  
-        write(25,fmt='(4e18.8)') T%TOW%TIMETAB(i),T%TOW%PBTAB(i),T%TOW%QBTAB(i),T%TOW%RBTAB(i)
-     end do
-        write(25,*) ' '
-     end if
-  end if
   write(25,*) 'Data Quality Flag (nd, 0=Data Not Loaded Successfully, 1=Data Loaded Successfully): ',T%TOW%DQFLAG
  
   RETURN
 
- end if
+ end if !!Echo flag
     
 !!!!!!!!!!!!!!!!!!!!!!!!!! LOAD DATA iflag = 1 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
@@ -4466,7 +4382,7 @@ SUBROUTINE TOWED(T,iflag)
   end if
   rewind(94)
 
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%OFFON
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%DYNOFFON
   read(unit=94,fmt=*,iostat=readflag) T%TOW%GRAVOFFON
   read(unit=94,fmt=*,iostat=readflag) T%TOW%AEROFLAG
   read(unit=94,fmt=*,iostat=readflag) T%TOW%WEIGHT
@@ -4474,9 +4390,9 @@ SUBROUTINE TOWED(T,iflag)
   read(unit=94,fmt=*,iostat=readflag) T%TOW%SLCG
   read(unit=94,fmt=*,iostat=readflag) T%TOW%BLCG
   read(unit=94,fmt=*,iostat=readflag) T%TOW%WLCG
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%SLREEL
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%BLREEL
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%WLREEL
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%SLTETHER
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%BLTETHER
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%WLTETHER
   read(unit=94,fmt=*,iostat=readflag) T%TOW%IXX
   read(unit=94,fmt=*,iostat=readflag) T%TOW%IYY
   read(unit=94,fmt=*,iostat=readflag) T%TOW%IZZ
@@ -4544,7 +4460,7 @@ SUBROUTINE TOWED(T,iflag)
 
   RETURN
  
- end if
+ end if !!End of load flag
  
  RETURN
 END SUBROUTINE TOWED
@@ -4950,9 +4866,6 @@ SUBROUTINE TETHER(T,iflag)
   write(25,*) 'Rotational Inertia or Reel(slug-ft^2): ',T%THR%IREEL
   write(25,*) 'Radius or Reel(ft): ',T%THR%RREEL
   write(25,*) 'Time Constant of Reel Controller : ',T%THR%TAU
-  write(25,*) 'Units: ft, Desc: Stationline of Tether Attachment Point on Towed in Towed Reference Frame ',T%THR%SLTETHER 
-  write(25,*) 'Units: ft, Desc: Buttline of Tether Attachment Point on Towed in Towed Reference Frame ',T%THR%BLTETHER 
-  write(25,*) 'Units: ft, Desc: Waterline of Tether Attachment Point on Towed in Towed Reference Frame ',T%THR%WLTETHER 
   write(25,*) 'Data Quality Flag (nd, 0=Data Not Loaded Successfully, 1=Data Loaded Successfully): ',T%THR%DQFLAG
   close(94) 
 
@@ -4992,9 +4905,6 @@ SUBROUTINE TETHER(T,iflag)
   read(unit=94,fmt=*,iostat=readflag) T%THR%IREEL
   read(unit=94,fmt=*,iostat=readflag) T%THR%RREEL
   read(unit=94,fmt=*,iostat=readflag) T%THR%TAU
-  read(unit=94,fmt=*,iostat=readflag) T%THR%SLTETHER 
-  read(unit=94,fmt=*,iostat=readflag) T%THR%BLTETHER 
-  read(unit=94,fmt=*,iostat=readflag) T%THR%WLTETHER 
 
   close(94) 
 

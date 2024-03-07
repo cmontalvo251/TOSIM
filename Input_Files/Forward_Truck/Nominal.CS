@@ -1,5 +1,4 @@
 0		!Tether Line control off(0) on(1=Pay In/Out)(2=Tension)(3=Tension+Pay Out)
-0		!Aircraft Control off(0) on(1)
 0.0		!KPY - Proportional Gain on Altitude(1.0)
 0.0		!KDY - Derivative Gain on Altitude
 0		!KPSI - Not used
