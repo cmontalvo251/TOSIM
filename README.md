@@ -24,3 +24,17 @@ Dr. Carlos Montalvo moved this repo from Gitlab to Github and made the code open
 
 Version 7.0 Released Jan 2024
 
+Things needed to do for Version 8.0
+
+1.) Nominal.CS file needs to get moved into each vehicles respective files - Read routines need to get updated as well
+2.) There needs to be 1 and only 1 control subroutine - This will get rid of the handshake stuff
+	Driver - Needs a drive forward and the hooks (commented for now) for waypoint control
+	Towed - Just needs inner loop control
+	Tether - Can stay the same
+3.) All remnants of AoA sweeps need to get removed 
+4.) Remove echo routine completely - Which means read routine will be flag eq 1 and then compute will be flag 2
+5.) The DRIVER and TOWED functions need to get passed T rather than T%DRIVER or T%TOWED
+6.) Need to make sure that tether reel and connection points are all properly aligned
+7.) Need to make sure the state vectors are properly aligned since the towed structure now has 8 extra states (thrust of each motor)
+
+
