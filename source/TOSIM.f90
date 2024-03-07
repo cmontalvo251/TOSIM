@@ -295,7 +295,14 @@ type ATMOSPHERESTRUCTURE
      real*8 :: PSIINTEGRAL = 0.0                      ! Units: 'ft', Desc: 'PSI integral term in PID Controller'
      real*8 :: UINTEGRAL = 0.0
      real*8 :: DELTATIME = 0.0                        ! Simulation timestep
-    real*8 :: OMEGAVEC = 0                           ! set this so the error of switching to a truck is fixed
+     real*8 :: OMEGAVEC = 0                           ! set this so the error of switching to a truck is fixed
+     real*8 :: MUTHROTTLE = 0                         ! Was throwing an error
+     real*8 :: CONTOFFON = 0                          ! was throwing an error
+     real*8 :: DOWNWASH = 0                           ! Was throwing an error 
+     real*8 :: DIAMETER = 0                           ! Was throwing an error
+     real*8 :: THRUSTVEC = 0                          ! Was throwing an error
+     real*8 :: MUVEC = 0                              ! Was throwing an error
+     real*8 :: KT = 0                                 ! Was throwing an error
      real*8 :: XCOM(MAXWP) = 500                         ! Units: 'm', X Waypoint command
      real*8 :: YCOM(MAXWP) = 500                         ! Units: 'm', Y Waypoint command
      real*8 :: ZCOM(MAXWP) = -200                        ! Units: 'm', Altitude command
@@ -338,6 +345,9 @@ type ATMOSPHERESTRUCTURE
   real*8 :: CXB = 0                                ! Was throwing an error so I did this
   real*8 :: CYB = 0                                !Was throwing an error so I did this
   real*8 :: CZB = 0                                ! Was throwing an error
+  real*8 :: CLL = 0                                ! Was throwing an error
+  real*8 :: CM = 0                                 ! Was throwing an error
+  real*8 :: CN = 0                                 ! Was throwing an error
   real*8 :: SAREA = 0                              !Was throwing an error so I did this
   real*8 ::DEN = 0                                 !Was throwing an error so I did this
   real*8 :: KT = 0                                 ! Driver Aero Parameter
