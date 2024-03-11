@@ -757,73 +757,11 @@ PROGRAM TOSIM
 !!!!!!!!!!!!!!!!!!11! Load Data !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
  call ATMOSPHERE(T,1)
- call DRIVER(T%DRIVER,1) !1 = load data , 2 = print data , 3 = compute for the different models
+ call DRIVER(T,1) !1 = load data , 2 = print data , 3 = compute for the different models
  call TETHER(T,1)
  call TOWED(T,1)
  call CONTROL(T,1)
  call SIMULATION(T,1)
-
-!!!!!!!!!!!!!!!!!!!!!!!!! Echo Data !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
- openflag = 0
- open(unit=25,file=T%RUNLOGFILE,iostat=openflag)
- if (openflag .ne. 0) then
-  write(*,*) 'Error Opening Run Log File: ',T%RUNLOGFILE; PAUSE; STOP
- end if
-
- write(25,*) ' '
- write(25,*) '**********************************************************************************************************'
- write(25,*) '**********************************************************************************************************'
- write(25,*) '                                                                                                          '
- write(25,*) 'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT                                                                       '
- write(25,*) 'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT                                                                       '
- write(25,*) 'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT                                                                       '
- write(25,*) 'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT                                                                       '
- write(25,*) 'TTTTTT                                                                                                    '
- write(25,*) 'TTTTTT        TTTTTTT        AAAAAAAAAAAAAA      PPPPPPPPPPP          AAAAAAAAAAAAAA       SSSSSSSSSSSSSS '
- write(25,*) 'TTTTTT        TTTTTTT       AAAAAAAAAAAAAAAA     PPPPPPPPPPPP        AAAAAAAAAAAAAAAA     SSSSSSSSSSSSSSSS'
- write(25,*) 'TTTTTT        TTTTTTT       AAAAAAAAAAAAAAAA     PPPPPPPPPPPPP       AAAAAAAAAAAAAAAA     SSSSSSSSSSSSSSSS'
- write(25,*) '              TTTTTTT       AAAAAA      AAAA     PPPPPP    PPPP      AAAAAA      AAAA     SSSSSS      SSSS'
- write(25,*) '              TTTTTTT       AAAAAA      AAAA     PPPPPP    PPPPP     AAAAAA      AAAA     SSSSSS      SSSS'
- write(25,*) '              TTTTTTT       AAAAAAAAAAAAAAAA     PPPPPPPPPPPPPP      AAAAAAAAAAAAAAAA       SSSSSS        '
- write(25,*) '              TTTTTTT       AAAAAAAAAAAAAAAA     PPPPPPPPPPPPP       AAAAAAAAAAAAAAAA         SSSSSS      '
- write(25,*) '              TTTTTTT       AAAAAAAAAAAAAAAA     PPPPPPPPPPP         AAAAAAAAAAAAAAAA           SSSSSS    '
- write(25,*) '              TTTTTTT       AAAAAA      AAAA     RRRRRR              AAAAAA      AAAA     SSS     SSSSSS  '
- write(25,*) '              TTTTTTT       AAAAAA      AAAA     RRRRRR              AAAAAA      AAAA     SSSSSS    SSSSSS'
- write(25,*) '              TTTTTTT       AAAAAA      AAAA     RRRRRR              AAAAAA      AAAA     SSSSSSSSSSSSSSSS'
- write(25,*) '              TTTTTTT       AAAAAA      AAAA     RRRRRR              AAAAAA      AAAA     SSSSSSSSSSSSSSSS'
- write(25,*) '              TTTTTTT       AAAAAA      AAAA     RRRRRR              AAAAAA      AAAA      SSSSSSSSSSSSSS '
- write(25,*) '                                                                                                          '
- write(25,*) 'Version 1.0, October 2013                                                                                 '
- write(25,*) '                                                                                                          '
- write(25,*) '**********************************************************************************************************'
- write(25,*) '**********************************************************************************************************'
- write(25,*) ' '
- write(25,*) 'TOSIM Input File Names File: ',trim(T%FILEINPUTFILE)
- write(25,*) 'TOSIM Input File: ',trim(T%TOSIMINPUTFILE)
- write(25,*) 'Driver Input File: ',trim(T%DRIVER%INPUTFILE)
- write(25,*) 'Atmosphere Input File: ',trim(T%ATMOSPHEREINPUTFILE)
- write(25,*) 'Towed Input File: ',trim(T%TOWEDINPUTFILE)
- write(25,*) 'Tether Input File: ',trim(T%TETHERINPUTFILE)
- if (T%CS%TETHERCONTROLOFFON .gt. 0) then
-    write(25,*) 'Tether Control Input File: ',trim(T%TCOMINPUTFILE)
- endif
- write(25,*) 'Control System Input File: ',trim(T%CSINPUTFILE)
- write(25,*) 'Simulation Input File: ',trim(T%SIMINPUTFILE)
- write(25,*) 'Run Log Output File: ',trim(T%RUNLOGFILE)
- write(25,*) 'State Output File: ',trim(T%STATEOUTPUTFILE)
- write(25,*) 'Miscellaneous Output File: ',trim(T%MISCOUTPUTFILE)
- write(25,*) 'Control Output File: ',trim(T%CONTROLOUTPUTFILE)
- write(25,*) 'Force Output File: ',trim(T%FORCEOUTPUTFILE)
- write(25,*) 'Error Output File: ',trim(T%ERROROUTPUTFILE)
- write(25,*) ' '
-
- call ATMOSPHERE(T,2)
- call DRIVER(T%DRIVER,2)
- call TETHER(T,2)
- call TOWED(T,2)
- call CONTROL(T,2)
- call SIMULATION(T,2)
 
 !!!!!!!!!!!!!!!!!!! Compute Simulation !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1332,8 +1270,7 @@ SUBROUTINE SIMULATION(T,iflag)
 
      !!!!!! Compute initial Tether points !!!!!!!!!!
 
-     call DRIVER_HANDSHAKE_INIT(T) !!Do some calculations specific to TOSIM
-     call DRIVER(T%DRIVER,3) ! Compute location of reel !!!!!Reel Location = T%DRIVER%(XYZ)REEL
+     call DRIVER(T,3) ! Compute location of reel !!!!!Reel Location = T%DRIVER%(XYZ)REEL
 
      !!Place Driver states in initial state vector
      T%DRIVER%INITIALSTATE(1:20) = T%DRIVER%STATE(1:20)
@@ -1376,97 +1313,6 @@ SUBROUTINE SIMULATION(T,iflag)
      T%SIM%INITIALSTATE(T%SIM%NOSTATES-7:T%SIM%NOSTATES) = T%DRIVER%INITIALSTATE(13:20)
   end if
 
-  ! Run Tether Sweep if AEROFLAG is set to 2
-  if (T%THR%AEROFLAG .eq. 2) then
-     !Set the number of beads to 2
-     T%THR%NBEADS = 1
-     !Set length of tether to 1 foot
-     T%THR%LEN = 1
-     !Set the position of the reel to 0,0,0 (1st truss element)
-     T%DRIVER%XREEL = 0;
-     T%DRIVER%YREEL = 0;
-     T%DRIVER%ZREEL = 0;
-     !Set the position of the single bead to 0,0,0.5
-     T%THR%STATE(1) = 0;
-     T%THR%STATE(2) = 0;
-     T%THR%STATE(3) = 0.5D0;
-     !Set the position of the towed connection point (0,0,1)
-     T%THR%XTETHER = 0;
-     T%THR%YTETHER = 0;
-     T%THR%ZTETHER = 1.0D0;
-     !Set the velocity of tether, bead and reel equal to zero
-     T%DRIVER%XREELDOT = 0;
-     T%DRIVER%YREELDOT = 0;
-     T%DRIVER%ZREELDOT = 0;
-     T%THR%STATE(4) = 0;
-     T%THR%STATE(5) = 0;
-     T%THR%STATE(6) = 0;
-     T%THR%XTETHERDOT = 0;
-     T%THR%YTETHERDOT = 0;
-     T%THR%ZTETHERDOT = 0;
-     
-     SWEEPS = 101
-     ALFAMAX = 90.0
-     write(*,*) 'Running Alpha Tether Sweeps'
-     T%AOASWEEPOUTPUTFILE = 'Output_Files/SWEEPS_Tether.OUT'
-     write(*,*)'About to try to open: ', T%AOASWEEPOUTPUTFILE
-     open(unit=101,file=T%AOASWEEPOUTPUTFILE,iostat=openflag)
-     if (openflag .ne. 0) then
-        write(*,*) 'Error Opening Restart Input File: ',T%AOASWEEPOUTPUTFILE; PAUSE; STOP
-     end if
-     do i = 1,SWEEPS
-        aoa = (-ALFAMAX + (2*ALFAMAX*(i-1))/(SWEEPS-1))*PI/180.0
-        unominal = 101*cos(aoa) !101 is 60 knots
-        wnominal = 101*sin(aoa)
-        !Change the derivatives of the reel, bead and towed connection point
-        T%THR%XTETHERDOT = unominal
-        T%THR%ZTETHERDOT = wnominal
-        T%THR%STATE(4) = unominal
-        T%THR%STATE(6) = wnominal
-        T%DRIVER%XREELDOT = unominal
-        T%DRIVER%ZREELDOT = wnominal
-        call TETHER(T,3)
-        write(101,*) aoa,unominal,wnominal,T%THR%FXAERO(1),T%THR%FYAERO(1),T%THR%FZAERO(1)
-     end do
-     write(*,*) 'Alpha Sweeps Complete'
-     STOP
-  end if
-
-  ! If the aero model is on run an aero sweep
-  if ((T%TOW%AEROFLAG .gt. 0) .and. (T%TOW%SWEEPOFFON .eq. 1)) then
-     write(*,*) 'Running Alpha Sweeps'
-     unominal = T%TOW%STATE(8) 
-     wnominal = T%TOW%STATE(10)
-     if (T%TOW%AEROFLAG .eq. 1) then
-        T%AOASWEEPOUTPUTFILE = 'Output_Files/SWEEPS_Taylor.OUT'
-     else
-        T%AOASWEEPOUTPUTFILE = 'Output_Files/SWEEPS_WingsX.OUT'
-     end if
-     write(*,*)'About to try to open: ', T%AOASWEEPOUTPUTFILE
-     open(unit=101,file=T%AOASWEEPOUTPUTFILE,iostat=openflag)
-     if (openflag .ne. 0) then
-        write(*,*) 'Error Opening Sweep Output File: ',T%AOASWEEPOUTPUTFILE; PAUSE; STOP
-     end if
-     !Run an Alfa Sweep
-     ALFAMAX = 90.0
-     SWEEPS = SWEEPTABLE
-     do i = 1,SWEEPS
-        aoa = (-ALFAMAX + (2*ALFAMAX*(i-1))/(SWEEPS-1))*PI/180.0
-        ! if (T%TOW%AEROFLAG .eq. 2) then
-        !    write(*,*) 'AOA(rad) = ',aoa
-        ! end if
-        T%TOW%STATE(8) = T%TOW%V_T*cos(aoa)
-        T%TOW%STATE(10) = T%TOW%V_T*sin(aoa)
-        call TOWED(T,3)
-        write(101,*) aoa,T%TOW%STATE(8),T%TOW%STATE(10),T%TOW%C_L,T%TOW%C_D,T%TOW%CXb,T%TOW%CYb,T%TOW%CZb,T%TOW%Cll,T%TOW%Cm,T%TOW%Cn
-     end do
-     write(*,*) 'AOA SWEEPS Complete'
-     ! Need to reset TOW%STATE 
-     T%TOW%STATE(8) = unominal
-     T%TOW%STATE(10) = wnominal
-     close(101)
-  end if
-
   !Initialize Time Vector
   T%SIM%TIME = T%SIM%INITIALTIME
   T%SIM%STATE(1:T%SIM%NOSTATES) = T%SIM%INITIALSTATE(1:T%SIM%NOSTATES)
@@ -1476,7 +1322,6 @@ SUBROUTINE SIMULATION(T,iflag)
   call STATELIMITS(T)
 
   T%SIM%DQFLAG = 1
-
 
   write(*,*) 'SIMULATION Load Complete'
 
@@ -1518,8 +1363,7 @@ if (iflag .eq. 3) then
           T%DRIVER%STATE(1:12) = T%SIM%STATE(stateindex+1:stateindex+12)
           T%DRIVER%STATE(13:20) = T%SIM%STATE((T%SIM%NOSTATES-7):T%SIM%NOSTATES)
        end if
-       call DRIVER_HANDSHAKE(T)
-       call DRIVER(T%DRIVER,3) 
+       call DRIVER(T,3) 
        if ((T%DRIVER%MODNO .eq. 0) .or. (T%DRIVER%MODNO .eq. 3)) then
           T%SIM%STATEDOT(stateindex+1:stateindex+12) = T%DRIVER%STATEDOT(1:12)
           T%SIM%STATEDOT((T%SIM%NOSTATES-7):T%SIM%NOSTATES) = T%DRIVER%STATEDOT(13:20)
@@ -2129,12 +1973,6 @@ SUBROUTINE ATMOSPHERE(T,iflag)
      T%ATM%VWAKE = T%DRIVER%VWAKE
   end if
   ! PAUSE; STOP;
-
-  if (T%DRIVER%DOWNWASHONOFF .eq. 1) then
-     T%DRIVER%TIME = T%SIM%TIME
-     call DOWNWASH(T%DRIVER,T%TOW%STATE)
-     T%ATM%VWAKE = T%DRIVER%VWAKE
-  end if
 
   !!Add all winds
   T%ATM%VXWIND = T%ATM%VXWIND + T%ATM%VWAKE(1) + T%ATM%WINDGUST(1) + T%ATM%WRFX
@@ -2923,207 +2761,117 @@ SUBROUTINE DRIVER(T,iflag)
   
 end if
   
-!!!!!!!!!!!!!!!!!!!!!! ECHO DATA iflag = 2 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- 
- if (iflag .eq. 2) then
- 
-  write(25,*) ' '
-  write(25,*) 'Driver'  
-  write(25,*) ' '
-  write(25,*) 'Driver Input File: '
-  write(25,*) trim(DRIVE%INPUTFILE)
-  write(25,*) ' '
-  write(25,*) 'Module off or on: ',DRIVE%OFFON
-  write(25,*) 'Model (0=Integration,1=Constant, 2=Table,3=6DOF Model): ',DRIVE%MODNO
-  if (DRIVE%MODNO .eq. 3) then
-     !Output driver stuff
-     write(25,*) 'Gravity Flag (0=Off, 1=On): ',DRIVE%GRAVOFFON
-     write(25,*) 'Aerodynamics Flag (0=Off, 1=On): ',DRIVE%AEROOFFON
-     write(25,*) 'Mass (kg): ',DRIVE%MASS
-     write(25,*) 'Weight (N): ',DRIVE%WEIGHT
-     write(25,*) 'Gravity (ft/s^2): ',DRIVE%GRAVITY
-     write(25,*) 'Stationline of Mass Center (m): ',DRIVE%SLCG
-     write(25,*) 'Buttline of Mass Center (m): ',DRIVE%BLCG
-     write(25,*) 'Waterline of Mass Center (m): ',DRIVE%WLCG
-     write(25,*) 'Stationline of Tether Reel Point on Driver: ', DRIVE%SLREEL
-     write(25,*) 'Buttline of Tether Reel Point on Driver: ', DRIVE%BLREEL
-     write(25,*) 'Waterline of Tether Reel Point on Driver: ', DRIVE%WLREEL
-     write(25,*) 'Ixx (kg m^2): ',DRIVE%IXX
-     write(25,*) 'Iyy (kg m^2): ',DRIVE%IYY
-     write(25,*) 'Izz (kg m^2): ',DRIVE%IZZ
-     write(25,*) 'Ixy (kg m^2): ',DRIVE%IXY
-     write(25,*) 'Ixz (kg m^2): ',DRIVE%IXZ
-     write(25,*) 'Iyz (kg m^2): ',DRIVE%IYZ
-     write(25,*) 'Ixx Inverse (1/(kg m^2)): ',DRIVE%IXXI
-     write(25,*) 'Iyy Inverse (1/(kg m^2)): ',DRIVE%IYYI
-     write(25,*) 'Izz Inverse (1/(kg m^2)): ',DRIVE%IZZI
-     write(25,*) 'Ixy Inverse (1/(kg m^2)): ',DRIVE%IXYI
-     write(25,*) 'Ixz Inverse (1/(kg m^2)): ',DRIVE%IXZI
-     write(25,*) 'Iyz Inverse (1/(kg m^2)): ',DRIVE%IYZI
-     write(25,*) 'Turn Radius of AC(m): ',  DRIVE%TURNRADIUS
-     write(25,*) 'Aero Parameter: ', DRIVE%DXD
-     write(25,*) 'Aero Parameter: ', DRIVE%C_T
-  else
-     write(25,*) ' '
-     write(25,*) 'Stationline of Airwake grid start on Driver: ', DRIVE%SLAIRWAKE
-     write(25,*) 'Buttline of Airwake grid start on Driver: ', DRIVE%BLAIRWAKE
-     write(25,*) 'Waterline of Airwake grid start on Driver: ', DRIVE%WLAIRWAKE
-     if ((DRIVE%MODNO .eq. 1) .or. (DRIVE%MODNO .eq. 0 )) then
-        write(25,*) 'Driver Speed from .DRIVER File(ft/s): ',DRIVE%FINALSPEED
-        write(25,*) 'Restart Speed from RESTART File (ft/s): ',DRIVE%RESTARTSPEED
-        write(25,*) 'Driver Azimuthal Direction (deg): ',57.3*DRIVE%PSI
-        write(25,*) 'Driver Initial X (ft): ',DRIVE%XCGINITIAL
-        write(25,*) 'Driver Initial Y (ft): ',DRIVE%YCGINITIAL
-        write(25,*) 'Driver Initial Z (ft): ',DRIVE%ZCGINITIAL
-        write(25,*) 'Driver Noise X (ft/s^2): ',DRIVE%XDDOTNOISE
-        write(25,*) 'Driver Noise Y (ft/s^2): ',DRIVE%YDDOTSCALE
-        write(25,*) 'Driver Noise Z (ft/s^2): ',DRIVE%YDDOTPERIOD
-        write(25,*) ' '
-     end if
-     if (DRIVE%MODNO .eq. 2) then
-        write(25,*) 'Time (s),      Xcg (ft),      Ycg (ft),      Zcg (ft)'
-        write(25,*) '----------------------------------------------------'
-        do i=1,DRIVE%TABSIZE  
-           write(25,fmt='(4e18.8)') DRIVE%TIMETAB(i),DRIVE%XCGTAB(i),DRIVE%YCGTAB(i),DRIVE%ZCGTAB(i)
-        end do
-        write(25,*) ' '
-        write(25,*) 'Time (s),    Phi (deg),  Theta (deg),    Psi (deg)'
-        write(25,*) '----------------------------------------------------'
-        do i=1,DRIVE%TABSIZE  
-           write(25,fmt='(4e18.8)') DRIVE%TIMETAB(i),57.3*DRIVE%PHITAB(i),57.3*DRIVE%THETATAB(i),57.3*DRIVE%PSITAB(i)
-        end do
-        write(25,*) ' '
-        write(25,*) 'Time (s),     Ub (ft/s),     Vb (ft/s),     Wb (ft/s)'
-        write(25,*) '----------------------------------------------------'
-        do i=1,DRIVE%TABSIZE   
-           write(25,fmt='(4e18.8)') DRIVE%TIMETAB(i),DRIVE%UBTAB(i),DRIVE%VBTAB(i),DRIVE%WBTAB(i)
-        end do
-        write(25,*) ' '
-        write(25,*) 'Time (s),     Pb (r/s),      Qb (r/s),    Rb (r/s)'
-        write(25,*) '----------------------------------------------------'
-        do i=1,DRIVE%TABSIZE  
-           write(25,fmt='(4e18.8)') DRIVE%TIMETAB(i),DRIVE%PBTAB(i),DRIVE%QBTAB(i),DRIVE%RBTAB(i)
-        end do
-        write(25,*) ' '
-     end if
-  end if
-  write(25,*) 'Data Quality Flag (nd, 0=Data Not Loaded Successfully, 1=Data Loaded Successfully): ',DRIVE%DQFLAG
-  
-  RETURN
-  
- end if
-  
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!! LOAD DATA iflag = 1 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
  if (iflag .eq. 1) then
    
-  open(unit=94,file=DRIVE%INPUTFILE,status='old',iostat=openflag)
+  open(unit=94,file=T%DRIVER%INPUTFILE,status='old',iostat=openflag)
   if (openflag .ne. 0) then
-     write(*,*) DRIVE%INPUTFILE
-   write(*,*) 'Error Opening Driver Input File => ',DRIVE%INPUTFILE,' <= ';PAUSE; STOP
+     write(*,*) T%DRIVER%INPUTFILE
+   write(*,*) 'Error Opening Driver Input File => ',T%DRIVER%INPUTFILE,' <= ';PAUSE; STOP
   end if
   rewind(94)
 
-  read(unit=94,fmt=*,iostat=readflag) readreal; DRIVE%OFFON = readreal
-  read(unit=94,fmt=*,iostat=readflag) readreal; DRIVE%MODNO = readreal
+  read(unit=94,fmt=*,iostat=readflag) readreal; T%DRIVER%OFFON = readreal
+  read(unit=94,fmt=*,iostat=readflag) readreal; T%DRIVER%MODNO = readreal
 
-  if (DRIVE%MODNO .eq. 3) then
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%GRAVOFFON
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%AEROOFFON
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%WEIGHT
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%GRAVITY
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%SLCG
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%BLCG
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%WLCG
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%SLREEL
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%BLREEL
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%WLREEL
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%IXX
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%IYY
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%IZZ
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%IXY
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%IXZ
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%IYZ
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%TURNRADIUS
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%DXD
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%C_T
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%MS_MIN
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%MS_MAX
-     read(unit=94,fmt=*,iostat=readflag) readreal; DRIVE%CONTROLOFFON = int(readreal)
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KPXDRIVE
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KIXDRIVE
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%KDXDRIVE
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%XINTEGRAL 
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%THETAINTEGRAL
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%PSIINTEGRAL
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%UCOMMAND !!Changed to UCOMMAND for forward flight 
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%YCOMMAND
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%ZCOMMAND
+  if (T%DRIVER%MODNO .eq. 3) then
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%GRAVOFFON
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%AEROOFFON
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%WEIGHT
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%GRAVITY
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%SLCG
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%BLCG
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%WLCG
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%SLREEL
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%BLREEL
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%WLREEL
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%IXX
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%IYY
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%IZZ
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%IXY
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%IXZ
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%IYZ
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%TURNRADIUS
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%DXD
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%C_T
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%MS_MIN
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%MS_MAX
+     read(unit=94,fmt=*,iostat=readflag) readreal; T%DRIVER%CONTROLOFFON = int(readreal)
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%KPXDRIVE
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%KIXDRIVE
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%KDXDRIVE
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%XINTEGRAL 
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%THETAINTEGRAL
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%PSIINTEGRAL
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%UCOMMAND !!Changed to UCOMMAND for forward flight 
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%YCOMMAND
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%ZCOMMAND
 
-     DRIVE%WAYPOINT = 1 !This is always defaulted to 1
+     T%DRIVER%WAYPOINT = 1 !This is always defaulted to 1
 
      !!!DO SOME CALCULATIONS ON driver
-     DRIVE%MASS = DRIVE%WEIGHT/DRIVE%GRAVITY 
-     deti = + DRIVE%IXX*(DRIVE%IYY*DRIVE%IZZ-DRIVE%IYZ*DRIVE%IYZ) - DRIVE%IXY*(DRIVE%IXY*DRIVE%IZZ-DRIVE%IYZ*DRIVE%IXZ) + DRIVE%IXZ*(DRIVE%IXY*DRIVE%IYZ-DRIVE%IYY*DRIVE%IXZ)
-     DRIVE%IXXI = (DRIVE%IYY*DRIVE%IZZ-DRIVE%IYZ*DRIVE%IYZ)/deti
-     DRIVE%IXYI = (DRIVE%IYZ*DRIVE%IXZ-DRIVE%IXY*DRIVE%IZZ)/deti
-     DRIVE%IXZI = (DRIVE%IXY*DRIVE%IYZ-DRIVE%IYY*DRIVE%IXZ)/deti
-     DRIVE%IYYI = (DRIVE%IXX*DRIVE%IZZ-DRIVE%IXZ*DRIVE%IXZ)/deti
-     DRIVE%IYZI = (DRIVE%IXY*DRIVE%IXZ-DRIVE%IXX*DRIVE%IYZ)/deti
-     DRIVE%IZZI = (DRIVE%IXX*DRIVE%IYY-DRIVE%IXY*DRIVE%IXY)/deti
+     T%DRIVER%MASS = T%DRIVER%WEIGHT/T%DRIVER%GRAVITY 
+     deti = + T%DRIVER%IXX*(T%DRIVER%IYY*T%DRIVER%IZZ-T%DRIVER%IYZ*T%DRIVER%IYZ) - T%DRIVER%IXY*(T%DRIVER%IXY*T%DRIVER%IZZ-T%DRIVER%IYZ*T%DRIVER%IXZ) + T%DRIVER%IXZ*(T%DRIVER%IXY*T%DRIVER%IYZ-T%DRIVER%IYY*T%DRIVER%IXZ)
+     T%DRIVER%IXXI = (T%DRIVER%IYY*T%DRIVER%IZZ-T%DRIVER%IYZ*T%DRIVER%IYZ)/deti
+     T%DRIVER%IXYI = (T%DRIVER%IYZ*T%DRIVER%IXZ-T%DRIVER%IXY*T%DRIVER%IZZ)/deti
+     T%DRIVER%IXZI = (T%DRIVER%IXY*T%DRIVER%IYZ-T%DRIVER%IYY*T%DRIVER%IXZ)/deti
+     T%DRIVER%IYYI = (T%DRIVER%IXX*T%DRIVER%IZZ-T%DRIVER%IXZ*T%DRIVER%IXZ)/deti
+     T%DRIVER%IYZI = (T%DRIVER%IXY*T%DRIVER%IXZ-T%DRIVER%IXX*T%DRIVER%IYZ)/deti
+     T%DRIVER%IZZI = (T%DRIVER%IXX*T%DRIVER%IYY-T%DRIVER%IXY*T%DRIVER%IXY)/deti
   else     
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%SLREEL
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%BLREEL
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%WLREEL
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%AIRWAKE
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%SLREEL
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%BLREEL
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%WLREEL
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%AIRWAKE
      !Read location of airwake data
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%AIRWAKEPATH
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%SLAIRWAKE
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%BLAIRWAKE
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%WLAIRWAKE
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%AIRWAKEPATH
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%SLAIRWAKE
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%BLAIRWAKE
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%WLAIRWAKE
 
-     if (DRIVE%AIRWAKE .eq. 1) then
+     if (T%DRIVER%AIRWAKE .eq. 1) then
 
         !Set TCOORD
         do i = 1,NTIMES
-           DRIVE%TCOORD(i) = 0 + (i-1)*1.0D0
+           T%DRIVER%TCOORD(i) = 0 + (i-1)*1.0D0
         end do
 
         !%%%%%%%Import Initial UVW matrices%%%%%%%%% */
 
         write(number, '(i1)' )  1
         letter = trim('U')
-        DRIVE%U0name = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+        T%DRIVER%U0name = trim(T%DRIVER%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
         letter = trim('V')
-        DRIVE%V0name = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+        T%DRIVER%V0name = trim(T%DRIVER%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
         letter = trim('W')
-        DRIVE%W0name = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+        T%DRIVER%W0name = trim(T%DRIVER%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
         write(number, '(i1)' )  2
         letter = trim('U')
-        DRIVE%Udtname = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+        T%DRIVER%Udtname = trim(T%DRIVER%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
         letter = trim('V')
-        DRIVE%Vdtname = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+        T%DRIVER%Vdtname = trim(T%DRIVER%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
         letter = trim('W')
-        DRIVE%Wdtname = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+        T%DRIVER%Wdtname = trim(T%DRIVER%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
 
-        call IMPORTWAKE(DRIVE%UDRIVER,DRIVE%U0name);
-        call IMPORTWAKE(DRIVE%UDRIVERDT,DRIVE%Udtname);
-        call IMPORTWAKE(DRIVE%VDRIVER,DRIVE%V0name);
-        call IMPORTWAKE(DRIVE%VDRIVERDT,DRIVE%Vdtname);
-        call IMPORTWAKE(DRIVE%WDRIVER,DRIVE%W0name);
-        call IMPORTWAKE(DRIVE%WDRIVERDT,DRIVE%Wdtname);
+        call IMPORTWAKE(T%DRIVER%UDRIVER,T%DRIVER%U0name);
+        call IMPORTWAKE(T%DRIVER%UDRIVERDT,T%DRIVER%Udtname);
+        call IMPORTWAKE(T%DRIVER%VDRIVER,T%DRIVER%V0name);
+        call IMPORTWAKE(T%DRIVER%VDRIVERDT,T%DRIVER%Vdtname);
+        call IMPORTWAKE(T%DRIVER%WDRIVER,T%DRIVER%W0name);
+        call IMPORTWAKE(T%DRIVER%WDRIVERDT,T%DRIVER%Wdtname);
 
         !!Import X,Y,Z Grid data
-        xgridname = trim(DRIVE%AIRWAKEPATH)//'X_Grid.txt'
-        ygridname = trim(DRIVE%AIRWAKEPATH)//'Y_Grid.txt'
-        zgridname = trim(DRIVE%AIRWAKEPATH)//'Z_Grid.txt'
+        xgridname = trim(T%DRIVER%AIRWAKEPATH)//'X_Grid.txt'
+        ygridname = trim(T%DRIVER%AIRWAKEPATH)//'Y_Grid.txt'
+        zgridname = trim(T%DRIVER%AIRWAKEPATH)//'Z_Grid.txt'
 
-        call IMPORTWAKE(DRIVE%XDRIVER,xgridname);
-        call IMPORTWAKE(DRIVE%YDRIVER,ygridname);
-        call IMPORTWAKE(DRIVE%ZDRIVER,zgridname);
+        call IMPORTWAKE(T%DRIVER%XDRIVER,xgridname);
+        call IMPORTWAKE(T%DRIVER%YDRIVER,ygridname);
+        call IMPORTWAKE(T%DRIVER%ZDRIVER,zgridname);
 
         do i = 1,IMAX
-           DRIVE%XCOORD(i) = DRIVE%XDRIVER(i,1,1);
+           T%DRIVER%XCOORD(i) = T%DRIVER%XDRIVER(i,1,1);
         end do
 
         write(*,*) 'Wake Data Load Complete'
@@ -3132,31 +2880,28 @@ end if
   end if
   
 
-  if ((DRIVE%MODNO .eq. 1) .or. (DRIVE%MODNO .eq. 0)) then
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%XCGINITIAL
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%YCGINITIAL
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%ZCGINITIAL
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%FINALSPEED
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%PSI
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%DOWNWASHONOFF
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%DOWNWASH
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%DIAMETER
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%XDDOTNOISE
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%YDDOTSCALE
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%YDDOTPERIOD
+  if ((T%DRIVER%MODNO .eq. 1) .or. (T%DRIVER%MODNO .eq. 0)) then
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%XCGINITIAL
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%YCGINITIAL
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%ZCGINITIAL
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%FINALSPEED
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%PSI
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%XDDOTNOISE
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%YDDOTSCALE
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%YDDOTPERIOD
   end if
-  if (DRIVE%MODNO .eq. 2) then
-   read(unit=94,fmt=*,iostat=readflag) readreal; DRIVE%TABSIZE = int(readreal)
-   do i=1,DRIVE%TABSIZE  
-    read(unit=94,fmt=*,iostat=readflag) DRIVE%TIMETAB(i),DRIVE%XCGTAB(i),DRIVE%YCGTAB(i),DRIVE%ZCGTAB(i),DRIVE%PHITAB(i),DRIVE%THETATAB(i),DRIVE%PSITAB(i), & 
-                                        DRIVE%UBTAB(i),DRIVE%VBTAB(i),DRIVE%WBTAB(i),DRIVE%PBTAB(i),DRIVE%QBTAB(i),DRIVE%RBTAB(i)
+  if (T%DRIVER%MODNO .eq. 2) then
+   read(unit=94,fmt=*,iostat=readflag) readreal; T%DRIVER%TABSIZE = int(readreal)
+   do i=1,T%DRIVER%TABSIZE  
+    read(unit=94,fmt=*,iostat=readflag) T%DRIVER%TIMETAB(i),T%DRIVER%XCGTAB(i),T%DRIVER%YCGTAB(i),T%DRIVER%ZCGTAB(i),T%DRIVER%PHITAB(i),T%DRIVER%THETATAB(i),T%DRIVER%PSITAB(i), & 
+                                        T%DRIVER%UBTAB(i),T%DRIVER%VBTAB(i),T%DRIVER%WBTAB(i),T%DRIVER%PBTAB(i),T%DRIVER%QBTAB(i),T%DRIVER%RBTAB(i)
    end do
   end if
 
   close(94) 
   write(*,*) 'DRIVER Load Complete'
 
-  DRIVE%DQFLAG = 1
+  T%DRIVER%DQFLAG = 1
   
   RETURN
    
@@ -3196,7 +2941,7 @@ SUBROUTINE IMPORTWAKE(mat,filename)
 
 END SUBROUTINE IMPORTWAKE
 
-SUBROUTINE AIRWAKE(DRIVE,XI,YI,ZI)
+SUBROUTINE AIRWAKE(T,XI,YI,ZI)
   use TOSIMDATATYPES
   implicit none
   integer stepX,stepY,stepZ,stepT,extrapX,extrapY,extrapZ,extrapT,cord2(2)
@@ -3209,7 +2954,7 @@ SUBROUTINE AIRWAKE(DRIVE,XI,YI,ZI)
   real*8 rI_I(3,1),rS_I(3,1),rAIRWAKE_S(3,1),rAwP_S(3,1),XI,YI,ZI
   character*1 letter
   character*10 number
-  type(DRIVERSTRUCTURE) DRIVE
+  type(TOSIMSTRUCTURE) T
 
   !   /*   %%This function will take in x,y,z(ft),t(sec) and location and  */
   !   /*   %return u,v,w(m/s). This uses a fast quad-linear interpolation */
@@ -3217,35 +2962,35 @@ SUBROUTINE AIRWAKE(DRIVE,XI,YI,ZI)
   !   /*   %so many globals must be defined. location is a string that */
   !   /*   %contains the location of the data to be interpolated. */
   
-  DRIVE%VWAKE(1) = 0
-  DRIVE%VWAKE(2) = 0
-  DRIVE%VWAKE(3) = 0
+  T%DRIVER%VWAKE(1) = 0
+  T%DRIVER%VWAKE(2) = 0
+  T%DRIVER%VWAKE(3) = 0
 
   rI_I(1,1) = XI
   rI_I(2,1) = YI
   rI_I(3,1) = ZI
   
-  rS_I(1,1) = DRIVE%XCG
-  rS_I(2,1) = DRIVE%YCG
-  rS_I(3,1) = DRIVE%ZCG
+  rS_I(1,1) = T%DRIVER%XCG
+  rS_I(2,1) = T%DRIVER%YCG
+  rS_I(3,1) = T%DRIVER%ZCG
 
-  rAIRWAKE_S(1,1) = DRIVE%SLAIRWAKE
-  rAIRWAKE_S(2,1) = DRIVE%BLAIRWAKE
-  rAIRWAKE_S(3,1) = DRIVE%WLAIRWAKE
+  rAIRWAKE_S(1,1) = T%DRIVER%SLAIRWAKE
+  rAIRWAKE_S(2,1) = T%DRIVER%BLAIRWAKE
+  rAIRWAKE_S(3,1) = T%DRIVER%WLAIRWAKE
 
-  rAwP_S = matmul(transpose(DRIVE%TIS),rI_I-rS_I)-rAIRWAKE_S
+  rAwP_S = matmul(transpose(T%DRIVER%TIS),rI_I-rS_I)-rAIRWAKE_S
 
   xstar = -rAwP_S(1,1)
   ystar = rAwP_S(2,1)
   zstar = -rAwP_S(3,1)
 
   !!Loop tstar
-  tstar = DRIVE%TIME
+  tstar = T%DRIVER%TIME
   tshift = 0
-  if (tstar .gt. DRIVE%TCOORD(NTIMES)) then
-     tshift = -floor(abs(tstar-DRIVE%TCOORD(1))/DRIVE%TCOORD(NTIMES))
+  if (tstar .gt. T%DRIVER%TCOORD(NTIMES)) then
+     tshift = -floor(abs(tstar-T%DRIVER%TCOORD(1))/T%DRIVER%TCOORD(NTIMES))
   end if
-  tstar = tstar + tshift*DRIVE%TCOORD(NTIMES)
+  tstar = tstar + tshift*T%DRIVER%TCOORD(NTIMES)
   ! write(*,*) 'Tstar = ',tstar, 'tshift = ',tshift
 
   stepX = 1;stepY = 1;stepZ = 1;stepT = 1;
@@ -3258,29 +3003,29 @@ SUBROUTINE AIRWAKE(DRIVE,XI,YI,ZI)
   uvw(1,1)=0;uvw(2,1)=0;uvw(3,1)=0;
   uvw(1,2)=0;uvw(2,2)=0;uvw(3,2)=0;
 
-  markX = DRIVE%markX
-  markY = DRIVE%markY
-  markZ = DRIVE%markZ
-  markT = DRIVE%markT
+  markX = T%DRIVER%markX
+  markY = T%DRIVER%markY
+  markZ = T%DRIVER%markZ
+  markT = T%DRIVER%markT
 
   !%%Check X
   if (markX .eq. IMAX) then
      markX = markX - 1;
   end if
-  if ((xstar .ge. DRIVE%XCOORD(markX)) .and. (xstar .le. DRIVE%XCOORD(markX+1))) then
+  if ((xstar .ge. T%DRIVER%XCOORD(markX)) .and. (xstar .le. T%DRIVER%XCOORD(markX+1))) then
      !%%You're in between the markers so keep going
   else
-     if (xstar .gt. DRIVE%XCOORD(IMAX)) then
+     if (xstar .gt. T%DRIVER%XCOORD(IMAX)) then
         markX = IMAX;
         stepX = -1;
         extrapX = 1;
         ! write(*,*) 'Out of bounds on x'
-     elseif (xstar .lt. DRIVE%XCOORD(1)) then
+     elseif (xstar .lt. T%DRIVER%XCOORD(1)) then
         markX = 1;
         stepX = 1;
         extrapX = 1;
      else
-        call FINDGE(DRIVE%XCOORD,IMAX,xstar,markX)
+        call FINDGE(T%DRIVER%XCOORD,IMAX,xstar,markX)
         if (markX .eq. IMAX) then
            markX = markX - 1;
         else if (markX .le. 0) then
@@ -3294,32 +3039,32 @@ SUBROUTINE AIRWAKE(DRIVE,XI,YI,ZI)
   !%%%Now that you have markX you can grab the y and z planes
   ! write(*,*) 'Ycoord'
   do j = 1,JMAX
-     DRIVE%YCOORD(j) = DRIVE%YDRIVER(markX,j,1); 
-     ! write(*,*) DRIVE%YCOORD(j)
+     T%DRIVER%YCOORD(j) = T%DRIVER%YDRIVER(markX,j,1); 
+     ! write(*,*) T%DRIVER%YCOORD(j)
   end do
   ! write(*,*) '------------'
   do k = 1,KMAX
-     DRIVE%ZCOORD(k) = DRIVE%ZDRIVER(markX,1,k);    
-     ! write(*,*) DRIVE%ZCOORD(k)
+     T%DRIVER%ZCOORD(k) = T%DRIVER%ZDRIVER(markX,1,k);    
+     ! write(*,*) T%DRIVER%ZCOORD(k)
   end do
 
   !%%Check Y
   if (markY .eq. JMAX) then
      markY = markY - 1;
   end if
-  if ((ystar .ge. DRIVE%YCOORD(markY)) .and. (ystar .le. DRIVE%YCOORD(markY+1))) then
+  if ((ystar .ge. T%DRIVER%YCOORD(markY)) .and. (ystar .le. T%DRIVER%YCOORD(markY+1))) then
      !%%You're in between the markers so keep going
   else
-     if (ystar .gt. DRIVE%YCOORD(JMAX)) then
+     if (ystar .gt. T%DRIVER%YCOORD(JMAX)) then
         markY = JMAX;
         stepY = -1;
         extrapY = 1;
-     elseif (ystar .lt. DRIVE%YCOORD(1)) then
+     elseif (ystar .lt. T%DRIVER%YCOORD(1)) then
         markY = 1;
         stepY = 1;
         extrapY = 1;
      else
-        call FINDGE(DRIVE%YCOORD,JMAX,ystar,markY)
+        call FINDGE(T%DRIVER%YCOORD,JMAX,ystar,markY)
         if (markY .eq. JMAX) then
            markY = markY - 1;
         else if (markY .le. 0) then
@@ -3335,25 +3080,25 @@ SUBROUTINE AIRWAKE(DRIVE,XI,YI,ZI)
      markZ = markZ - 1;
   end if
 
-  if ((zstar .ge. DRIVE%ZCOORD(markZ)) .and. (zstar .le. DRIVE%ZCOORD(markZ+1))) then
+  if ((zstar .ge. T%DRIVER%ZCOORD(markZ)) .and. (zstar .le. T%DRIVER%ZCOORD(markZ+1))) then
      !%%You're in between the markers so keep going
   else
      !%Find markZ
-     if (zstar .gt. DRIVE%ZCOORD(KMAX)) then
+     if (zstar .gt. T%DRIVER%ZCOORD(KMAX)) then
         !%use endpt
         markZ = KMAX;
         stepZ = -1;
         extrapZ = 1;
-        DRIVE%VWAKE(1) = 0
-        DRIVE%VWAKE(2) = 0
-        DRIVE%VWAKE(3) = 0
+        T%DRIVER%VWAKE(1) = 0
+        T%DRIVER%VWAKE(2) = 0
+        T%DRIVER%VWAKE(3) = 0
         RETURN
-     else if (zstar .lt. DRIVE%ZCOORD(1)) then
+     else if (zstar .lt. T%DRIVER%ZCOORD(1)) then
         markZ = 1;
         stepZ = 1;
         extrapZ = 1;
      else
-        call FINDGE(DRIVE%ZCOORD,KMAX,zstar,markZ)
+        call FINDGE(T%DRIVER%ZCOORD,KMAX,zstar,markZ)
         if (markZ .eq. KMAX) then
            markZ = markZ - 1;
         else if (markZ .eq. 0) then
@@ -3368,21 +3113,21 @@ SUBROUTINE AIRWAKE(DRIVE,XI,YI,ZI)
   if (markT .eq. NTIMES) then
      markT = markT - 1;
   end if
-  !write(*,*) tstar,markT,DRIVE%TCOORD(markT)
-  if ((tstar .ge. DRIVE%TCOORD(markT)) .and. (tstar .le. DRIVE%TCOORD(markT+1))) then
+  !write(*,*) tstar,markT,T%DRIVER%TCOORD(markT)
+  if ((tstar .ge. T%DRIVER%TCOORD(markT)) .and. (tstar .le. T%DRIVER%TCOORD(markT+1))) then
      !%%You're in between the markers so keep going
   else
      !%Find markT
-     if (tstar .gt. DRIVE%TCOORD(NTIMES)) then
+     if (tstar .gt. T%DRIVER%TCOORD(NTIMES)) then
         !%use endpt
         markT = NTIMES;
         extrapT = 1;
-     else if (tstar .lt. DRIVE%TCOORD(1)) then
+     else if (tstar .lt. T%DRIVER%TCOORD(1)) then
         !%use start pt
         markT = 1;
         extrapT = 1;
      else
-        call FINDGE(DRIVE%TCOORD,NTIMES,tstar,markT)
+        call FINDGE(T%DRIVER%TCOORD,NTIMES,tstar,markT)
         if (markT .eq. NTIMES) then
            markT = markT - 1;
         else if (markT .eq. 0) then
@@ -3401,15 +3146,15 @@ SUBROUTINE AIRWAKE(DRIVE,XI,YI,ZI)
         endif
      endif
      letter = trim('U')
-     DRIVE%U0name = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+     T%DRIVER%U0name = trim(T%DRIVER%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
      letter = trim('V')
-     DRIVE%V0name = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+     T%DRIVER%V0name = trim(T%DRIVER%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
      letter = trim('W')
-     DRIVE%W0name = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+     T%DRIVER%W0name = trim(T%DRIVER%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
      !%%only import at markT
-     call IMPORTWAKE(DRIVE%UDRIVER,DRIVE%U0name);
-     call IMPORTWAKE(DRIVE%VDRIVER,DRIVE%V0name);
-     call IMPORTWAKE(DRIVE%WDRIVER,DRIVE%W0name);
+     call IMPORTWAKE(T%DRIVER%UDRIVER,T%DRIVER%U0name);
+     call IMPORTWAKE(T%DRIVER%VDRIVER,T%DRIVER%V0name);
+     call IMPORTWAKE(T%DRIVER%WDRIVER,T%DRIVER%W0name);
      if (extrapT .eq. 1) then
         tinterp = 1;
      else
@@ -3422,15 +3167,15 @@ SUBROUTINE AIRWAKE(DRIVE,XI,YI,ZI)
            write(number, '(i3)' )  markT+1
         endif
         letter = trim('U')
-        DRIVE%Udtname = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+        T%DRIVER%Udtname = trim(T%DRIVER%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
         letter = trim('V')
-        DRIVE%Vdtname = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+        T%DRIVER%Vdtname = trim(T%DRIVER%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
         letter = trim('W')
-        DRIVE%Wdtname = trim(DRIVE%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
+        T%DRIVER%Wdtname = trim(T%DRIVER%AIRWAKEPATH)//trim(letter)//'_'//trim(number)//'.txt'
         !%%only import at markT
-        call IMPORTWAKE(DRIVE%UDRIVERDT,DRIVE%Udtname);
-        call IMPORTWAKE(DRIVE%VDRIVERDT,DRIVE%Vdtname);
-        call IMPORTWAKE(DRIVE%WDRIVERDT,DRIVE%Wdtname);
+        call IMPORTWAKE(T%DRIVER%UDRIVERDT,T%DRIVER%Udtname);
+        call IMPORTWAKE(T%DRIVER%VDRIVERDT,T%DRIVER%Vdtname);
+        call IMPORTWAKE(T%DRIVER%WDRIVERDT,T%DRIVER%Wdtname);
      end if !(extrapT eq. 1 ) 
   end if
 
@@ -3442,71 +3187,71 @@ SUBROUTINE AIRWAKE(DRIVE,XI,YI,ZI)
      !%Interpolate Spatially
 
      !%%To start we have 8 discrete point (8 corners of a cube)
-     xpts2(1) = DRIVE%XCOORD(markX)
-     xpts2(2) = DRIVE%XCOORD(markX+stepX);
-     ypts2(1) = DRIVE%YCOORD(markY)
-     ypts2(2) = DRIVE%YCOORD(markY+stepY);
-     zpts2(1) = DRIVE%ZCOORD(markZ)
-     zpts2(2) = DRIVE%ZCOORD(markZ+stepZ);
+     xpts2(1) = T%DRIVER%XCOORD(markX)
+     xpts2(2) = T%DRIVER%XCOORD(markX+stepX);
+     ypts2(1) = T%DRIVER%YCOORD(markY)
+     ypts2(2) = T%DRIVER%YCOORD(markY+stepY);
+     zpts2(1) = T%DRIVER%ZCOORD(markZ)
+     zpts2(2) = T%DRIVER%ZCOORD(markZ+stepZ);
      x1 = markX;x2 = markX+stepX;
      y1 = markY;y2 = (markY+stepY);
      z1 = markZ;z2 = markZ+stepZ;
      ! write(*,*) 'x1,x2,y1,y2,z1,z2 = ',x1,x2,y1,y2,z1,z2
      if (tt .eq. 1) then
         !%%Use UDRIVER,VDRIVER,WDRIVER
-        u8(1) = DRIVE%UDRIVER(x1,y1,z1);
-        u8(2) = DRIVE%UDRIVER(x2,y1,z1);
-        u8(3) = DRIVE%UDRIVER(x2,y2,z1);
-        u8(4) = DRIVE%UDRIVER(x1,y2,z1);
-        u8(5) = DRIVE%UDRIVER(x1,y1,z2);
-        u8(6) = DRIVE%UDRIVER(x2,y1,z2);
-        u8(7) = DRIVE%UDRIVER(x2,y2,z2);
-        u8(8) = DRIVE%UDRIVER(x1,y2,z2);
-        v8(1) = DRIVE%VDRIVER(x1,y1,z1);
-        v8(2) = DRIVE%VDRIVER(x2,y1,z1);
-        v8(3) = DRIVE%VDRIVER(x2,y2,z1);
-        v8(4) = DRIVE%VDRIVER(x1,y2,z1);
-        v8(5) = DRIVE%VDRIVER(x1,y1,z2);
-        v8(6) = DRIVE%VDRIVER(x2,y1,z2);
-        v8(7) = DRIVE%VDRIVER(x2,y2,z2);
-        v8(8) = DRIVE%VDRIVER(x1,y2,z2);
-        w8(1) = DRIVE%WDRIVER(x1,y1,z1);
-        w8(2) = DRIVE%WDRIVER(x2,y1,z1);
-        w8(3) = DRIVE%WDRIVER(x2,y2,z1);
-        w8(4) = DRIVE%WDRIVER(x1,y2,z1);
-        w8(5) = DRIVE%WDRIVER(x1,y1,z2);
-        w8(6) = DRIVE%WDRIVER(x2,y1,z2);
-        w8(7) = DRIVE%WDRIVER(x2,y2,z2);
-        w8(8) = DRIVE%WDRIVER(x1,y2,z2);
+        u8(1) = T%DRIVER%UDRIVER(x1,y1,z1);
+        u8(2) = T%DRIVER%UDRIVER(x2,y1,z1);
+        u8(3) = T%DRIVER%UDRIVER(x2,y2,z1);
+        u8(4) = T%DRIVER%UDRIVER(x1,y2,z1);
+        u8(5) = T%DRIVER%UDRIVER(x1,y1,z2);
+        u8(6) = T%DRIVER%UDRIVER(x2,y1,z2);
+        u8(7) = T%DRIVER%UDRIVER(x2,y2,z2);
+        u8(8) = T%DRIVER%UDRIVER(x1,y2,z2);
+        v8(1) = T%DRIVER%VDRIVER(x1,y1,z1);
+        v8(2) = T%DRIVER%VDRIVER(x2,y1,z1);
+        v8(3) = T%DRIVER%VDRIVER(x2,y2,z1);
+        v8(4) = T%DRIVER%VDRIVER(x1,y2,z1);
+        v8(5) = T%DRIVER%VDRIVER(x1,y1,z2);
+        v8(6) = T%DRIVER%VDRIVER(x2,y1,z2);
+        v8(7) = T%DRIVER%VDRIVER(x2,y2,z2);
+        v8(8) = T%DRIVER%VDRIVER(x1,y2,z2);
+        w8(1) = T%DRIVER%WDRIVER(x1,y1,z1);
+        w8(2) = T%DRIVER%WDRIVER(x2,y1,z1);
+        w8(3) = T%DRIVER%WDRIVER(x2,y2,z1);
+        w8(4) = T%DRIVER%WDRIVER(x1,y2,z1);
+        w8(5) = T%DRIVER%WDRIVER(x1,y1,z2);
+        w8(6) = T%DRIVER%WDRIVER(x2,y1,z2);
+        w8(7) = T%DRIVER%WDRIVER(x2,y2,z2);
+        w8(8) = T%DRIVER%WDRIVER(x1,y2,z2);
         ! do i = 1,8
         !    write(*,*) 'u8 = ',u8(i)
         ! end do
      else
         !%%Use Udt,Vdt,Wdt
-        u8(1) = DRIVE%UDRIVERDT(x1,y1,z1);
-        u8(2) = DRIVE%UDRIVERDT(x2,y1,z1);
-        u8(3) = DRIVE%UDRIVERDT(x2,y2,z1);
-        u8(4) = DRIVE%UDRIVERDT(x1,y2,z1);
-        u8(5) = DRIVE%UDRIVERDT(x1,y1,z2);
-        u8(6) = DRIVE%UDRIVERDT(x2,y1,z2);
-        u8(7) = DRIVE%UDRIVERDT(x2,y2,z2);
-        u8(8) = DRIVE%UDRIVERDT(x1,y2,z2);
-        v8(1) = DRIVE%VDRIVERDT(x1,y1,z1);
-        v8(2) = DRIVE%VDRIVERDT(x2,y1,z1);
-        v8(3) = DRIVE%VDRIVERDT(x2,y2,z1);
-        v8(4) = DRIVE%VDRIVERDT(x1,y2,z1);
-        v8(5) = DRIVE%VDRIVERDT(x1,y1,z2);
-        v8(6) = DRIVE%VDRIVERDT(x2,y1,z2);
-        v8(7) = DRIVE%VDRIVERDT(x2,y2,z2);
-        v8(8) = DRIVE%VDRIVERDT(x1,y2,z2);
-        w8(1) = DRIVE%WDRIVERDT(x1,y1,z1);
-        w8(2) = DRIVE%WDRIVERDT(x2,y1,z1);
-        w8(3) = DRIVE%WDRIVERDT(x2,y2,z1);
-        w8(4) = DRIVE%WDRIVERDT(x1,y2,z1);
-        w8(5) = DRIVE%WDRIVERDT(x1,y1,z2);
-        w8(6) = DRIVE%WDRIVERDT(x2,y1,z2);
-        w8(7) = DRIVE%WDRIVERDT(x2,y2,z2);
-        w8(8) = DRIVE%WDRIVERDT(x1,y2,z2);
+        u8(1) = T%DRIVER%UDRIVERDT(x1,y1,z1);
+        u8(2) = T%DRIVER%UDRIVERDT(x2,y1,z1);
+        u8(3) = T%DRIVER%UDRIVERDT(x2,y2,z1);
+        u8(4) = T%DRIVER%UDRIVERDT(x1,y2,z1);
+        u8(5) = T%DRIVER%UDRIVERDT(x1,y1,z2);
+        u8(6) = T%DRIVER%UDRIVERDT(x2,y1,z2);
+        u8(7) = T%DRIVER%UDRIVERDT(x2,y2,z2);
+        u8(8) = T%DRIVER%UDRIVERDT(x1,y2,z2);
+        v8(1) = T%DRIVER%VDRIVERDT(x1,y1,z1);
+        v8(2) = T%DRIVER%VDRIVERDT(x2,y1,z1);
+        v8(3) = T%DRIVER%VDRIVERDT(x2,y2,z1);
+        v8(4) = T%DRIVER%VDRIVERDT(x1,y2,z1);
+        v8(5) = T%DRIVER%VDRIVERDT(x1,y1,z2);
+        v8(6) = T%DRIVER%VDRIVERDT(x2,y1,z2);
+        v8(7) = T%DRIVER%VDRIVERDT(x2,y2,z2);
+        v8(8) = T%DRIVER%VDRIVERDT(x1,y2,z2);
+        w8(1) = T%DRIVER%WDRIVERDT(x1,y1,z1);
+        w8(2) = T%DRIVER%WDRIVERDT(x2,y1,z1);
+        w8(3) = T%DRIVER%WDRIVERDT(x2,y2,z1);
+        w8(4) = T%DRIVER%WDRIVERDT(x1,y2,z1);
+        w8(5) = T%DRIVER%WDRIVERDT(x1,y1,z2);
+        w8(6) = T%DRIVER%WDRIVERDT(x2,y1,z2);
+        w8(7) = T%DRIVER%WDRIVERDT(x2,y2,z2);
+        w8(8) = T%DRIVER%WDRIVERDT(x1,y2,z2);
      end if
 
 
@@ -3606,8 +3351,8 @@ SUBROUTINE AIRWAKE(DRIVE,XI,YI,ZI)
      vatm(3) = uvw(3,1);
   else
      !%%Interpolate on T
-     tpts(1) = DRIVE%TCOORD(markT)
-     tpts(2) = DRIVE%TCOORD(markT+1);
+     tpts(1) = T%DRIVER%TCOORD(markT)
+     tpts(2) = T%DRIVER%TCOORD(markT+1);
      u2(1) = uvw(1,1);
      u2(2) = uvw(1,2);
      v2(1) = uvw(2,1);
@@ -3625,47 +3370,16 @@ SUBROUTINE AIRWAKE(DRIVE,XI,YI,ZI)
      vatm(3) = w;
   end if
 
-  DRIVE%VWAKE(1) = -(vatm(1) - DRIVE%UDRIVER(markX,markY,KMAX))
-  DRIVE%VWAKE(2) = vatm(2)
-  DRIVE%VWAKE(3) = -vatm(3)
+  T%DRIVER%VWAKE(1) = -(vatm(1) - T%DRIVER%UDRIVER(markX,markY,KMAX))
+  T%DRIVER%VWAKE(2) = vatm(2)
+  T%DRIVER%VWAKE(3) = -vatm(3)
 
-  DRIVE%markX = markX
-  DRIVE%markY = markY
-  DRIVE%markZ = markZ
-  DRIVE%markT = markT
+  T%DRIVER%markX = markX
+  T%DRIVER%markY = markY
+  T%DRIVER%markZ = markZ
+  T%DRIVER%markT = markT
 
 END SUBROUTINE AIRWAKE
-
-SUBROUTINE DOWNWASH(DRIVE,STATE)
-  use TOSIMDATATYPES
-  implicit none
-  real*8 xcg,ycg,zcg,downwash_angle,zdownwash,delx,dely,delz,n,STATE(3)
-  type(DRIVERSTRUCTURE) DRIVE
-
-  DRIVE%VWAKE = 0
-
-  !Extract state of Towed Body
-  xcg = STATE(1)
-  ycg = STATE(2)
-  zcg = STATE(3)
-
-  !Compute z location of downwash
-  downwash_angle = atan2(DRIVE%DOWNWASH,DRIVE%SPEED)
-  zdownwash = delx*tan(downwash_angle)
-
-  !Check and see if the towed body is in Driver airwake
-  delx = abs(DRIVE%XCG - xcg)
-  dely = abs(DRIVE%YCG - ycg)
-  delz = abs(abs(DRIVE%ZCG - zcg) - zdownwash)
-
-  if ((dely .lt. DRIVE%DIAMETER) .and. (delz .lt. DRIVE%DIAMETER)) then
-     DRIVE%VWAKE(1) = 0.0
-     DRIVE%VWAKE(2) = 0.0
-     call RandUniform(n)
-     DRIVE%VWAKE(3) = DRIVE%DOWNWASH*(1+(1-2*n)*0.1D0)
-  end if
-
-END SUBROUTINE DOWNWASH
 
 SUBROUTINE TOWED_CONTROL(TOW)
   use TOSIMDATATYPES
@@ -4087,16 +3801,12 @@ SUBROUTINE TOWED(T,iflag)
     if (V_A .eq. 0) then
         V_A = uaero
     end if
-    !!Dynamic pressure
-
-    q_inf = 0.5*T%ATM%DEN*(V_A**2)
-    q_inf_S = 0.5*T%ATM%DEN*(V_A**2)*T%TOW%SAREA
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Quadcopter Aerodynamic Model written by Lisa Schibelius - 12/2016!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     !Recompute KT
-    T%TOW%KT = T%TOW%C_T*((T%TOW%DEN*qPI*(T%TOW%RNEW**4)/4))
+    T%TOW%KT = T%TOW%C_T*((T%ATM%DEN*qPI*(T%TOW%RNEW**4)/4))
     
     !Compute Thrust
     
@@ -4164,7 +3874,7 @@ SUBROUTINE TOWED(T,iflag)
     !gotodynamics
 
     !!!!!!!!! Aerodynamics
-    bquad = T%TOW%C_TAU*((T%TOW%DEN*qPI*(T%TOW%RNEW**5)/4))
+    bquad = T%TOW%C_TAU*((T%ATM%DEN*qPI*(T%TOW%RNEW**5)/4))
 
     !!! According to dynamic equations, a positive roll will have rotors 1,4 > 2,3. This was previously 2,3>1,4
     ! Since T3 = T1*Ltheta_front/Ltheta_back we're just going to do this for simplicity
