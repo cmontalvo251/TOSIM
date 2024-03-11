@@ -8,7 +8,6 @@ IMPLICIT NONE
  integer,parameter :: MAXNAOA = 100                ! Units: 'nd', Desc: 'Maximum Number of Aerodynamic Angle of Attack Table Points'
  integer,parameter :: MAXX = 1000                  ! Units: 'nd', Desc: 'Maximum Number of System States'
  integer,parameter :: NOACTUATORS = 9              ! Units: 'nd', Desc: Number of Actuators
- integer,parameter :: SWEEPTABLE = 101             ! Units: 'nd', Desc: Sweep Table length
  integer,parameter :: FT2M = 0.3048                ! Conversion from Feet to Meters
  integer,parameter :: M2FT = 3.28084               ! Conversion from Meters to Feet
  real*8,parameter  :: PI = 3.14159265358979323846  ! Units: 'nd', Desc: 'Pi'
@@ -334,7 +333,6 @@ type ATMOSPHERESTRUCTURE
   real*8 :: RUDDER = 0                             ! Adding a rudder parameter just in case we use the manta
   real*8 :: FLAPS = 0                              ! Adding flaps parameter in case we use an airplane later
   real*8 :: DELTHRUST = 0                          ! Adding incase we use an airplane later
-  real*8 :: SWEEPOFFON = 0                         ! Adding incase we use an airplane later
   real*8 :: TURNRADIUS = 0
   real*8 :: V_T = 0                                ! Velocity (ft/s)
   real*8 :: KT = 0                                 ! Quadcopter Aero Parameter
@@ -641,7 +639,6 @@ end type CONTROLSYSTEMSTRUCTURE
   character(128) :: CONTROLOUTPUTFILE = ' '        ! Units: 'nd', Desc: 'Control Output File'
   character(128) :: FORCEOUTPUTFILE = ' '          ! Units: 'nd', Desc: 'Force Output File'
   character(128) :: ERROROUTPUTFILE = ' '          ! Units: 'nd', Desc: 'Error Output File'
-  character(128) :: AOASWEEPOUTPUTFILE = ' '       ! Units: 'nd', Desc: 'Error Output File'
   character(24) :: DATEANDTIMEOFRUN = ' '          ! Units: 'nd', Desc: 'Date and Time of Run'
   real*8 :: GRAVITY = 32.2                         ! Units: 'ft/s^2', Desc: 'Gravity'
   type(ATMOSPHERESTRUCTURE) :: ATM
@@ -765,7 +762,7 @@ PROGRAM TOSIM
 
 !!!!!!!!!!!!!!!!!!! Compute Simulation !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
- call SIMULATION(T,3)
+ call SIMULATION(T,2)
 
 !!!!!!!!!!!!!!!!! Close Output Files !!!!!!!!!!!!!!!!!!!!!!!
 
@@ -780,7 +777,7 @@ SUBROUTINE SIMULATION(T,iflag)
  use TOSIMDATATYPES
  implicit none
  integer iflag,openflag,readflag
- integer i,j,k,npts,stateindex,SWEEPS
+ integer i,j,k,npts,stateindex
  real*8 readreal,xslope,yslope,zslope,idx
  real*8 sum,nominaltime,nominalstate(MAXX),rkalfa(4),krkbody(MAXX,4)
  real*4 tictotal,ticuser,ticsystem,toctotal,tocuser,tocsystem,elapsed(2)
@@ -791,7 +788,7 @@ SUBROUTINE SIMULATION(T,iflag)
 
  !!!!!!!!!!!!!!! COMPUTE iflag = 3 !!!!!!!!!!!!!!!!!!!!!!1
 
- if (iflag .eq. 3) then  
+ if (iflag .eq. 2) then  
 
   ! Define Constants
 
@@ -801,8 +798,7 @@ SUBROUTINE SIMULATION(T,iflag)
 
   !T%SIM%TIME = T%SIM%INITIALTIME
   !T%SIM%STATE(1:T%SIM%NOSTATES) = T%SIM%INITIALSTATE(1:T%SIM%NOSTATES)
-  call SYSTEMDERIVATIVES(T,3)
-  call SYSTEMDERIVATIVES(T,2) !Echo data
+  call SYSTEMDERIVATIVES(T,2)
 
   ! Compute Nominal Torque Value
   if (T%SIM%ACTUATORONOFF .eq. 1) then
@@ -813,7 +809,7 @@ SUBROUTINE SIMULATION(T,iflag)
   end if
    
   if (T%SIM%ICS .eq. 1) then
-     call CONTROL(T,3)
+     call CONTROL(T,2)
   end if
 
   ! Open Time Simulation Output Files
@@ -942,7 +938,7 @@ SUBROUTINE SIMULATION(T,iflag)
 
     ! Compute Derivatives
 
-    call SYSTEMDERIVATIVES(T,3)
+    call SYSTEMDERIVATIVES(T,2)
 
     ! write(*,*) 'Fx,Fy,Fz - Grav,Aero,Cont,Total'
     ! write(*,*) T%TOW%FXGRAV,T%TOW%FYGRAV,T%TOW%FZGRAV
@@ -1003,12 +999,12 @@ SUBROUTINE SIMULATION(T,iflag)
 
    ! Step State Derivatives
    ! rk4
-   call SYSTEMDERIVATIVES(T,3)
+   call SYSTEMDERIVATIVES(T,2)
 
    ! Step Control System
 
    if (T%SIM%ICS .eq. 1) then
-      call CONTROL(T,3)
+      call CONTROL(T,2)
    end if
 
   ! State Limits
@@ -1078,57 +1074,6 @@ SUBROUTINE SIMULATION(T,iflag)
   
  end if
  
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ECHO DATA iflag = 2 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- 
- if (iflag .eq. 2) then
- 
-  write(25,*) ' '
-  write(25,*) 'SSSS IIII M   M U  U LL   AAAA TTTT IIII OOOO N  N'
-  write(25,*) 'SS    II  MM MM U  U LL   A  A  TT   II  O  O NN N'
-  write(25,*) 'SSSS  II  M M M U  U LL   AAAA  TT   II  O  O N NN'
-  write(25,*) '  SS  II  M   M U  U LL   A  A  TT   II  O  O N  N'
-  write(25,*) 'SSSS IIII M   M UUUU LLLL A  A  TT  IIII OOOO N  N'
-  write(25,*) ' '
-  write(25,*) 'Simulation Input File: ',trim(T%SIMINPUTFILE)
-  write(25,*) ' '
-  write(25,*) 'Initial Time (s): ',T%SIM%INITIALTIME
-  write(25,*) 'Final Time (s): ',T%SIM%FINALTIME
-  write(25,*) 'Delta Time (s): ',T%SIM%DELTATIME
-  write(25,*) 'Output Skip Parameter (nd): ',T%SIM%IOUTSKIP
-  write(25,*) 'Control System Flag (0=Off, 1=On): ',T%SIM%ICS
-  write(25,*) 'Debug Flag (0=Off, 1=On): ',T%SIM%IDEBUG
-  write(25,*) 'Debug Index (nd): ',T%SIM%IDXOUT
-  write(25,*) 'Create a Restart Point (nd): ',T%SIM%CREATERESTART
-  if (T%SIM%CREATERESTART .eq. 1) then
-     write(25,*) 'Restart Point Filename: ',T%SIM%RESTARTFILE
-     write(25,*) 'Restart Time(sec): ',T%SIM%RESTARTTIME
-  end if
-  write(25,*) 'Use a Restart Point (nd): ',T%SIM%RESTART
-  if (T%SIM%RESTART .eq. 1) then
-     write(25,*) 'Restart Point Filename: ',T%SIM%RESTARTFILE
-  end if
-  write(25,*) ' '  
-  write(25,*) 'Initial State Vector'
-  write(25,*) '--------------------'
-  write(25,*) 'Towed States'
-  !!! REVISIT ME 
-  do i=1,T%SIM%NOSTATES
-  if (i .eq. 1) write(25,*) 'Number of states:',T%SIM%NOSTATES
-   if (i .eq. 14) then
-      write(25,*) 'Driver States'
-   else if (i .eq. 26) then
-      write(25,*) 'Tether States'
-   else if (i .eq. T%SIM%NOSTATES - 8) then
-      write(25,*) 'PWM Thrust States'
-   end if
-   write(25,fmt='(a1,i4,e18.8)') ' ',i,T%SIM%INITIALSTATE(i)
-  end do
-  write(25,*) 'Data Quality Flag (nd, 0=Data Not Loaded Successfully, 1=Data Loaded Successfully): ',T%SIM%DQFLAG
-  
-  RETURN
-  
- end if
-  
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! LOAD DATA iflag = 1 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
  if (iflag .eq. 1) then
@@ -1270,7 +1215,7 @@ SUBROUTINE SIMULATION(T,iflag)
 
      !!!!!! Compute initial Tether points !!!!!!!!!!
 
-     call DRIVER(T,3) ! Compute location of reel !!!!!Reel Location = T%DRIVER%(XYZ)REEL
+     call DRIVER(T,2) ! Compute location of reel !!!!!Reel Location = T%DRIVER%(XYZ)REEL
 
      !!Place Driver states in initial state vector
      T%DRIVER%INITIALSTATE(1:20) = T%DRIVER%STATE(1:20)
@@ -1281,7 +1226,7 @@ SUBROUTINE SIMULATION(T,iflag)
 
      ! Compute location of connection point on Towed Platform
 
-     call TOWED(T,3) !Cradle tether connection point Location = T%THR%(XYZ)TETHER
+     call TOWED(T,2) !Cradle tether connection point Location = T%THR%(XYZ)TETHER
 
      stateindex = 0
      xslope = (T%THR%XTETHER - T%DRIVER%XREEL)/(T%THR%NBEADS+1)
@@ -1343,7 +1288,7 @@ SUBROUTINE SYSTEMDERIVATIVES(T,iflag)
 
 !!!!!!!!!!!!!!!!!!!!!!!! COMPUTE iflag = 3!!!!!!!!!!!!!!!!!
 
-if (iflag .eq. 3) then
+if (iflag .eq. 2) then
    
     stateindex = 0 
     
@@ -1352,7 +1297,7 @@ if (iflag .eq. 3) then
     T%TOW%STATEDOT = 0.0
     T%TOW%STATE(1:13) = T%SIM%STATE(stateindex+1:stateindex+13)
     if (T%TOW%DYNOFFON .eq. 1) then
-       call TOWED(T,3)
+       call TOWED(T,2)
        T%SIM%STATEDOT(stateindex+1:stateindex+13) = T%TOW%STATEDOT(1:13)
     end if
     stateindex = stateindex + 13
@@ -1363,7 +1308,7 @@ if (iflag .eq. 3) then
           T%DRIVER%STATE(1:12) = T%SIM%STATE(stateindex+1:stateindex+12)
           T%DRIVER%STATE(13:20) = T%SIM%STATE((T%SIM%NOSTATES-7):T%SIM%NOSTATES)
        end if
-       call DRIVER(T,3) 
+       call DRIVER(T,2)
        if ((T%DRIVER%MODNO .eq. 0) .or. (T%DRIVER%MODNO .eq. 3)) then
           T%SIM%STATEDOT(stateindex+1:stateindex+12) = T%DRIVER%STATEDOT(1:12)
           T%SIM%STATEDOT((T%SIM%NOSTATES-7):T%SIM%NOSTATES) = T%DRIVER%STATEDOT(13:20)
@@ -1380,7 +1325,7 @@ if (iflag .eq. 3) then
     T%THR%STATEDOT = 0.0
     T%THR%STATE(1:7*T%THR%NBEADS+1) = T%SIM%STATE(stateindex+1:stateindex+7*T%THR%NBEADS+1)
     if (T%THR%DYNOFFON .eq. 1) then
-       call TETHER(T,3)
+       call TETHER(T,2)
        T%SIM%STATEDOT(stateindex+1:stateindex+7*T%THR%NBEADS+1) = T%THR%STATEDOT(1:7*T%THR%NBEADS+1)
     end if
     stateindex = stateindex + 7*T%THR%NBEADS + 1
@@ -1389,41 +1334,6 @@ if (iflag .eq. 3) then
     
  end if
 
-!!!!!!!!!!!!!!!!!!!!ECHO DATA iflag = 2!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-if (iflag .eq. 2) then
-   
-   write(25,*) ' '
-   write(25,*) 'STATE AT T = ',T%SIM%TIME
-   write(25,*) ' '
-   write(25,*) 'Towed States'
-   do i=1,T%SIM%NOSTATES
-      if (i .eq. 14) then
-         write(25,*) 'Driver States'
-      else if (i .eq. 26) then
-         write(25,*) 'Tether States'
-      end if
-      write(25,fmt='(a1,i4,e18.8)') ' ',i,T%SIM%STATE(i)
-   end do
-   write(25,*) ' '
-   write(25,*) ' '
-   write(25,*) 'STATE DERIVATIVES AT T = ',T%SIM%TIME
-   write(25,*) ' '
-   write(25,*) 'Towed Statedots'
-   do i=1,T%SIM%NOSTATES
-      if (i .eq. 14) then
-         write(25,*) 'Driver Statedots'
-      else if (i .eq. 26) then
-         write(25,*) 'Tether Statedots'
-      end if
-      write(25,fmt='(a1,i4,e18.8)') ' ',i,T%SIM%STATEDOT(i)
-   end do
-   write(25,*) ' '
-
-   RETURN
-            
-end if
- 
  RETURN
 END SUBROUTINE SYSTEMDERIVATIVES
 
@@ -1458,7 +1368,7 @@ SUBROUTINE DRIVER_HANDSHAKE(T)
      T%ATM%YI = T%DRIVER%STATE(2)
      T%ATM%ZI = T%DRIVER%STATE(3)
      !Compute Atmopsheric density and winds - Same for Driver
-     call ATMOSPHERE(T,3) !T%ATM%DEN
+     call ATMOSPHERE(T,2) !T%ATM%DEN
      T%DRIVER%VXWIND = T%ATM%VXWIND
      T%DRIVER%VYWIND = T%ATM%VYWIND
      T%DRIVER%VZWIND = T%ATM%VZWIND
@@ -1518,7 +1428,7 @@ SUBROUTINE CONTROL(T,iflag)
  
 !!!!!!!!!!!!!!!!!!!!!!! COMPUTE iflag = 3 !!!!!!!!!!!!!!!!!!!!!!!!!!
   
- if (iflag .eq. 3) then  
+ if (iflag .eq. 2) then  
 
     !!!Feedback from Sensors
     call FEEDBACK(T)
@@ -1655,55 +1565,6 @@ SUBROUTINE CONTROL(T,iflag)
   RETURN
  end if
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ECHO DATA iflag = 2 !!!!!!!!!!!!!!!!!!!!!!!!
-
- if (iflag .eq. 2) then 
-  write(25,*) ' '
-  write(25,*) 'CCCC OOOO N  N TTTT RRR  OOOO LL   SSSS'
-  write(25,*) 'CC   O  O NN N  TT  RR R O  O LL   SS  '
-  write(25,*) 'CC   O  O N NN  TT  RRR  O  O LL   SSSS'
-  write(25,*) 'CC   O  O N  N  TT  RRR  O  O LL     SS'
-  write(25,*) 'CCCC OOOO N  N  TT  RR R OOOO LLLL SSSS'
-  write(25,*) ' '
-  write(25,*) 'Control System Input File: '
-  write(25,*) trim(T%CSINPUTFILE)
-  write(25,*) ' '
-  write(25,*) 'Tether Line Length Control Flag (0=Off, 1=On): ', T%CS%TETHERCONTROLOFFON
-  write(25,*) 'Driver Control Flag (0=Off, 1=On): ',T%DRIVER%CONTROLOFFON
-  write(25,*) 'Towed Body Control Off On (0=Off, 1=On): ',T%CS%TOWEDCONTROLOFFON
-  write(25,*) 'Towed proportional gain on speed: ',T%CS%KU 
-  write(25,*) 'Towed proportional gain on roll angle: ',T%CS%KPP
-  write(25,*) 'Towed derivative gain on roll angle: ',T%CS%KDP
-  write(25,*) 'Not used: ',T%CS%KPT
-  write(25,*) 'Towed proportional gain on pitch angle: ',T%CS%KPZ
-  write(25,*) 'Towed derivative gain on pitch angle: ',T%CS%KDZ
-  write(25,*) 'Towed proportional gain on altitude: ',T%CS%KPY
-  write(25,*) 'Towed derivative gain on altitude: ',T%CS%KDY
-  write(25,*) 'Towed Derivative Gain on sideslip: ',T%CS%KV 
-  write(25,*) 'Not used - all values below not used: ',T%CS%KPSI
-  write(25,*) '------------------all values below not used-------------------'
-  write(25,*) 'Tether proportional gain on length: ',T%CS%KTETHER
-  write(25,*) 'Tether derivative gain on length: ',T%CS%KDTETHER
-  write(25,*) 'Tether integral gain on length: ',T%CS%KITETHER
-  write(25,*) 'Parafoil proportional gain on heading' , T%CS%KPARAFOIL
-  write(25,*) 'Parafoil Derivative gain on heading' , T%CS%KDPARAFOIL
-  write(25,*) 'Feedback Update Rate: ',T%CS%UPDATERATE
-  write(25,*) 'Sensor Errors On (1) off (0): ', T%CS%SENSORERRORS
-  write(25,*) 'Bird Roll Angle Sensor Error(Bias): ', T%CS%BIRDROLLERROR(1) !Bias
-  write(25,*) 'Bird Roll Angle Sensor Error(Scale): ', T%CS%BIRDROLLERROR(2) !Scale
-  write(25,*) 'Bird Roll Angle Sensor Error(Noise): ', T%CS%BIRDROLLERROR(3) !Noise
-  write(25,*) 'Riser Sensor Error(Bias): ', T%CS%RISERROLLERROR(1) !Bias
-  write(25,*) 'Riser Sensor Error(Scale): ', T%CS%RISERROLLERROR(2) !Scale
-  write(25,*) 'Riser Sensor Error(Noise): ', T%CS%RISERROLLERROR(3) !Noise
-  write(25,*) 'Tension Sensor Error(Bias): ', T%CS%TENSIONERROR(1) !Bias
-  write(25,*) 'Tension Sensor Error(Scale): ', T%CS%TENSIONERROR(2) !Scale
-  write(25,*) 'Tension Sensor Error(Noise): ', T%CS%TENSIONERROR(3) !Noise
-  write(25,*) 'Data Quality Flag (nd, 0=Data Not Loaded Successfully, 1=Data Loaded Successfully): ',T%CS%DQFLAG
-
-  RETURN
-  
- end if
-  
 !!!!!!!!!!!!!!!!!!!!!!!!LOAD DATA iflag = 1!!!!!!!!!!!!!!!!!!!!!!!!!
  
  if (iflag .eq. 1) then
@@ -1846,7 +1707,7 @@ SUBROUTINE ATMOSPHERE(T,iflag)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! COMPUTE iflag = 3 !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
- if (iflag .eq. 3) then  
+ if (iflag .eq. 2) then  
 
     !!Reset all winds to zero
     T%ATM%VXWIND = 0
@@ -1999,58 +1860,6 @@ SUBROUTINE ATMOSPHERE(T,iflag)
 
 end if
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ECHO DATA iflag = 2 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-if (iflag .eq. 2) then 
-  write(25,*) ' '
-  write(25,*) 'AAAA TTTT M   M OOOO SSSS PPPP H  H EEEE RRR  EEEE'
-  write(25,*) 'A  A  TT  MM MM O  O SS   PP P H  H EE   RR R EE  '
-  write(25,*) 'AAAA  TT  M M M O  O SSSS PPPP HHHH EEEE RRRR EEEE'
-  write(25,*) 'A  A  TT  M   M O  O   SS PP   H  H EE   RRR  EE  '
-  write(25,*) 'A  A  TT  M   M OOOO SSSS PP   H  H EEEE RR R EEEE'
-  write(25,*) ' '
-  write(25,*) 'Atmosphere Input File: '
-  write(25,*) trim(T%ATMOSPHEREINPUTFILE)
-  write(25,*) ' '
-  write(25,*) 'Model Number (0=Constant, 1=Equation, 2=Table): ',T%ATM%MODNO
-  write(25,*) ' '
-  if (T%ATM%MODNO .eq. 1) then
-   write(25,*) 'Density (slug/ft^3): ',T%ATM%DEN
-   write(25,*) 'Wind Speed (ft/s): ',T%ATM%WINDSPEED
-   write(25,*) 'Wind Direction (deg): ',57.3*T%ATM%WINDDIR
-   write(25,*) 'Wind Elevation (deg): ',57.3*T%ATM%WINDELEV
-   write(25,*) ' '
-  end if
-  if (T%ATM%MODNO .eq. 2) then
-   write(25,*) 'Wind Speed (ft/s): ',T%ATM%WINDSPEED
-   write(25,*) 'Wind Direction (deg): ',57.3*T%ATM%WINDDIR
-   write(25,*) 'Wind Elevation (deg): ',57.3*T%ATM%WINDELEV
-   write(25,*) ' '
-  end if
-  if (T%ATM%MODNO .eq. 3) then
-   write(25,*) 'Altitude (ft), Density (slug/ft^3), VX Wind Speed (ft/s), VY Wind Speed (ft/s), VZ Wind Speed (ft/s)'
-   write(25,*) '---------------------------------------------------------------------------------------------'
-   do i=1,T%ATM%TABSIZE  
-    write(25,fmt='(5e18.8)') T%ATM%ALTTAB(i),T%ATM%DENTAB(i),T%ATM%VXWINDTAB(i),T%ATM%VYWINDTAB(i),T%ATM%VZWINDTAB(i)
-   end do
-   write(25,*) ' '
-  end if
-  if (T%ATM%MODNO .eq. 4) then
-     write(25,*) 'Using Wind File = ',T%ATM%PATH 
-     write(25,*) 'Grid Size of WRF model = ',T%ATM%dx,' m'
-     write(25,*) 'Maximum Height of WRF model = ',T%ATM%ztop,' m'
-     write(25,*) 'Grid Size of Turbulence (m) = ', T%ATM%dxT
-     write(25,*) 'Wind scale = ',T%ATM%IWINDSCALE
-     write(25,*) 'Turbulence Scale = ',T%ATM%TURBLEVEL
-     write(25,*) 'Heading Offset in WRF model(rad) = ',T%ATM%PSIOFFSET
-     write(25,*) 'Wavespeed in X and Y (ft/s) = ',T%ATM%WAVESPEED(1),T%ATM%WAVESPEED(2)
-  end if
-  write(25,*) 'Data Quality Flag (nd, 0=Data Not Loaded Successfully, 1=Data Loaded Successfully): ',T%ATM%DQFLAG
-
-  RETURN
-  
-end if
-  
 !!!!!!!!!!!!!!!!!!!!!!!!!!!! LOAD DATA iflag = 1 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
  if (iflag .eq. 1) then
@@ -2292,7 +2101,7 @@ SUBROUTINE DRIVER(T,iflag)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!! COMPUTE FLAG iflag = 3 !!!!!!!!!!!!!!!!!!!!!!!!!
   
- if (iflag .eq. 3) then  
+ if (iflag .eq. 2) then  
     
     !Extract everything from state vector
     xcg = T%DRIVER%STATE(1)
@@ -3673,7 +3482,7 @@ SUBROUTINE TOWED(T,iflag)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!! COMPUTE iflag = 3 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   
- if (iflag .eq. 3) then  
+ if (iflag .eq. 2) then  
  
   ! Unwrap State Vector
   
@@ -3769,7 +3578,7 @@ SUBROUTINE TOWED(T,iflag)
 
   ! write(*,*) T%SIM%TIME,T%ATM%XI,T%ATM%YI,T%ATM%ZI
 
-  call ATMOSPHERE(T,3) !T%ATM%DEN
+  call ATMOSPHERE(T,2) !T%ATM%DEN
 
   ! write(*,*) T%ATM%VXWIND,T%ATM%VYWIND,T%ATM%VZWIND
 
@@ -4008,59 +3817,6 @@ SUBROUTINE TOWED(T,iflag)
   
  end if !!For the compute flag
   
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ECHO DATA iflag = 2 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- 
- if (iflag .eq. 2) then 
-  write(25,*) ' '
-  write(25,*) 'Towed System'
-  write(25,*) ' '
-  write(25,*) 'Towed Input File: '
-  write(25,*) trim(T%TOWEDINPUTFILE)
-  write(25,*) ' '
-
-  write(25,*) 'Module off or on: ',T%TOW%DYNOFFON
-  write(25,*) 'Gravity Flag (0=Off, 1=On): ',T%TOW%GRAVOFFON
-  write(25,*) 'Aerodynamics Flag (0=Off, 1=On): ',T%TOW%AEROFLAG
-  write(25,*) 'Mass (kg): ',T%TOW%MASS
-  write(25,*) 'Weight (N): ',T%TOW%WEIGHT
-  write(25,*) 'Gravity (ft/s^2): ', T%TOW%GRAVITY
-  write(25,*) 'Stationline of Mass Center (m): ',T%TOW%SLCG
-  write(25,*) 'Buttline of Mass Center (m): ',T%TOW%BLCG
-  write(25,*) 'Waterline of Mass Center (m): ',T%TOW%WLCG
-  write(25,*) 'Stationline of Tether Reel Point on Tow: ', T%TOW%SLTETHER
-  write(25,*) 'Buttline of Tether Reel Point on Tow: ', T%TOW%BLTETHER
-  write(25,*) 'Waterline of Tether Reel Point on Tow: ', T%TOW%WLTETHER
-  write(25,*) 'Ixx (kg m^2): ',T%TOW%IXX
-  write(25,*) 'Iyy (kg m^2): ',T%TOW%IYY
-  write(25,*) 'Izz (kg m^2): ',T%TOW%IZZ
-  write(25,*) 'Ixy (kg m^2): ',T%TOW%IXY
-  write(25,*) 'Ixz (kg m^2): ',T%TOW%IXZ
-  write(25,*) 'Iyz (kg m^2): ',T%TOW%IYZ
-  write(25,*) 'Ixx Inverse (1/(kg m^2)): ',T%TOW%IXXI
-  write(25,*) 'Iyy Inverse (1/(kg m^2)): ',T%TOW%IYYI
-  write(25,*) 'Izz Inverse (1/(kg m^2)): ',T%TOW%IZZI
-  write(25,*) 'Ixy Inverse (1/(kg m^2)): ',T%TOW%IXYI
-  write(25,*) 'Ixz Inverse (1/(kg m^2)): ',T%TOW%IXZI
-  write(25,*) 'Iyz Inverse (1/(kg m^2)): ',T%TOW%IYZI
-  write(25,*) 'Turn Radius of AC(m): ',  T%TOW%TURNRADIUS
-  write(25,*) 'Aero Parameter: ', T%TOW%ALC
-  write(25,*) 'Aero Parameter: ', T%TOW%ALS
-  write(25,*) 'Aero Parameter: ', T%TOW%DXD
-  write(25,*) 'Aero Parameter: ', T%TOW%DYD
-  write(25,*) 'Aero Parameter: ', T%TOW%RNEW
-  write(25,*) 'Aero Parameter: ', T%TOW%C_T
-  write(25,*) 'Aero Parameter: ', T%TOW%C_TAU
-  write(25,*) 'Aero Parameter: ', T%TOW%LPHI12
-  write(25,*) 'Aero Parameter: ', T%TOW%LPHI34
-  write(25,*) 'Aero Parameter: ', T%TOW%LTHETA12
-  write(25,*) 'Aero Parameter: ', T%TOW%LTHETA34
-  write(25,*) 'Aero Parameter: ', T%TOW%OMEGAMAX
-  write(25,*) 'Data Quality Flag (nd, 0=Data Not Loaded Successfully, 1=Data Loaded Successfully): ',T%TOW%DQFLAG
- 
-  RETURN
-
- end if !!Echo flag
-    
 !!!!!!!!!!!!!!!!!!!!!!!!!! LOAD DATA iflag = 1 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
  if (iflag .eq. 1) then
@@ -4173,7 +3929,7 @@ SUBROUTINE TETHER(T,iflag)
 
 !!!!!!!!!!!!!!!!!! COMPUTE iflag = 3 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   
- if ((iflag .eq. 3) .or. (iflag .eq. 4)) then  !4 is a debug flag I added when adding beads (C. Montalvo 11/1/15)
+ if ((iflag .eq. 2) .or. (iflag .eq. 3)) then  !3 is a debug flag I added when adding beads (C. Montalvo 11/1/15)
  
   ! Unwrap State Vector
   
@@ -4214,7 +3970,7 @@ SUBROUTINE TETHER(T,iflag)
   r(T%THR%NBEADS+2,3) = T%THR%ZTETHER;
 
   !Debug Output
-  ! if (iflag .eq. 4) then
+  ! if (iflag .eq. 3) then
   !    write(*,*) 'Tension = ',tension(1:T%THR%NBEADS+1)
   !    write(*,*) 'X Position = ',r(1:T%THR%NBEADS+2,1)
   !    write(*,*) 'Y Position = ',r(1:T%THR%NBEADS+2,2)
@@ -4313,7 +4069,7 @@ SUBROUTINE TETHER(T,iflag)
         T%ATM%XI = raero(i,1); 
         T%ATM%YI = raero(i,2);
         T%ATM%ZI = raero(i,3);
-        call ATMOSPHERE(T,3)
+        call ATMOSPHERE(T,2)
 
         vaero(i,1) = vaero(i,1) - T%ATM%VXWIND;
         vaero(i,2) = vaero(i,2) - T%ATM%VYWIND;
@@ -4509,59 +4265,6 @@ SUBROUTINE TETHER(T,iflag)
   
  end if
   
-!!!!!!!!!!!!!!!!!!!!!!!!!!!! ECHO DATA iflag = 2 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- 
- if (iflag .eq. 2) then 
-  write(25,*) ' '
-  write(25,*) 'TTTTTT EEEEE TTTTTT HH  HH EEEEE RRR  '
-  write(25,*) '  TT   EE      TT   HH  HH EE    RR R '
-  write(25,*) '  TT   EEEE    TT   HHHHHH EEEE  RRRRR'
-  write(25,*) '  TT   EE      TT   HH  HH EE    RR R '
-  write(25,*) '  TT   EEEEE   TT   HH  HH EEEEE RR  R'
-  write(25,*) ' '
-  write(25,*) 'Tether Input File: '
-  write(25,*) trim(T%TETHERINPUTFILE)
-  write(25,*) ' '  
-  write(25,*) 'Dynamics Flag (0=Off, 1=On): ',T%THR%DYNOFFON
-  write(25,*) 'Gravity Flag (0=Off, 1=On): ',T%THR%GRAVOFFON
-  write(25,*) 'Aerodynamics Flag (0=Off, 1=On, 2=sweep): ',T%THR%AEROFLAG
-  write(25,*) 'Elasticity Flag (0=Off, 1=On): ',T%THR%ELASOFFON
-  write(25,*) 'Number of Beads (nd): ',T%THR%NBEADS
-  write(25,*) 'Mass Per Unit Length (slug/ft): ',T%THR%MASSPUL
-  write(25,*) 'Unstretched Total Length of Tether Line (ft): ',T%THR%LEN
-  write(25,*) 'Maximum Length of Tether Line(ft): ', T%THR%LENMAX
-  write(25,*) 'Minimum Length of Tether Line(ft): ', T%THR%LENMIN 
-  write(25,*) 'Unstretched Total Diameter of Tether Line (ft): ',T%THR%DIA
-  write(25,*) 'Cross-Sectional Area of Tether Line (ft^2): ',T%THR%AREA
-  write(25,*) 'KE Total Tether Modulus (lbf/ft^2): ',T%THR%KE
-  write(25,*) 'KV Total Tether Modulus 2 (lbf/ft): ',T%THR%KV
-  write(25,*) 'CV Total Tether Damping Modulus (lbf/(ft^2/s)): ',T%THR%CV
-  write(25,*) 'GP Tether Torsional Modulus (lbf/rad-ft^2): ',T%THR%GP
-  write(25,*) 'GD Tether Damping Torsional Modulus (lbf-s/(rad-ft^2)): ',T%THR%GD
-  write(25,*) 'KP Total Tether Torsional Stiffness (lbf-ft/rad): ',T%THR%KP
-  write(25,*) 'KD Total Tether Damping (lbf-ft-s/(rad)): ',T%THR%KD
-  write(25,*) 'Nonlinearity of Tether (0=linear,1=non-linear):',T%THR%NONLINEAR
-  write(25,*) 'Element Mass (slug): ',T%THR%EMASS
-  write(25,*) 'Element Length (ft): ',T%THR%ELEN
-  write(25,*) 'Element KE (lbf/ft): ',T%THR%EKE
-  write(25,*) 'Element KV (lbf/ft): ',T%THR%EKV
-  write(25,*) 'Element CV (lbf/ft): ',T%THR%ECV
-  write(25,*) 'Tension Filter Root (rad/s): ',T%THR%SIGMA
-  write(25,*) 'Tension Filter Input Stiffness Gain (lbf/ft): ',T%THR%KU
-  write(25,*) 'Tension Filter Input Damping Gain (lbf/(ft/s)): ',T%THR%CU
-  write(25,*) 'Tether Material Poisson Ratio (nd): ',T%THR%NU
-  write(25,*) 'Axial Drag Coefficient (nd): ',T%THR%CD_AXIAL
-  write(25,*) 'Normal Drag Coefficient (nd): ',T%THR%CD_NORMAL
-  write(25,*) 'Rotational Inertia or Reel(slug-ft^2): ',T%THR%IREEL
-  write(25,*) 'Radius or Reel(ft): ',T%THR%RREEL
-  write(25,*) 'Time Constant of Reel Controller : ',T%THR%TAU
-  write(25,*) 'Data Quality Flag (nd, 0=Data Not Loaded Successfully, 1=Data Loaded Successfully): ',T%THR%DQFLAG
-  close(94) 
-
-  RETURN
-
- end if
-    
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!! LOAD DATA iflag = 1 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
  if (iflag .eq. 1) then
@@ -4629,7 +4332,7 @@ SUBROUTINE TETHERPROPERTIES(T)
   if (T%THR%ADDBEAD .eq. 1) then
 
      !Call TETHER model to make sure tether is initialized properly
-     call TETHER(T,4) 
+     call TETHER(T,3) 
      
      !Make sure to set ADDBEAD to 0 so that you don't add an extra bead again
      T%THR%ADDBEAD = 0
@@ -4692,14 +4395,14 @@ SUBROUTINE TETHERPROPERTIES(T)
      T%SIM%NOSTATES = 13 + 12 + 7*T%THR%NBEADS + 1
 
      !Re-Run the TETHER and then SYSTEMDERIVATIVES routine to get the derivatives shifted correctly
-     call TETHER(T,4)
-     call SYSTEMDERIVATIVES(T,3)
+     call TETHER(T,3)
+     call SYSTEMDERIVATIVES(T,2)
   end if
 
   !Remove a bead if it needs it
   if (T%THR%REMOVEBEAD .eq. 1) then
      !Call TETHER model to make sure tether is initialized properly
-     call TETHER(T,4) 
+     call TETHER(T,3) 
      
      !Make sure to set REMOVEBEAD to 0 so that you don't remove an extra bead again
      T%THR%REMOVEBEAD = 0
@@ -4726,8 +4429,8 @@ SUBROUTINE TETHERPROPERTIES(T)
      T%SIM%NOSTATES = 13 + 12 + 7*T%THR%NBEADS + 1
 
      !Re-Run the TETHER and then SYSTEMDERIVATIVES routine to get the derivatives shifted correctly
-     call TETHER(T,4)
-     call SYSTEMDERIVATIVES(T,3)
+     call TETHER(T,3)
+     call SYSTEMDERIVATIVES(T,2)
   end if
   
   T%THR%AREA = PI*(T%THR%DIA/2)**2
