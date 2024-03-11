@@ -568,54 +568,6 @@ type ATMOSPHERESTRUCTURE
   real*8 :: ACTUATORDOT(NOACTUATORS) = 0.0         ! Units: 'vd', Desc: 'Vector of Actuators Derivatives
 end type SIMULATIONSTRUCTURE
 
-!!!!!!!!!!!!!!!!!!!!!!!!!! CONTROL SYSTEM STRUCTURE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- 
- type CONTROLSYSTEMSTRUCTURE
-  integer :: DQFLAG = 0                            ! Units: 'nd', Desc: 'Data Quality Flag (0=Data Not Loaded Successfully, 1=Data Loaded Successfully)'
-  integer :: TETHERCONTROLOFFON = 0                ! Units: 'nd', Desc: 'Tether Line Length Control Flag (0=Off, 1=On)'
-  integer :: TOWEDCONTROLOFFON = 0                 ! Units: 'nd', Desc: 'Aircraft controller off on (0=Off, 1=On)'
-  integer :: SENSORERRORS = 0                      ! Units: 'nd', Desc: 'Sensor Errors off on (0=Off, 1=On)'
-  real*8 :: KU = 0                                 ! Units: 'nd', Desc: Aircraft proportional gain on speed
-  real*8 :: KPP = 0                                ! Units: 'nd', Desc: Aircraft proportional gain on roll angle
-  real*8 :: KDP = 0                                ! Units: 'nd', Desc: Aircraft derivative gain on roll angle
-  real*8 :: KPT = 0                                ! Units: 'nd', Desc: Aircraft proportional gain on pitch angle
-  real*8 :: KPZ = 0                                ! Units: 'nd', Desc: Aircraft proportional gain on altitude
-  real*8 :: KDZ = 0                                ! Units: 'nd', Desc: Aircraft derivative gain on altitude
-  real*8 :: KPY = 0                                ! Units: 'nd', Desc: Aircraft proportional gain on crossrange
-  real*8 :: KDY = 0                                ! Units: 'nd', Desc: Aircraft derivative gain on crossrange
-  real*8 :: KV = 0                                 ! Units: 'nd', Desc: Aircraft proportional gain on sideslip
-  real*8 :: KPSI = 0                               ! Units: 'nd', Desc: Aircraft proportional gain on heading
-  real*8 :: KTETHER = 0                            ! Units: 'nd', Desc: Tether proportional gain on length
-  real*8 :: KDTETHER = 0                           ! Units: 'nd', Desc: Tether derivative gain on length
-  real*8 :: KITETHER = 0                           ! Units: 'nd', Desc: Tether integral gain on length
-  real*8 :: KPARAFOIL = 0                          ! Units: 'nd', Desc: Parafoil proportional gain on 
-  real*8 :: KDPARAFOIL = 0                         ! Units: 'nd', Desc: Parafoil derivative gain on
-  real*8 :: XCOMMAND = 0.0                         ! Units: 'ft', Desc: Desired x-coordinate, driver
-  real*8 :: YCOMMAND = 0.0                         ! Units: 'ft', Desc: Desired y-coordinate, driver
-  real*8 :: ZCOMMAND = 0.0                         ! Units: 'ft', Desc: Desired z-coordinate, driver
-  real*8 :: PHICOMMAND = 0.0                       ! Units: 'rad',Desc: Quadcopter phi command
-  real*8 :: THETACOMMAND = 0.0                     ! Units: 'rad',Desc: Quadcopter theta command
-  real*8 :: PSICOMMAND = 0.0                       ! Units: 'rad',Desc: Quadcopter psi command
-  real*8 :: WAYPOINT = 0.0                         ! Units: 'ft', Desc: Desired x-coordinate, driver
-  real*8 :: UPDATERATE = 0.0                       ! Units: 's', Desc: 'Rate for Control System Updates'
-  real*8 :: UPDATETIME = 0.0                       ! Units: 's', Desc: 'Time for Next Control System Update'
-  real*8 :: LEN = 0.0                              ! Units: 'ft', Desc: Feedback of length of tether
-  real*8 :: THETA = 0.0                            ! Units: 'rad', Desc: Feedback of pitch angle of tether
-  real*8 :: PSI = 0.0                              ! Units: 'rad', Desc: Feedback of yaw angle of tether
-  real*8 :: PSI_PURE = 0.0                         ! Units: 'rad', Desc: Unpolluted Feedback of yaw angle of tether
-  real*8 :: DELPREV = 0.0                          ! Units: 'nd', Desc: Previous Dely value used for derivative filter
-  real*8 :: DELDOTPREV = 0.0                       ! Units: 'nd', Desc: Previous Delydot value used for derivative filter
-  real*8 :: BIRDROLL = 0.0                         ! Units: 'rad', Desc: Bird Roll Angle from feedback sensors
-  real*8 :: BIRDYAW = 0.0                          ! Units: 'rad', Desc: Bird Yaw Angle from feedback sensors
-  real*8 :: RISERROLL = 0.0                        ! Units: 'rad', Desc: Angle of Risers from Bird to Canopy
-  real*8 :: TENSIONBIRD = 0.0                      ! Units: 'lbf', Desc: Tension At Bird from Feedback Sensor
-  real*8 :: TENSIONWINCH = 0.0                     ! Units: 'lbf', Desc: Tension At Winch from Feedback Sensor
-  real*8 :: BIRDROLLERROR(3) = 0.0                 ! Units: 'md', Desc: Bias, Scale Factor, and Noise
-  real*8 :: RISERROLLERROR(3) = 0.0                ! Units: 'md', Desc: Bias, Scale Factor, and Noise
-  real*8 :: TENSIONERROR(3) = 0.0                  ! Units: 'md', Desc: Bias, Scale Factor, and Noise
-
-end type CONTROLSYSTEMSTRUCTURE
-
 !!!!!!!!!!!!!!!!!!!!!!!!!! TOSIM STRUCTURE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
  type TOSIMSTRUCTURE
@@ -626,7 +578,6 @@ end type CONTROLSYSTEMSTRUCTURE
   character(128) :: TETHERINPUTFILE = ' '          ! Units: 'nd', Desc: 'Tether Input File'
   character(256) :: WINGSXINPUTDIR = ' '           ! Units: 'nd', Desc: 'WingsX Input Directory'  
   character(256) :: WINGSXINPUTFILE = ' '          ! Units: 'nd', Desc: 'WingsX Input File'
-  character(128) :: CSINPUTFILE = ' '              ! Units: 'nd', Desc: 'Control System Input File'
   character(128) :: TCOMINPUTFILE = ' '            ! Units: 'nd', Desc: 'Tether control system input file'
   character(128) :: SIMINPUTFILE = ' '             ! Units: 'nd', Desc: 'Simulation Input File'
   character(128) :: RUNLOGFILE = ' '               ! Units: 'nd', Desc: 'Run Log File'
@@ -641,7 +592,6 @@ end type CONTROLSYSTEMSTRUCTURE
   type(TOWEDSTRUCTURE) :: TOW
   type(TETHERSTRUCTURE) :: THR
   type(DRIVERSTRUCTURE) :: DRIVER
-  type(CONTROLSYSTEMSTRUCTURE) :: CS
   type(SIMULATIONSTRUCTURE) :: SIM
  end type TOSIMSTRUCTURE
 
@@ -716,9 +666,6 @@ PROGRAM TOSIM
     if ((inputfiletype.eq.'TPS') .or. (inputfiletype.eq.'tps') .or. (inputfiletype.eq.'Tps')) then
         T%TOSIMINPUTFILE = inputfilename;  
     end if
-    if ((inputfiletype.eq.'CS') .or. (inputfiletype.eq.'cs') .or. (inputfiletype.eq.'Cs')) then
-        T%CSINPUTFILE = inputfilename;  
-    end if
     if ((inputfiletype.eq.'SIM') .or. (inputfiletype.eq.'sim') .or. (inputfiletype.eq.'Sim')) then
         T%SIMINPUTFILE = inputfilename;  
     end if
@@ -753,7 +700,6 @@ PROGRAM TOSIM
  call DRIVER(T,1) !1 = load data , 2 = print data , 3 = compute for the different models
  call TETHER(T,1)
  call TOWED(T,1)
- call CONTROL(T,1)
  call SIMULATION(T,1)
 
 !!!!!!!!!!!!!!!!!!! Compute Simulation !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -830,11 +776,6 @@ SUBROUTINE SIMULATION(T,iflag)
   write(25,*) 'FORCE VECTOR OUTPUT FILE CREATED: ',trim(T%FORCEOUTPUTFILE)
   write(25,*) ' '
   rewind(83)
-  open(unit=42,file=T%ERROROUTPUTFILE)
-  write(25,*) ' '
-  write(25,*) 'ERROR VECTOR OUTPUT FILE CREATED: ',trim(T%ERROROUTPUTFILE)
-  write(25,*) ' '
-  rewind(42)
  
   ! Integrate Equations of Motion
 
@@ -866,8 +807,6 @@ SUBROUTINE SIMULATION(T,iflag)
     write(91,fmt='(1000F30.10)') T%SIM%TIME,T%TOW%AILERON,T%TOW%ELEVATOR,T%TOW%RUDDER,T%TOW%FLAPS,T%TOW%OMEGAVEC(1:4,1), T%DRIVER%FYGRAV, T%DRIVER%FYAERO, T%DRIVER%FYCONT
       !Force Vector File
     write(83,fmt='(1000F30.10)') T%SIM%TIME,T%THR%FXGRAV(1:T%THR%NBEADS),T%THR%FYGRAV(1:T%THR%NBEADS),T%THR%FZGRAV(1:T%THR%NBEADS),T%THR%FXELAS(1:T%THR%NBEADS),T%THR%FYELAS(1:T%THR%NBEADS),T%THR%FZELAS(1:T%THR%NBEADS),T%THR%FXAERO(1:T%THR%NBEADS),T%THR%FYAERO(1:T%THR%NBEADS),T%THR%FZAERO(1:T%THR%NBEADS)
-      !Error Outputfile
-    write(42,fmt='(1000F30.10)') T%SIM%TIME,T%CS%PSI,T%CS%PSI_PURE,T%CS%BIRDYAW
    end if 
 
    
@@ -1064,7 +1003,6 @@ SUBROUTINE SIMULATION(T,iflag)
   close(96)
   close(91)
   close(83)
-  close(42)
 
   RETURN
   
@@ -1380,16 +1318,12 @@ SUBROUTINE CONTROL(T,iflag)
  LOGICAL :: DOUBLET = .FALSE.
  
 !!!!!!!!!!!!!!!!!!!!!!! COMPUTE iflag = 3 !!!!!!!!!!!!!!!!!!!!!!!!!!
-  
  if (iflag .eq. 2) then  
-
-    !!!Feedback from Sensors
-    call FEEDBACK(T)
 
     ! Tether Line Length Control
     lencommand = T%THR%NOMLEN !Default value is to keep tether at nominal length
 
-    if (T%CS%TETHERCONTROLOFFON .eq. 1) then
+    if (T%THR%TETHERCONTROLOFFON .eq. 1) then
        ! Extension according to precomputed Bezier curve profile
        lencommand = 0.0 
        if (T%SIM%TIME .le. T%THR%TCOM(1)) then
@@ -1406,10 +1340,10 @@ SUBROUTINE CONTROL(T,iflag)
     end if
 
     !!Constant tension controller
-    if (T%CS%TETHERCONTROLOFFON .eq. 2) then
+    if (T%THR%TETHERCONTROLOFFON .eq. 2) then
        ldotnom = 0
        T%THR%LDOTNOMINAL = ldotnom
-       tension = T%CS%TENSIONWINCH
+       tension = T%THR%TENSIONWINCH
        !!!Now edit pay out rate based on tension
        ldot = 0.004*(tension-1000) + ldotnom
        !Check for minimum
@@ -1431,7 +1365,7 @@ SUBROUTINE CONTROL(T,iflag)
        T%THR%PREVLEN = lencommand
     end if
 
-    if (T%CS%TETHERCONTROLOFFON .eq. 3) then
+    if (T%THR%TETHERCONTROLOFFON .eq. 3) then
        ! Extension according to precomputed Bezier curve profile
        if (T%THR%LDOTFACTOR .eq. 1) then
           lencommand = 0.0 
@@ -1455,7 +1389,7 @@ SUBROUTINE CONTROL(T,iflag)
        T%THR%LDOTNOMINAL = ldotnom
        T%THR%PREVLENCOMMAND = lencommand
        !Now get tension estimate
-       tension = T%CS%TENSIONWINCH
+       tension = T%THR%TENSIONWINCH
        !!!Now edit pay out rate based on tension
        ldot = 0.004*(tension-1000) + ldotnom
        !Check for minimum
@@ -1485,12 +1419,12 @@ SUBROUTINE CONTROL(T,iflag)
     !! It is the job of the Torque Controller at the reel to set the 
     !! pay in and pay out the line
     if (T%SIM%ACTUATORONOFF .eq. 1) then
-       tension = T%CS%TENSIONWINCH
+       tension = T%THR%TENSIONWINCH
        T%THR%THETACOMMAND = (lencommand - T%THR%NOMLEN)/T%THR%RREEL
        T%THR%THETAREEL = T%SIM%ACTUATOR(3)
        T%THR%THETADOTREEL = T%SIM%ACTUATOR(4)
        T%THR%THETAINT = T%SIM%ACTUATOR(6)
-       T%THR%TORQUECOMMAND = T%THR%NOMTORQUE + T%THR%IREEL*(T%CS%KTETHER*(T%THR%THETACOMMAND-T%THR%THETAREEL)+T%CS%KDTETHER*(0-T%THR%THETADOTREEL)+T%CS%KITETHER*(T%THR%THETAINT))
+       T%THR%TORQUECOMMAND = T%THR%NOMTORQUE + T%THR%IREEL*(T%THR%KTETHER*(T%THR%THETACOMMAND-T%THR%THETAREEL)+T%THR%KDTETHER*(0-T%THR%THETADOTREEL)+T%THR%KITETHER*(T%THR%THETAINT))
 
        ! T%THR%TORQUECOMMAND = -194
 
@@ -1609,129 +1543,8 @@ SUBROUTINE CONTROL(T,iflag)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   RETURN
- end if
+end if
 
-!!!!!!!!!!!!!!!!!!!!!!!!LOAD DATA iflag = 1!!!!!!!!!!!!!!!!!!!!!!!!!
- 
- if (iflag .eq. 1) then
- 
-  open(unit=94,file=T%CSINPUTFILE,status='old',iostat=openflag)
-  if (openflag .ne. 0) then
-   write(*,*) 'Error Opening Control System Input File: ',T%CSINPUTFILE; PAUSE; STOP
-  end if
-  rewind(94)
-
-  read(unit=94,fmt=*,iostat=readflag) readreal; T%CS%TETHERCONTROLOFFON = int(readreal)
-  read(unit=94,fmt=*,iostat=readflag) readreal; T%CS%TOWEDCONTROLOFFON = int(readreal)
-  read(unit=94,fmt=*,iostat=readflag) T%CS%KPY
-  read(unit=94,fmt=*,iostat=readflag) T%CS%KDY
-  read(unit=94,fmt=*,iostat=readflag) T%CS%KPSI
-  read(unit=94,fmt=*,iostat=readflag) T%CS%KPP
-  read(unit=94,fmt=*,iostat=readflag) T%CS%KDP
-  read(unit=94,fmt=*,iostat=readflag) T%CS%KPZ
-  read(unit=94,fmt=*,iostat=readflag) T%CS%KDZ
-  read(unit=94,fmt=*,iostat=readflag) T%CS%KPT
-  read(unit=94,fmt=*,iostat=readflag) T%CS%KV 
-  read(unit=94,fmt=*,iostat=readflag) T%CS%KU
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KPXDRIVE
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KIXDRIVE
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KDXDRIVE
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KPYDRIVE
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KIYDRIVE
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KDYDRIVE
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KPZDRIVE
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KIZDRIVE
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KDZDRIVE
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KPPHI
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KIPHI
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KDPHI
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KPTHETA
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KITHETA
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KDTHETA
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KPPSI
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KIPSI
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%KDPSI
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%XINTEGRAL !! These aren't used anymore suggest deleting them
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%YINTEGRAL !!From the input routine
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%ZINTEGRAL
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%PHIINTEGRAL !!Honestly these gains are so intense we should move them 
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%THETAINTEGRAL !!to the driver input file.
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%PSIINTEGRAL
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%XCOMMAND
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%YCOMMAND
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%ZCOMMAND
-  ! read(unit=94,fmt=*,iostat=readflag) T%CS%WAYPOINT
-  read(unit=94,fmt=*,iostat=readflag) T%CS%KTETHER
-  read(unit=94,fmt=*,iostat=readflag) T%CS%KDTETHER
-  read(unit=94,fmt=*,iostat=readflag) T%CS%KITETHER
-  read(unit=94,fmt=*,iostat=readflag) T%CS%UPDATERATE
-  !!Sensor Errors
-  read(unit=94,fmt=*,iostat=readflag) readreal;T%CS%SENSORERRORS = int(readreal)
-  read(unit=94,fmt=*,iostat=readflag) T%CS%BIRDROLLERROR(1) !Bias
-  read(unit=94,fmt=*,iostat=readflag) T%CS%BIRDROLLERROR(2) !Scale
-  read(unit=94,fmt=*,iostat=readflag) T%CS%BIRDROLLERROR(3) !Noise
-  read(unit=94,fmt=*,iostat=readflag) T%CS%RISERROLLERROR(1) !Bias
-  read(unit=94,fmt=*,iostat=readflag) T%CS%RISERROLLERROR(2) !Scale
-  read(unit=94,fmt=*,iostat=readflag) T%CS%RISERROLLERROR(3) !Noise
-  read(unit=94,fmt=*,iostat=readflag) T%CS%TENSIONERROR(1) !Bias
-  read(unit=94,fmt=*,iostat=readflag) T%CS%TENSIONERROR(2) !Scale
-  read(unit=94,fmt=*,iostat=readflag) T%CS%TENSIONERROR(3) !Noise
-  !! x,y,z command and zintegral
-
-
-  !!This attempts to randomize the randuniform calls.
-  !sort of like srand() in C++
-  ! call itime(now)
-
-  ! ctr = 0
-  ! call RandUniform(n1)
-  ! n1 = 100*n1
-  ! do i = 1,(now(1)*3600+now(2)*60+now(3))*n1
-  !    call RandUniform(n1)  
-  !    ctr = ctr + 1
-  ! end do
-  ! write(*,*) 'Randomizing....',ctr
-
-
-  ! T%CS%TENSIONERROR(1) = T%CS%TENSIONERROR(1)*n1
-  call RandUniform(n1)  
-  T%CS%TENSIONERROR(2) = T%CS%TENSIONERROR(2)*n1
-  call RandUniform(n1)  
-  ! T%CS%BIRDROLLERROR(1) = T%CS%BIRDROLLERROR(1)*n1
-  call RandUniform(n1)  
-  T%CS%BIRDROLLERROR(2) = T%CS%BIRDROLLERROR(2)*n1
-  call RandUniform(n1)  
-  ! T%CS%RISERROLLERROR(1) = T%CS%RISERROLLERROR(1)*n1
-  call RandUniform(n1)  
-  T%CS%RISERROLLERROR(2) = T%CS%RISERROLLERROR(2)*n1
-  
-  close(94) 
-
-  !!!If tether controller is on you need to read the tether command file
-  if ((T%CS%TETHERCONTROLOFFON .eq. 1) .or. (T%CS%TETHERCONTROLOFFON .eq. 3)) then
-     open(unit=94,file=T%TCOMINPUTFILE,status='old',iostat=openflag)
-     if (openflag .ne. 0) then
-        write(*,*) 'Error Opening Tether Command Input File: ',T%TCOMINPUTFILE; PAUSE; STOP
-     end if
-     do i = 1,200
-        read(unit=94,fmt=*,iostat=readflag) T%THR%TCOM(i)
-     end do
-     do i = 1,200
-        read(unit=94,fmt=*,iostat=readflag) T%THR%REELTRAJ(i)
-     end do
-  end if
-     
-    close(94)
-
-  write(*,*) 'CONTROL SYSTEM Load Complete'
-  
-  T%CS%DQFLAG = 1
-
-  RETURN
- 
- end if
-
- RETURN
 END SUBROUTINE CONTROL
 
 !!!!!!!!!!!!!!!!!!!1!!! SUBROUTINE ATMOSPHERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5138,106 +4951,4 @@ SUBROUTINE TURBULENCE(T)
 
 END SUBROUTINE TURBULENCE
 
-SUBROUTINE TUSTINDERIVATIVEFILTER(T,delydot,dely)
-  use TOSIMDATATYPES
-  implicit none
-  real*8 angles(2,1),rGS_I(3,1),theta,psi,norm,delz,dely,dt,tau,wc
-  real*8 alfa,y(2),delydot
-  type(TOSIMSTRUCTURE) T
-  
-  dt = T%SIM%DELTATIME
-  wc = 10 !rad/s
-  tau = 1/wc;
-  alfa = 2*tau/dt;
-  delydot = (2*(dely-T%CS%DELPREV)+T%CS%DELDOTPREV*(2*tau-dt))/(2*tau+dt);
-
-END SUBROUTINE TUSTINDERIVATIVEFILTER
-
-SUBROUTINE FEEDBACK(T)
- use TOSIMDATATYPES
- implicit none
- integer i,stateindex
- real*8 angles(2,1),rGS_I(3,1),theta,psi,norm,delz,dely,n,rGS_S(3,1)
- type(TOSIMSTRUCTURE) T
-
- if (T%SIM%TIME .gt. T%CS%UPDATETIME) then
-
-    !Step UPDATETIME
-    T%CS%UPDATETIME = T%CS%UPDATETIME + 1/T%CS%UPDATERATE
-
-    ! write(*,*) T%SIM%TIME
-    !!! REVISIT ME
-    !Pass Global state to local state
-    T%TOW%STATE(1:13)  = T%SIM%STATE(1:13)
-    T%DRIVER%STATE(1:12) = T%SIM%STATE(14:25)
-    T%DRIVER%STATE(13:20) = T%SIM%STATE(T%SIM%NOSTATES-7:T%SIM%NOSTATES)  ! Thrust from rotors
-
-    !!!!!!!!!!!TETHER ANGLES!!!!!!!!!!!!!!
-
-    !Vectors from Driver to towed system
-    rGS_I(1,1) = T%DRIVER%XCG - T%TOW%STATE(1)
-    rGS_I(2,1) = T%DRIVER%YCG - T%TOW%STATE(2)
-    rGS_I(3,1) = T%DRIVER%ZCG - T%TOW%STATE(3)
-
-    !Rotate to Driver frame
-    rGS_S(1,1) = rGS_I(1,1)*cos(T%DRIVER%PSI) + rGS_I(2,1)*sin(T%DRIVER%PSI) + T%DRIVER%SLREEL
-    rGS_S(2,1) = -rGS_I(1,1)*sin(T%DRIVER%PSI) + rGS_I(2,1)*cos(T%DRIVER%PSI) + T%DRIVER%BLREEL
-    rGS_S(3,1) = rGS_I(3,1) + T%DRIVER%WLREEL
-    
-    ! write(*,*) '-----------------------------------------------'
-    ! write(*,*) 'rGS_S(1:3,1) = ',rGS_S(1,1),rGS_S(2,1),rGS_S(3,1)
-
-    !Normalize
-    norm = sqrt(rGS_S(1,1)**2 + rGS_S(2,1)**2 + rGS_S(3,1)**2)
-    rGS_S = rGS_S/norm
-    
-    ! write(*,*) 'rGS_S(1:3,1) = ',rGS_S(1,1),rGS_S(2,1),rGS_S(3,1)
-    ! write(*,*) 'norm = ',norm
-
-    T%CS%THETA = PI/2-asin(rGS_S(3,1))
-    T%CS%PSI = atan2(rGS_S(2,1),rGS_S(1,1))
-    !Reconstruct dely and delz
-    delz = norm*sin(T%CS%THETA)
-    dely = norm*cos(T%CS%THETA)*sin(T%CS%PSI)
-
-    ! write(*,*) 'theta,psi = ' ,T%CS%THETA,T%CS%PSI
-    ! write(*,*) 'dely,delz = ' ,dely,delz
-
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    !!!!!TENSION!!!!!
-
-    !Now get tension estimate
-    stateindex = 0
-    stateindex = stateindex + 13
-    stateindex = stateindex + 12
-    T%THR%STATE(1:7*T%THR%NBEADS+1) = T%SIM%STATE(stateindex+1:stateindex+7*T%THR%NBEADS+1)
-    stateindex = 0
-    do i=1,T%THR%NBEADS
-       stateindex = stateindex + 6
-    end do
-    T%CS%TENSIONWINCH = T%THR%STATE(stateindex+1)
-    do i=1,T%THR%NBEADS
-       stateindex = stateindex + 1
-    end do
-    T%CS%TENSIONBIRD = T%THR%STATE(stateindex+1) ! Tension at the parafoil
-
-    !!!!!!!!!!!!TETHER LENGTH!!!!!!!!!!!!!
-
-    T%CS%LEN = T%THR%STRETCHLEN
-
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    !!!!!ADD BIAS, SCALE, NOISE
-    T%CS%PSI_PURE = T%CS%PSI
-    if (T%CS%SENSORERRORS .eq. 1) then
-       call RandGaussian(n)
-       T%CS%TENSIONBIRD = (1+T%CS%TENSIONERROR(2))*T%CS%TENSIONBIRD + T%CS%TENSIONERROR(1) + T%CS%TENSIONERROR(3)*n
-       call RandGaussian(n)
-       T%CS%TENSIONWINCH = (1+T%CS%TENSIONERROR(2))*T%CS%TENSIONWINCH + T%CS%TENSIONERROR(1) + T%CS%TENSIONERROR(3)*n
-    end if
-
- endif
-
-END SUBROUTINE
 

@@ -19,7 +19,11 @@
 1.0 		!Normal Drag(nd) (1.0)                
 2.205 		!Rotational Inertia of Reel(slugs-ft^2)                 
 1.64 		!Radius of Reel(ft)                 
-5.0 		!Time Constant of Torque at Reel                
+5.0 		!Time Constant of Torque at Reel
+0		!Tether Line control off(0) on(1=Pay In/Out)(2=Tension)(3=Tension+Pay Out)
+0.0		!Kpreel proportional gain on reel controller(2.0)
+0.0 		!Kdreel derivative gain on reel controller(3.0)
+0.0 		!Kireel integral gain on reel controller(1.0)
 
 
 ! This is based on a ultra high molecular weight polyethylene (UHMWPE) fiber made by Dyneema. This is based on the Dyneema SK38 tether material which has a Young's Modulus of 34 GPa with a percent elongation of 6.5%. It's material density is approximately 980 kg/m^3 which is converted to 1.90151 slugs/ft^3

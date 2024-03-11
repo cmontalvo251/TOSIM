@@ -5,7 +5,7 @@
 1		!Control system on(1) or off(0)                        
 0		!Model Actuators on(1) or off(0)                        
 1		!Debug ouputs on(1) or off(0)                        
-0		!Debug index??? (Not entirely sure what this is)
+10		!Feedback Update Rate(Hz)
 0		!Use a restart point on(1) or off(0)                        
 'RESTART_FILES/Steady_60knots_2lbf_side.RESTART' !Restart point filename 
 0.0		!X_driver(ft)

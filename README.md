@@ -32,8 +32,7 @@ Things changed in Version 8.0
 5.) The DRIVER and TOWED functions are now passed the T variable rather than T%DRIVER or T%TOWED
 
 Things needed to do for Version 8.0
-
-1.) Nominal.CS file needs to get moved into each vehicles respective files - Read routines need to get updated as well
+1.) Nominal.CS file has been moved into each vehicles respective files - Read routines need to get updated as well
 2.) There needs to be 1 and only 1 control subroutine - This will get rid of the handshake stuff
 	Driver - Needs a drive forward and the hooks (commented for now) for waypoint control
 	Towed - Just needs inner loop control
