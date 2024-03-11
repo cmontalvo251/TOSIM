@@ -295,13 +295,8 @@ type ATMOSPHERESTRUCTURE
      real*8 :: PSIINTEGRAL = 0.0                      ! Units: 'ft', Desc: 'PSI integral term in PID Controller'
      real*8 :: UINTEGRAL = 0.0
      real*8 :: DELTATIME = 0.0                        ! Simulation timestep
-     real*8 :: MUTHROTTLE = 0                         ! Was throwing an error
-     real*8 :: CONTOFFON = 0                          ! was throwing an error
-     real*8 :: DOWNWASH = 0                           ! Was throwing an error 
-     real*8 :: DIAMETER = 0                           ! Was throwing an error
-     real*8 :: THRUSTVEC = 0                          ! Was throwing an error
-     real*8 :: MUVEC = 0                              ! Was throwing an error
-     real*8 :: KT = 0                                 ! Was throwing an error
+     real*8 :: MUTHROTTLE = 0                         ! Units: 'microseconds', Desc: 'PWM signal to motor'
+     real*8 :: THRUSTVEC = 0                          ! Units: N, Desc: Thrust
      real*8 :: XCOM(MAXWP) = 500                         ! Units: 'm', X Waypoint command
      real*8 :: YCOM(MAXWP) = 500                         ! Units: 'm', Y Waypoint command
      real*8 :: ZCOM(MAXWP) = -200                        ! Units: 'm', Altitude command
@@ -319,21 +314,21 @@ type ATMOSPHERESTRUCTURE
   integer :: AEROFLAG = 0                          ! Units: 'nd', Desc: 'Aerodynamics Flag (0=Off, 1=On)'
   integer :: DQFLAG = 0                            ! Units: 'nd', Desc: 'Data Quality Flag (0=Data Not Loaded Successfully, 1=Data Loaded Successfully)'
   real*8 :: GRAVITY = 32.2                         ! Gravity constant on Earth (ft/s^2)
-  real*8 :: ALC = 0                                ! Driver aero parameter
-  real*8 :: ALS = 0                                ! Driver aero parameter
-  real*8 :: DXD = 0                                ! Driver aero parameter
-  real*8 :: DYD = 0                                ! Driver aero parameter
-  real*8 :: RNEW = 0                               ! Driver aero parameter
-  real*8 :: C_T = 0                                ! Driver aero parameter
-  real*8 :: C_TAU = 0                              ! Driver aero parameter
-  real*8 :: LPHI12 = 0                             ! Driver aero parameter
-  real*8 :: LPHI34 = 0                             ! Driver aero parameter
-  real*8 :: LTHETA12 = 0                           ! Driver aero parameter
-  real*8 :: LTHETA34 = 0                           ! Driver aero parameter
-  real*8 :: OMEGAMAX = 0                           ! Driver aero parameter
-  real*8 :: OMEGAVEC(4,1) = 0                      ! Driver aero parameter
-  real*8 :: THRUSTVEC(4,1) = 0                     ! Driver aero parameter
-  real*8 :: MUVEC(4,1) = 0                         ! Driver aero parameter
+  real*8 :: ALC = 0                                ! Quadcopter aero parameter
+  real*8 :: ALS = 0                                ! Quadcopter aero parameter
+  real*8 :: DXD = 0                                ! Quadcopter aero parameter
+  real*8 :: DYD = 0                                ! Quadcopter aero parameter
+  real*8 :: RNEW = 0                               ! Quadcopter aero parameter
+  real*8 :: C_T = 0                                ! Quadcopter aero parameter
+  real*8 :: C_TAU = 0                              ! Quadcopter aero parameter
+  real*8 :: LPHI12 = 0                             ! Quadcopter aero parameter
+  real*8 :: LPHI34 = 0                             ! Quadcopter aero parameter
+  real*8 :: LTHETA12 = 0                           ! Quadcopter aero parameter
+  real*8 :: LTHETA34 = 0                           ! Quadcopter aero parameter
+  real*8 :: OMEGAMAX = 0                           ! Quadcopter aero parameter
+  real*8 :: OMEGAVEC(4,1) = 0                      ! Quadcopter aero parameter
+  real*8 :: THRUSTVEC(4,1) = 0                     ! Quadcopter aero parameter
+  real*8 :: MUVEC(4,1) = 0                         ! Quadcopter aero parameter
   real*8 :: AILERON = 0                            ! Adding an aileron parameter just in case we want an airplane being towed
   real*8 :: ELEVATOR = 0                           ! Adding an elevator parameter just in case we use the manta
   real*8 :: RUDDER = 0                             ! Adding a rudder parameter just in case we use the manta
@@ -342,19 +337,9 @@ type ATMOSPHERESTRUCTURE
   real*8 :: SWEEPOFFON = 0                         ! Adding incase we use an airplane later
   real*8 :: TURNRADIUS = 0
   real*8 :: V_T = 0                                ! Velocity (ft/s)
-  real*8 :: C_L = 0                                !Was throwing an error so I did this - ZMM
-  real*8 :: C_D = 0                                ! Was throwing an error so I did this
-  real*8 :: CXB = 0                                ! Was throwing an error so I did this
-  real*8 :: CYB = 0                                !Was throwing an error so I did this
-  real*8 :: CZB = 0                                ! Was throwing an error
-  real*8 :: CLL = 0                                ! Was throwing an error
-  real*8 :: CM = 0                                 ! Was throwing an error
-  real*8 :: CN = 0                                 ! Was throwing an error
-  real*8 :: SAREA = 0                              !Was throwing an error so I did this
-  real*8 :: DEN = 0                                 !Was throwing an error so I did this
-  real*8 :: KT = 0                                 ! Driver Aero Parameter
-  real*8 :: OMEGA0 = 0                             ! Driver Aero Parameter
-  real*8 :: IRR = 0                                ! Driver Aero Parameter
+  real*8 :: KT = 0                                 ! Quadcopter Aero Parameter
+  real*8 :: OMEGA0 = 0                             ! Quadcopter Aero Parameter
+  real*8 :: IRR = 0                                ! Quadcopter Aero Parameter
   real*8 :: MS_MIN = 0.0                           ! Maximum PWM signal (microseconds)
   real*8 :: MS_MAX = 0.0                           ! Minimum PWM signal (microseconds)
   real*8 :: DOWNWASH = 0.0                         ! Units: 'nd', Magnitude of Downwash
@@ -614,9 +599,9 @@ end type SIMULATIONSTRUCTURE
   real*8 :: XCOMMAND = 0.0                         ! Units: 'ft', Desc: Desired x-coordinate, driver
   real*8 :: YCOMMAND = 0.0                         ! Units: 'ft', Desc: Desired y-coordinate, driver
   real*8 :: ZCOMMAND = 0.0                         ! Units: 'ft', Desc: Desired z-coordinate, driver
-  real*8 :: PHICOMMAND = 0.0                       ! Units: 'rad',Desc: Driver phi command
-  real*8 :: THETACOMMAND = 0.0                     ! Units: 'rad',Desc: Driver theta command
-  real*8 :: PSICOMMAND = 0.0                       ! Units: 'rad',Desc: Driver psi command
+  real*8 :: PHICOMMAND = 0.0                       ! Units: 'rad',Desc: Quadcopter phi command
+  real*8 :: THETACOMMAND = 0.0                     ! Units: 'rad',Desc: Quadcopter theta command
+  real*8 :: PSICOMMAND = 0.0                       ! Units: 'rad',Desc: Quadcopter psi command
   real*8 :: WAYPOINT = 0.0                         ! Units: 'ft', Desc: Desired x-coordinate, driver
   real*8 :: UPDATERATE = 0.0                       ! Units: 's', Desc: 'Rate for Control System Updates'
   real*8 :: UPDATETIME = 0.0                       ! Units: 's', Desc: 'Time for Next Control System Update'
@@ -2450,7 +2435,7 @@ END SUBROUTINE ATMOSPHERE
 !end if
 !!!!!!!!!!!!!!!!!!!!!!!!!!! SUBROUTINE DRIVER !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE DRIVER(DRIVE,iflag)
+SUBROUTINE DRIVER(T,iflag)
  use TOSIMDATATYPES
  implicit none
  integer i,iflag,ifind,openflag,readflag
@@ -2465,52 +2450,52 @@ SUBROUTINE DRIVER(DRIVE,iflag)
  character*256 xgridname,ygridname,zgridname
  character*1 letter
  character*10 number
- type(DRIVERSTRUCTURE) DRIVE
+ type(TOSIMSTRUCTURE) T
 
 !!!!!!!!!!!!!!!!!!!!!!!!!! COMPUTE FLAG iflag = 3 !!!!!!!!!!!!!!!!!!!!!!!!!
   
  if (iflag .eq. 3) then  
     
     !Extract everything from state vector
-    xcg = DRIVE%STATE(1)
-    ycg = DRIVE%STATE(2)
-    zcg = DRIVE%STATE(3)
-    phi = DRIVE%STATE(4) 
-    theta = DRIVE%STATE(5)
-    psi = DRIVE%STATE(6)
-    ub = DRIVE%STATE(7)
-    vb = DRIVE%STATE(8)
-    wb = DRIVE%STATE(9)
-    pb = DRIVE%STATE(10)
-    qb = DRIVE%STATE(11) 
-    rb = DRIVE%STATE(12)
-    TVEC(1)    = DRIVE%STATE(13)
-    TDOTVEC(1) = DRIVE%STATE(14)
-    TVEC(2)    = DRIVE%STATE(15)
-    TDOTVEC(2) = DRIVE%STATE(16)
-    TVEC(3)    = DRIVE%STATE(17)
-    TDOTVEC(3) = DRIVE%STATE(18)
-    TVEC(4)    = DRIVE%STATE(19)
-    TDOTVEC(4) = DRIVE%STATE(20)
-    ! TVEC(1) = DRIVE%STATE(13)
-    ! TVEC(2) = DRIVE%STATE(14)
-    ! TVEC(3) = DRIVE%STATE(15)
-    ! TVEC(4) = DRIVE%STATE(16)
+    xcg = T%DRIVER%STATE(1)
+    ycg = T%DRIVER%STATE(2)
+    zcg = T%DRIVER%STATE(3)
+    phi = T%DRIVER%STATE(4) 
+    theta = T%DRIVER%STATE(5)
+    psi = T%DRIVER%STATE(6)
+    ub = T%DRIVER%STATE(7)
+    vb = T%DRIVER%STATE(8)
+    wb = T%DRIVER%STATE(9)
+    pb = T%DRIVER%STATE(10)
+    qb = T%DRIVER%STATE(11) 
+    rb = T%DRIVER%STATE(12)
+    TVEC(1)    = T%DRIVER%STATE(13)
+    TDOTVEC(1) = T%DRIVER%STATE(14)
+    TVEC(2)    = T%DRIVER%STATE(15)
+    TDOTVEC(2) = T%DRIVER%STATE(16)
+    TVEC(3)    = T%DRIVER%STATE(17)
+    TDOTVEC(3) = T%DRIVER%STATE(18)
+    TVEC(4)    = T%DRIVER%STATE(19)
+    TDOTVEC(4) = T%DRIVER%STATE(20)
+    ! TVEC(1) = T%DRIVER%STATE(13)
+    ! TVEC(2) = T%DRIVER%STATE(14)
+    ! TVEC(3) = T%DRIVER%STATE(15)
+    ! TVEC(4) = T%DRIVER%STATE(16)
 
     !Set some things for other models
-    DRIVE%XCG = DRIVE%STATE(1) 
-    DRIVE%YCG = DRIVE%STATE(2)
-    DRIVE%ZCG = DRIVE%STATE(3)
-    DRIVE%PSI = DRIVE%STATE(6) !psi
-    DRIVE%SPEED = DRIVE%STATE(7) !ub
+    T%DRIVER%XCG = T%DRIVER%STATE(1) 
+    T%DRIVER%YCG = T%DRIVER%STATE(2)
+    T%DRIVER%ZCG = T%DRIVER%STATE(3)
+    T%DRIVER%PSI = T%DRIVER%STATE(6) !psi
+    T%DRIVER%SPEED = T%DRIVER%STATE(7) !ub
 
     !Distance from CG to tether attachment point
-    rCF_B(1,1) = DRIVE%SLREEL
-    rCF_B(2,1) = DRIVE%BLREEL 
-    rCF_B(3,1) = DRIVE%WLREEL
+    rCF_B(1,1) = T%DRIVER%SLREEL
+    rCF_B(2,1) = T%DRIVER%BLREEL 
+    rCF_B(3,1) = T%DRIVER%WLREEL
 
     !- This is where we're going to hi-jack the model and compute the derivatives using Lisa Schibelius' quadcopter MODEL
-    if (DRIVE%MODNO .eq. 3) then
+    if (T%DRIVER%MODNO .eq. 3) then
 
        ! Unwrap State Vector - This is the same for the DRIVEDRIVER
 
@@ -2522,42 +2507,42 @@ SUBROUTINE DRIVER(DRIVE,iflag)
        sphi = sin(phi);
        spsi = sin(psi);
        cpsi = cos(psi);
-       DRIVE%TIC(1,1) = ctheta * cpsi;
-       DRIVE%TIC(2,1) = ctheta * spsi;
-       DRIVE%TIC(3,1) = -stheta;
-       DRIVE%TIC(1,2) = sphi * stheta * cpsi - cphi * spsi;
-       DRIVE%TIC(2,2) = sphi * stheta * spsi + cphi * cpsi;
-       DRIVE%TIC(3,2) = sphi * ctheta;
-       DRIVE%TIC(1,3) = cphi * stheta * cpsi + sphi * spsi;
-       DRIVE%TIC(2,3) = cphi * stheta * spsi - sphi * cpsi;
-       DRIVE%TIC(3,3) = cphi * ctheta;
+       T%DRIVER%TIC(1,1) = ctheta * cpsi;
+       T%DRIVER%TIC(2,1) = ctheta * spsi;
+       T%DRIVER%TIC(3,1) = -stheta;
+       T%DRIVER%TIC(1,2) = sphi * stheta * cpsi - cphi * spsi;
+       T%DRIVER%TIC(2,2) = sphi * stheta * spsi + cphi * cpsi;
+       T%DRIVER%TIC(3,2) = sphi * ctheta;
+       T%DRIVER%TIC(1,3) = cphi * stheta * cpsi + sphi * spsi;
+       T%DRIVER%TIC(2,3) = cphi * stheta * spsi - sphi * cpsi;
+       T%DRIVER%TIC(3,3) = cphi * ctheta;
 
        ! Inertial to copter Transformation Matrix
        
-       DRIVE%TCI = transpose(DRIVE%TIC)
+       T%DRIVER%TCI = transpose(T%DRIVER%TIC)
   
        ! Gravity Forces and Moments - Same for DRIVER
   
-       DRIVE%FXGRAV = 0.0; DRIVE%FYGRAV = 0.0; DRIVE%FZGRAV = 0.0;
-       DRIVE%MXGRAV = 0.0; DRIVE%MYGRAV = 0.0; DRIVE%MZGRAV = 0.0;
-       if (DRIVE%GRAVOFFON .eq. 1) then
-          DRIVE%FXGRAV = DRIVE%TIC(3,1)*DRIVE%WEIGHT
-          DRIVE%FYGRAV = DRIVE%TIC(3,2)*DRIVE%WEIGHT
-          DRIVE%FZGRAV = DRIVE%TIC(3,3)*DRIVE%WEIGHT
+       T%DRIVER%FXGRAV = 0.0; T%DRIVER%FYGRAV = 0.0; T%DRIVER%FZGRAV = 0.0;
+       T%DRIVER%MXGRAV = 0.0; T%DRIVER%MYGRAV = 0.0; T%DRIVER%MZGRAV = 0.0;
+       if (T%DRIVER%GRAVOFFON .eq. 1) then
+          T%DRIVER%FXGRAV = T%DRIVER%TIC(3,1)*T%DRIVER%WEIGHT
+          T%DRIVER%FYGRAV = T%DRIVER%TIC(3,2)*T%DRIVER%WEIGHT
+          T%DRIVER%FZGRAV = T%DRIVER%TIC(3,3)*T%DRIVER%WEIGHT
        end if
 
        ! Aerodynamic Forces and Moments - Still Same for DRIVER
        
-       DRIVE%FXAERO = 0.0; DRIVE%FYAERO = 0.0; DRIVE%FZAERO = 0.0;
-       DRIVE%MXAERO = 0.0; DRIVE%MYAERO = 0.0; DRIVE%MZAERO = 0.0;
+       T%DRIVER%FXAERO = 0.0; T%DRIVER%FYAERO = 0.0; T%DRIVER%FZAERO = 0.0;
+       T%DRIVER%MXAERO = 0.0; T%DRIVER%MYAERO = 0.0; T%DRIVER%MZAERO = 0.0;
 
-       DRIVE%FXAERO = DRIVE%C_T*DRIVE%MUTHROTTLE
+       T%DRIVER%FXAERO = T%DRIVER%C_T*T%DRIVER%MUTHROTTLE
        
-       if (DRIVE%AEROOFFON .eq. 1) then
-          vATM_I(1,1) = DRIVE%VXWIND
-          vATM_I(2,1) = DRIVE%VYWIND
-          vATM_I(3,1) = DRIVE%VZWIND
-          vATM_A = matmul(DRIVE%TCI,vATM_I)
+       if (T%DRIVER%AEROOFFON .eq. 1) then
+          vATM_I(1,1) = T%DRIVER%VXWIND
+          vATM_I(2,1) = T%DRIVER%VYWIND
+          vATM_I(3,1) = T%DRIVER%VZWIND
+          vATM_A = matmul(T%DRIVER%TCI,vATM_I)
 
           !Add in atmospheric winds
 
@@ -2568,33 +2553,33 @@ SUBROUTINE DRIVER(DRIVE,iflag)
           !Compute total velocity
 
           V_A = sqrt(uaero**2 + vaero**2 + waero**2)
-          q_inf = 0.5*DRIVE%DEN*(V_A**2) !This assumes the reference area is 1
+          q_inf = 0.5*T%DRIVER%DEN*(V_A**2) !This assumes the reference area is 1
           S = 1.0
           q_inf_S = q_inf*S
 
-          DRIVE%FXAERO = DRIVE%FXAERO - q_inf_S*DRIVE%DXD
+          T%DRIVER%FXAERO = T%DRIVER%FXAERO - q_inf_S*T%DRIVER%DXD
 
        end if !Aerodynamic forces
 
        !At this point we should have F(XYZ)AERO and M(XYZ)AERO populated
-       DRIVE%FXCONT = 0.0; DRIVE%FYCONT = 0.0; DRIVE%FZCONT = 0.0;          
-       DRIVE%MXCONT = 0.0; DRIVE%MYCONT = 0.0; DRIVE%MZCONT = 0.0;
+       T%DRIVER%FXCONT = 0.0; T%DRIVER%FYCONT = 0.0; T%DRIVER%FZCONT = 0.0;          
+       T%DRIVER%MXCONT = 0.0; T%DRIVER%MYCONT = 0.0; T%DRIVER%MZCONT = 0.0;
 
        !Don't forget to add Tether forces
-       if ((DRIVE%THR_DYNOFFON .eq. 1) .and. (DRIVE%THR_ELASOFFON .eq. 1)) then
-          if (isnan(DRIVE%FTETHERX) .or. isnan(DRIVE%FTETHERY)) then
+       if ((T%DRIVER%THR_DYNOFFON .eq. 1) .and. (T%DRIVER%THR_ELASOFFON .eq. 1)) then
+          if (isnan(T%DRIVER%FTETHERX) .or. isnan(T%DRIVER%FTETHERY)) then
              write(*,*) 'Sorry dude Nans in tether model detected - I suggest lowering your timestep'
-             write(*,*) 'Current Time = ',DRIVE%TIME
-             write(*,*) 'Tether Forces = ',DRIVE%FTETHERX,DRIVE%FTETHERY
+             write(*,*) 'Current Time = ',T%DRIVER%TIME
+             write(*,*) 'Tether Forces = ',T%DRIVER%FTETHERX,T%DRIVER%FTETHERY
              STOP
           else
-             C_Ftether_I(1,1) = DRIVE%FTETHERX
-             C_Ftether_I(2,1) = DRIVE%FTETHERY
-             C_Ftether_I(3,1) = DRIVE%FTETHERZ
-             C_Ftether_B = matmul(DRIVE%TCI,C_Ftether_I)
-             DRIVE%FXCONT = C_Ftether_B(1,1)
-             DRIVE%FYCONT = C_Ftether_B(2,1)
-             DRIVE%FZCONT = C_Ftether_B(3,1)
+             C_Ftether_I(1,1) = T%DRIVER%FTETHERX
+             C_Ftether_I(2,1) = T%DRIVER%FTETHERY
+             C_Ftether_I(3,1) = T%DRIVER%FTETHERZ
+             C_Ftether_B = matmul(T%DRIVER%TCI,C_Ftether_I)
+             T%DRIVER%FXCONT = C_Ftether_B(1,1)
+             T%DRIVER%FYCONT = C_Ftether_B(2,1)
+             T%DRIVER%FZCONT = C_Ftether_B(3,1)
                 
              !Skew symmetric operator on cradle cg to tether connection point
     
@@ -2610,82 +2595,82 @@ SUBROUTINE DRIVER(DRIVE,iflag)
 
              C_Mtether_B = matmul(S_rCF_B,C_Ftether_B)
 
-             DRIVE%MXCONT = C_Mtether_B(1,1)
-             DRIVE%MYCONT = C_Mtether_B(2,1)
-             DRIVE%MZCONT = C_Mtether_B(3,1)
+             T%DRIVER%MXCONT = C_Mtether_B(1,1)
+             T%DRIVER%MYCONT = C_Mtether_B(2,1)
+             T%DRIVER%MZCONT = C_Mtether_B(3,1)
           end if
        end if
 
        ! Total Forces and Moments
        
-       DRIVE%FXTOTAL = DRIVE%FXGRAV + DRIVE%FXAERO + DRIVE%FXCONT
-       DRIVE%FYTOTAL = DRIVE%FYGRAV + DRIVE%FYAERO + DRIVE%FYCONT
-       !write(*,*) 'Z Force = ',DRIVE%FZGRAV,DRIVE%FZAERO,DRIVE%FZCONT
-       DRIVE%FZTOTAL = DRIVE%FZGRAV + DRIVE%FZAERO + DRIVE%FZCONT
-       DRIVE%MXTOTAL = DRIVE%MXGRAV + DRIVE%MXAERO + DRIVE%MXCONT
-       DRIVE%MYTOTAL = DRIVE%MYGRAV + DRIVE%MYAERO + DRIVE%MYCONT
-       DRIVE%MZTOTAL = DRIVE%MZGRAV + DRIVE%MZAERO + DRIVE%MZCONT
+       T%DRIVER%FXTOTAL = T%DRIVER%FXGRAV + T%DRIVER%FXAERO + T%DRIVER%FXCONT
+       T%DRIVER%FYTOTAL = T%DRIVER%FYGRAV + T%DRIVER%FYAERO + T%DRIVER%FYCONT
+       !write(*,*) 'Z Force = ',T%DRIVER%FZGRAV,T%DRIVER%FZAERO,T%DRIVER%FZCONT
+       T%DRIVER%FZTOTAL = T%DRIVER%FZGRAV + T%DRIVER%FZAERO + T%DRIVER%FZCONT
+       T%DRIVER%MXTOTAL = T%DRIVER%MXGRAV + T%DRIVER%MXAERO + T%DRIVER%MXCONT
+       T%DRIVER%MYTOTAL = T%DRIVER%MYGRAV + T%DRIVER%MYAERO + T%DRIVER%MYCONT
+       T%DRIVER%MZTOTAL = T%DRIVER%MZGRAV + T%DRIVER%MZAERO + T%DRIVER%MZCONT
 
        ! State Derivatives
 
-       xcgdot = DRIVE%TIC(1,1)*ub + DRIVE%TIC(1,2)*vb + DRIVE%TIC(1,3)*wb
-       ycgdot = DRIVE%TIC(2,1)*ub + DRIVE%TIC(2,2)*vb + DRIVE%TIC(2,3)*wb
-       zcgdot = DRIVE%TIC(3,1)*ub + DRIVE%TIC(3,2)*vb + DRIVE%TIC(3,3)*wb  
+       xcgdot = T%DRIVER%TIC(1,1)*ub + T%DRIVER%TIC(1,2)*vb + T%DRIVER%TIC(1,3)*wb
+       ycgdot = T%DRIVER%TIC(2,1)*ub + T%DRIVER%TIC(2,2)*vb + T%DRIVER%TIC(2,3)*wb
+       zcgdot = T%DRIVER%TIC(3,1)*ub + T%DRIVER%TIC(3,2)*vb + T%DRIVER%TIC(3,3)*wb  
 
        phidot = pb + sphi * ttheta * qb + cphi * ttheta * rb;
        thetadot = cphi * qb - sphi * rb;
        psidot = (sphi / ctheta) * qb + (cphi / ctheta) * rb;
-       ubdot = DRIVE%FXTOTAL/DRIVE%MASS + rb*vb - qb*wb
-       vbdot = DRIVE%FYTOTAL/DRIVE%MASS + pb*wb - rb*ub
-       !write(*,*) 'Weight and Z =',DRIVE%FZTOTAL,DRIVE%MASS
-       wbdot = DRIVE%FZTOTAL/DRIVE%MASS + qb*ub - pb*vb
+       ubdot = T%DRIVER%FXTOTAL/T%DRIVER%MASS + rb*vb - qb*wb
+       vbdot = T%DRIVER%FYTOTAL/T%DRIVER%MASS + pb*wb - rb*ub
+       !write(*,*) 'Weight and Z =',T%DRIVER%FZTOTAL,T%DRIVER%MASS
+       wbdot = T%DRIVER%FZTOTAL/T%DRIVER%MASS + qb*ub - pb*vb
 
-       c1 = DRIVE%MXTOTAL - pb*(qb*DRIVE%IXZ-rb*DRIVE%IXY) - qb*(qb*DRIVE%IYZ-rb*DRIVE%IYY) - rb*(qb*DRIVE%IZZ-rb*DRIVE%IYZ)
-       c2 = DRIVE%MYTOTAL - pb*(rb*DRIVE%IXX-pb*DRIVE%IXZ) - qb*(rb*DRIVE%IXY-pb*DRIVE%IYZ) - rb*(rb*DRIVE%IXZ-pb*DRIVE%IZZ)
-       c3 = DRIVE%MZTOTAL - pb*(pb*DRIVE%IXY-qb*DRIVE%IXX) - qb*(pb*DRIVE%IYY-qb*DRIVE%IXY) - rb*(pb*DRIVE%IYZ-qb*DRIVE%IXZ)
-       pbdot = DRIVE%IXXI*c1 + DRIVE%IXYI*c2 + DRIVE%IXZI*c3
-       qbdot = DRIVE%IXYI*c1 + DRIVE%IYYI*c2 + DRIVE%IYZI*c3
-       rbdot = DRIVE%IXZI*c1 + DRIVE%IYZI*c2 + DRIVE%IZZI*c3
+       c1 = T%DRIVER%MXTOTAL - pb*(qb*T%DRIVER%IXZ-rb*T%DRIVER%IXY) - qb*(qb*T%DRIVER%IYZ-rb*T%DRIVER%IYY) - rb*(qb*T%DRIVER%IZZ-rb*T%DRIVER%IYZ)
+       c2 = T%DRIVER%MYTOTAL - pb*(rb*T%DRIVER%IXX-pb*T%DRIVER%IXZ) - qb*(rb*T%DRIVER%IXY-pb*T%DRIVER%IYZ) - rb*(rb*T%DRIVER%IXZ-pb*T%DRIVER%IZZ)
+       c3 = T%DRIVER%MZTOTAL - pb*(pb*T%DRIVER%IXY-qb*T%DRIVER%IXX) - qb*(pb*T%DRIVER%IYY-qb*T%DRIVER%IXY) - rb*(pb*T%DRIVER%IYZ-qb*T%DRIVER%IXZ)
+       pbdot = T%DRIVER%IXXI*c1 + T%DRIVER%IXYI*c2 + T%DRIVER%IXZI*c3
+       qbdot = T%DRIVER%IXYI*c1 + T%DRIVER%IYYI*c2 + T%DRIVER%IYZI*c3
+       rbdot = T%DRIVER%IXZI*c1 + T%DRIVER%IYZI*c2 + T%DRIVER%IZZI*c3
 
        ! Wrap State Derivatives
 
-       DRIVE%STATEDOT(1) = xcgdot
-       DRIVE%STATEDOT(2) = ycgdot
-       DRIVE%STATEDOT(2) = ycgdot
-       DRIVE%STATEDOT(3) = zcgdot
-       DRIVE%STATEDOT(4) = phidot
-       DRIVE%STATEDOT(5) = thetadot
-       DRIVE%STATEDOT(6) = psidot
-       DRIVE%STATEDOT(7) = ubdot
-       DRIVE%STATEDOT(8) = vbdot
-       DRIVE%STATEDOT(9) = wbdot
-       DRIVE%STATEDOT(10) = pbdot 
-       DRIVE%STATEDOT(11) = qbdot 
-       DRIVE%STATEDOT(12) = rbdot
-       DRIVE%STATEDOT(13) = TDOTVEC(1)
-       DRIVE%STATEDOT(14) = TDBLDOTVEC(1)
-       DRIVE%STATEDOT(15) = TDOTVEC(2)
-       DRIVE%STATEDOT(16) = TDBLDOTVEC(2)
-       DRIVE%STATEDOT(17) = TDOTVEC(3)
-       DRIVE%STATEDOT(18) = TDBLDOTVEC(3)
-       DRIVE%STATEDOT(19) = TDOTVEC(4)
-       DRIVE%STATEDOT(20) = TDBLDOTVEC(4)
+       T%DRIVER%STATEDOT(1) = xcgdot
+       T%DRIVER%STATEDOT(2) = ycgdot
+       T%DRIVER%STATEDOT(2) = ycgdot
+       T%DRIVER%STATEDOT(3) = zcgdot
+       T%DRIVER%STATEDOT(4) = phidot
+       T%DRIVER%STATEDOT(5) = thetadot
+       T%DRIVER%STATEDOT(6) = psidot
+       T%DRIVER%STATEDOT(7) = ubdot
+       T%DRIVER%STATEDOT(8) = vbdot
+       T%DRIVER%STATEDOT(9) = wbdot
+       T%DRIVER%STATEDOT(10) = pbdot 
+       T%DRIVER%STATEDOT(11) = qbdot 
+       T%DRIVER%STATEDOT(12) = rbdot
+       T%DRIVER%STATEDOT(13) = TDOTVEC(1)
+       T%DRIVER%STATEDOT(14) = TDBLDOTVEC(1)
+       T%DRIVER%STATEDOT(15) = TDOTVEC(2)
+       T%DRIVER%STATEDOT(16) = TDBLDOTVEC(2)
+       T%DRIVER%STATEDOT(17) = TDOTVEC(3)
+       T%DRIVER%STATEDOT(18) = TDBLDOTVEC(3)
+       T%DRIVER%STATEDOT(19) = TDOTVEC(4)
+       T%DRIVER%STATEDOT(20) = TDBLDOTVEC(4)
 
-       !write(*,*) 'Statedot = ',DRIVE%STATEDOT
+       !write(*,*) 'Statedot = ',T%DRIVER%STATEDOT
 
        !!Save some stuff for Tether model
-       DRIVE%XDOT = xcgdot
-       DRIVE%YDOT = ycgdot
-       DRIVE%ZDOT = zcgdot
+       T%DRIVER%XDOT = xcgdot
+       T%DRIVER%YDOT = ycgdot
+       T%DRIVER%ZDOT = zcgdot
 
        !Compute Reel Locations - r_reel = r_cg + TIB*r_body
        rCG_I(1,1) = xcg 
        rCG_I(2,1) = ycg
        rCG_I(3,1) = zcg ! + (1/3) !REVISIT
-       rReel_I = rCG_I + matmul(DRIVE%TIC,rCF_B)
-       DRIVE%XREEL = rReel_I(1,1)
-       DRIVE%YREEL = rReel_I(2,1)
-       DRIVE%ZREEL = rReel_I(3,1)
+       rReel_I = rCG_I + matmul(T%DRIVER%TIC,rCF_B)
+       T%DRIVER%XREEL = rReel_I(1,1)
+       T%DRIVER%YREEL = rReel_I(2,1)
+       T%DRIVER%ZREEL = rReel_I(3,1)
        !Compute Reel Dot - v_reel = v_cg + TIB*(omega x r_body)
        v_CG_I(1,1) = xcgdot
        v_CG_I(2,1) = ycgdot
@@ -2699,156 +2684,156 @@ SUBROUTINE DRIVER(DRIVE,iflag)
        S_wt_B(3,1) = -qb
        S_wt_B(3,2) = pb
        S_wt_B(3,3) = 0.0
-       v_Reel_I = v_CG_I + matmul(DRIVE%TIC,matmul(S_wt_B,rCF_B))
-       DRIVE%XREELDOT = v_Reel_I(1,1)
-       DRIVE%YREELDOT = v_Reel_I(2,1)
-       DRIVE%ZREELDOT = v_Reel_I(3,1)
+       v_Reel_I = v_CG_I + matmul(T%DRIVER%TIC,matmul(S_wt_B,rCF_B))
+       T%DRIVER%XREELDOT = v_Reel_I(1,1)
+       T%DRIVER%YREELDOT = v_Reel_I(2,1)
+       T%DRIVER%ZREELDOT = v_Reel_I(3,1)
     end if !End MODNO
     ! Integration Model 
-    if (DRIVE%MODNO .eq. 0) then
+    if (T%DRIVER%MODNO .eq. 0) then
        !!!Compute Driver speed 
-       if (DRIVE%RESTARTSPEED .eq. -999) then
-          !DRIVE%SPEED = DRIVE%FINALSPEED
+       if (T%DRIVER%RESTARTSPEED .eq. -999) then
+          !T%DRIVER%SPEED = T%DRIVER%FINALSPEED
           accel = 0
        else
           !Ramp in speed - assume constant decel/acceleration of 2 ft/s
           dspeed = 3
-          tend = abs(DRIVE%RESTARTSPEED-DRIVE%FINALSPEED)/dspeed
-          if (DRIVE%TIME .gt. tend) then
-             !DRIVE%SPEED = DRIVE%FINALSPEED
+          tend = abs(T%DRIVER%RESTARTSPEED-T%DRIVER%FINALSPEED)/dspeed
+          if (T%DRIVER%TIME .gt. tend) then
+             !T%DRIVER%SPEED = T%DRIVER%FINALSPEED
              accel = 0
           else
-             !DRIVE%SPEED = DRIVE%RESTARTSPEED + sign(1.0,DRIVE%FINALSPEED-DRIVE%RESTARTSPEED)*dspeed*(DRIVE%TIME)
-             accel = sign(1.0,DRIVE%FINALSPEED-DRIVE%RESTARTSPEED)*dspeed
+             !T%DRIVER%SPEED = T%DRIVER%RESTARTSPEED + sign(1.0,T%DRIVER%FINALSPEED-T%DRIVER%RESTARTSPEED)*dspeed*(T%DRIVER%TIME)
+             accel = sign(1.0,T%DRIVER%FINALSPEED-T%DRIVER%RESTARTSPEED)*dspeed
           end if
        end if
 
        !!Compute Derivatives
-       DRIVE%XDOT = DRIVE%SPEED !!This assumes you are flying straight - REVISIT REVISIT
-       DRIVE%YDOT = vb
-       DRIVE%ZDOT = wb
-       DRIVE%STATEDOT(1) = DRIVE%XDOT
-       DRIVE%STATEDOT(2) = DRIVE%YDOT
-       DRIVE%STATEDOT(3) = DRIVE%ZDOT
-       DRIVE%STATEDOT(4:6) = 0 !Phi theta psi
+       T%DRIVER%XDOT = T%DRIVER%SPEED !!This assumes you are flying straight - REVISIT REVISIT
+       T%DRIVER%YDOT = vb
+       T%DRIVER%ZDOT = wb
+       T%DRIVER%STATEDOT(1) = T%DRIVER%XDOT
+       T%DRIVER%STATEDOT(2) = T%DRIVER%YDOT
+       T%DRIVER%STATEDOT(3) = T%DRIVER%ZDOT
+       T%DRIVER%STATEDOT(4:6) = 0 !Phi theta psi
        call RandUniform(noise)
-       DRIVE%STATEDOT(7) = accel + (1.0D0-2*noise)*DRIVE%XDDOTNOISE !udot
+       T%DRIVER%STATEDOT(7) = accel + (1.0D0-2*noise)*T%DRIVER%XDDOTNOISE !udot
        call RandUniform(noise)
        freq = 0
-       if (DRIVE%YDDOTPERIOD .ne. 0) then
-          freq = (2*qPI)/(DRIVE%YDDOTPERIOD)*cos((2*qPI)/(DRIVE%YDDOTPERIOD)*DRIVE%TIME)
+       if (T%DRIVER%YDDOTPERIOD .ne. 0) then
+          freq = (2*qPI)/(T%DRIVER%YDDOTPERIOD)*cos((2*qPI)/(T%DRIVER%YDDOTPERIOD)*T%DRIVER%TIME)
        end if
-       DRIVE%STATEDOT(8) = 0 + (1.0D0-2*noise)*DRIVE%XDDOTNOISE + DRIVE%YDDOTSCALE*freq !vdot
+       T%DRIVER%STATEDOT(8) = 0 + (1.0D0-2*noise)*T%DRIVER%XDDOTNOISE + T%DRIVER%YDDOTSCALE*freq !vdot
        call RandUniform(noise)
-       DRIVE%STATEDOT(9) = (1.0D0-2*noise)*DRIVE%XDDOTNOISE !wdot
-       DRIVE%STATEDOT(10:12) = 0 !p,q,rdot
+       T%DRIVER%STATEDOT(9) = (1.0D0-2*noise)*T%DRIVER%XDDOTNOISE !wdot
+       T%DRIVER%STATEDOT(10:12) = 0 !p,q,rdot
 
        !Compute Reel Locations
-       DRIVE%XREEL = DRIVE%XCG + cos(DRIVE%PSI)*(DRIVE%SLREEL-DRIVE%SLCG) - sin(DRIVE%PSI)*(DRIVE%BLREEL-DRIVE%BLCG) 
-       DRIVE%YREEL = DRIVE%YCG + sin(DRIVE%PSI)*(DRIVE%SLREEL-DRIVE%SLCG) + cos(DRIVE%PSI)*(DRIVE%BLREEL-DRIVE%BLCG) 
-       DRIVE%ZREEL = DRIVE%ZCG + DRIVE%WLREEL - DRIVE%WLCG 
-       DRIVE%XREELDOT = DRIVE%XDOT
-       DRIVE%YREELDOT = DRIVE%YDOT
-       DRIVE%ZREELDOT = DRIVE%ZDOT
+       T%DRIVER%XREEL = T%DRIVER%XCG + cos(T%DRIVER%PSI)*(T%DRIVER%SLREEL-T%DRIVER%SLCG) - sin(T%DRIVER%PSI)*(T%DRIVER%BLREEL-T%DRIVER%BLCG) 
+       T%DRIVER%YREEL = T%DRIVER%YCG + sin(T%DRIVER%PSI)*(T%DRIVER%SLREEL-T%DRIVER%SLCG) + cos(T%DRIVER%PSI)*(T%DRIVER%BLREEL-T%DRIVER%BLCG) 
+       T%DRIVER%ZREEL = T%DRIVER%ZCG + T%DRIVER%WLREEL - T%DRIVER%WLCG 
+       T%DRIVER%XREELDOT = T%DRIVER%XDOT
+       T%DRIVER%YREELDOT = T%DRIVER%YDOT
+       T%DRIVER%ZREELDOT = T%DRIVER%ZDOT
        
     end if
 
  ! Constant Model
 
-    if (DRIVE%MODNO .eq. 1) then
+    if (T%DRIVER%MODNO .eq. 1) then
 
-     DRIVE%SPEED = DRIVE%FINALSPEED
+     T%DRIVER%SPEED = T%DRIVER%FINALSPEED
         
-     ! if (DRIVE%TIME .gt. 1000) then
-     !    DRIVE%XCG = DRIVE%XCGINITIAL + DRIVE%SPEED*1000 + (DRIVE%SPEED+5)*(DRIVE%TIME-1000)
-     !    speed = DRIVE%SPEED+5
+     ! if (T%DRIVER%TIME .gt. 1000) then
+     !    T%DRIVER%XCG = T%DRIVER%XCGINITIAL + T%DRIVER%SPEED*1000 + (T%DRIVER%SPEED+5)*(T%DRIVER%TIME-1000)
+     !    speed = T%DRIVER%SPEED+5
      ! end if
-     DRIVE%XDOT = DRIVE%SPEED*cos(DRIVE%PSI)
-     DRIVE%YDOT = DRIVE%SPEED*sin(DRIVE%PSI) !!!DO NOT FORGET TO FIX THIS TOO
+     T%DRIVER%XDOT = T%DRIVER%SPEED*cos(T%DRIVER%PSI)
+     T%DRIVER%YDOT = T%DRIVER%SPEED*sin(T%DRIVER%PSI) !!!DO NOT FORGET TO FIX THIS TOO
 
      !!Compute CG location -- This assumes that speed is constant
 
-     DRIVE%XCG = DRIVE%XCGINITIAL + DRIVE%SPEED*cos(DRIVE%PSI)*DRIVE%TIME
-     DRIVE%YCG = DRIVE%YCGINITIAL + DRIVE%SPEED*sin(DRIVE%PSI)*DRIVE%TIME
-     DRIVE%ZCG = DRIVE%ZCGINITIAL
+     T%DRIVER%XCG = T%DRIVER%XCGINITIAL + T%DRIVER%SPEED*cos(T%DRIVER%PSI)*T%DRIVER%TIME
+     T%DRIVER%YCG = T%DRIVER%YCGINITIAL + T%DRIVER%SPEED*sin(T%DRIVER%PSI)*T%DRIVER%TIME
+     T%DRIVER%ZCG = T%DRIVER%ZCGINITIAL
 
      !Compute CG speed
 
-     DRIVE%ZDOT = 0.0
-     DRIVE%XREEL = DRIVE%XCG + cos(DRIVE%PSI)*(DRIVE%SLREEL-DRIVE%SLCG) - sin(DRIVE%PSI)*(DRIVE%BLREEL-DRIVE%BLCG) 
-     DRIVE%YREEL = DRIVE%YCG + sin(DRIVE%PSI)*(DRIVE%SLREEL-DRIVE%SLCG) + cos(DRIVE%PSI)*(DRIVE%BLREEL-DRIVE%BLCG) 
-     DRIVE%ZREEL = DRIVE%ZCG + DRIVE%WLREEL - DRIVE%WLCG 
-     DRIVE%XREELDOT = DRIVE%XDOT
-     DRIVE%YREELDOT = DRIVE%YDOT
-     DRIVE%ZREELDOT = DRIVE%ZDOT
+     T%DRIVER%ZDOT = 0.0
+     T%DRIVER%XREEL = T%DRIVER%XCG + cos(T%DRIVER%PSI)*(T%DRIVER%SLREEL-T%DRIVER%SLCG) - sin(T%DRIVER%PSI)*(T%DRIVER%BLREEL-T%DRIVER%BLCG) 
+     T%DRIVER%YREEL = T%DRIVER%YCG + sin(T%DRIVER%PSI)*(T%DRIVER%SLREEL-T%DRIVER%SLCG) + cos(T%DRIVER%PSI)*(T%DRIVER%BLREEL-T%DRIVER%BLCG) 
+     T%DRIVER%ZREEL = T%DRIVER%ZCG + T%DRIVER%WLREEL - T%DRIVER%WLCG 
+     T%DRIVER%XREELDOT = T%DRIVER%XDOT
+     T%DRIVER%YREELDOT = T%DRIVER%YDOT
+     T%DRIVER%ZREELDOT = T%DRIVER%ZDOT
 
      !Place everything in state vector
 
-     DRIVE%STATE(1) = DRIVE%XCG
-     DRIVE%STATE(2) = DRIVE%YCG
-     DRIVE%STATE(3) = DRIVE%ZCG
-     DRIVE%STATE(4) = 0 !phi 
-     DRIVE%STATE(5) = 0 !theta
-     DRIVE%STATE(6) = DRIVE%PSI !psi
-     DRIVE%STATE(7) = DRIVE%SPEED
-     DRIVE%STATE(8:12) = 0
+     T%DRIVER%STATE(1) = T%DRIVER%XCG
+     T%DRIVER%STATE(2) = T%DRIVER%YCG
+     T%DRIVER%STATE(3) = T%DRIVER%ZCG
+     T%DRIVER%STATE(4) = 0 !phi 
+     T%DRIVER%STATE(5) = 0 !theta
+     T%DRIVER%STATE(6) = T%DRIVER%PSI !psi
+     T%DRIVER%STATE(7) = T%DRIVER%SPEED
+     T%DRIVER%STATE(8:12) = 0
 
    ! Helpful variables
      
-     DRIVE%THETA = 0
-     DRIVE%PHI = 0
-     ctheta = cos(DRIVE%THETA)
-     stheta = sin(DRIVE%THETA)
-     cphi = cos(DRIVE%PHI)
-     sphi = sin(DRIVE%PHI)
-     cpsi = cos(DRIVE%PSI)
-     spsi = sin(DRIVE%PSI)
+     T%DRIVER%THETA = 0
+     T%DRIVER%PHI = 0
+     ctheta = cos(T%DRIVER%THETA)
+     stheta = sin(T%DRIVER%THETA)
+     cphi = cos(T%DRIVER%PHI)
+     sphi = sin(T%DRIVER%PHI)
+     cpsi = cos(T%DRIVER%PSI)
+     spsi = sin(T%DRIVER%PSI)
 
      ! Reel Position and Velocity
      
-     DRIVE%TIS(1,1) = ctheta*cpsi
-     DRIVE%TIS(2,1) = ctheta*spsi
-     DRIVE%TIS(3,1) = -stheta
-     DRIVE%TIS(1,2) = sphi*stheta*cpsi - cphi*spsi
-     DRIVE%TIS(2,2) = sphi*stheta*spsi + cphi*cpsi
-     DRIVE%TIS(3,2) = sphi*ctheta
-     DRIVE%TIS(1,3) = cphi*stheta*cpsi + sphi*spsi
-     DRIVE%TIS(2,3) = cphi*stheta*spsi - sphi*cpsi
-     DRIVE%TIS(3,3) = cphi*ctheta
+     T%DRIVER%TIS(1,1) = ctheta*cpsi
+     T%DRIVER%TIS(2,1) = ctheta*spsi
+     T%DRIVER%TIS(3,1) = -stheta
+     T%DRIVER%TIS(1,2) = sphi*stheta*cpsi - cphi*spsi
+     T%DRIVER%TIS(2,2) = sphi*stheta*spsi + cphi*cpsi
+     T%DRIVER%TIS(3,2) = sphi*ctheta
+     T%DRIVER%TIS(1,3) = cphi*stheta*cpsi + sphi*spsi
+     T%DRIVER%TIS(2,3) = cphi*stheta*spsi - sphi*cpsi
+     T%DRIVER%TIS(3,3) = cphi*ctheta
   end if
   
   ! Table Look-Up Model 
 
-  if (DRIVE%MODNO .eq. 2) then
+  if (T%DRIVER%MODNO .eq. 2) then
     
    ifind = 0
   
    ! Position Pointer  
 
-   if (DRIVE%TIME .le. DRIVE%TIMETAB(DRIVE%IP)) then 
+   if (T%DRIVER%TIME .le. T%DRIVER%TIMETAB(T%DRIVER%IP)) then 
     ifind = -1 
-    do while ((ifind.ne.0) .and. (DRIVE%IP.gt.1))
-     DRIVE%IP = DRIVE%IP - 1 
-     if (DRIVE%TIMETAB(DRIVE%IP)   .le. DRIVE%TIME) then 
-     if (DRIVE%TIMETAB(DRIVE%IP+1) .gt. DRIVE%TIME) then 
+    do while ((ifind.ne.0) .and. (T%DRIVER%IP.gt.1))
+     T%DRIVER%IP = T%DRIVER%IP - 1 
+     if (T%DRIVER%TIMETAB(T%DRIVER%IP)   .le. T%DRIVER%TIME) then 
+     if (T%DRIVER%TIMETAB(T%DRIVER%IP+1) .gt. T%DRIVER%TIME) then 
       ifind = 0
      end if
      end if 
     end do 
    end if
-   if (DRIVE%TIME .gt. DRIVE%TIMETAB(DRIVE%IP+1)) then 
+   if (T%DRIVER%TIME .gt. T%DRIVER%TIMETAB(T%DRIVER%IP+1)) then 
     ifind = 1
-    do while ((ifind.ne.0) .and. (DRIVE%IP.lt.DRIVE%TABSIZE-1))
-     DRIVE%IP = DRIVE%IP + 1 
-     if (DRIVE%TIMETAB(DRIVE%IP)   .le. DRIVE%TIME) then 
-     if (DRIVE%TIMETAB(DRIVE%IP+1) .gt. DRIVE%TIME) then 
+    do while ((ifind.ne.0) .and. (T%DRIVER%IP.lt.T%DRIVER%TABSIZE-1))
+     T%DRIVER%IP = T%DRIVER%IP + 1 
+     if (T%DRIVER%TIMETAB(T%DRIVER%IP)   .le. T%DRIVER%TIME) then 
+     if (T%DRIVER%TIMETAB(T%DRIVER%IP+1) .gt. T%DRIVER%TIME) then 
       ifind = 0 
      end if 
      end if 
     end do 
    end if
    if (ifind .eq. 0) then
-    m = (DRIVE%TIME-DRIVE%TIMETAB(DRIVE%IP))/(DRIVE%TIMETAB(DRIVE%IP+1)-DRIVE%TIMETAB(DRIVE%IP))
+    m = (T%DRIVER%TIME-T%DRIVER%TIMETAB(T%DRIVER%IP))/(T%DRIVER%TIMETAB(T%DRIVER%IP+1)-T%DRIVER%TIMETAB(T%DRIVER%IP))
    else if (ifind .eq. -1) then
     m = 0.0
    else if (ifind .eq. 1) then
@@ -2857,74 +2842,74 @@ SUBROUTINE DRIVER(DRIVE,iflag)
   
    ! Interpolate
     
-   DRIVE%XCG   = DRIVE%XCGINITIAL + DRIVE%XCGTAB(DRIVE%IP)   + m*(DRIVE%XCGTAB(DRIVE%IP+1)-DRIVE%XCGTAB(DRIVE%IP))
-   DRIVE%YCG   = DRIVE%YCGINITIAL + DRIVE%YCGTAB(DRIVE%IP)   + m*(DRIVE%YCGTAB(DRIVE%IP+1)-DRIVE%YCGTAB(DRIVE%IP))
-   DRIVE%ZCG   = DRIVE%ZCGINITIAL + DRIVE%ZCGTAB(DRIVE%IP)   + m*(DRIVE%ZCGTAB(DRIVE%IP+1)-DRIVE%ZCGTAB(DRIVE%IP))
-   DRIVE%PHI   = DRIVE%PHITAB(DRIVE%IP)   + m*(DRIVE%PHITAB(DRIVE%IP+1)-DRIVE%PHITAB(DRIVE%IP))
-   DRIVE%THETA = DRIVE%THETATAB(DRIVE%IP) + m*(DRIVE%THETATAB(DRIVE%IP+1)-DRIVE%THETATAB(DRIVE%IP))
-   DRIVE%PSI   = DRIVE%PSITAB(DRIVE%IP)   + m*(DRIVE%PSITAB(DRIVE%IP+1)-DRIVE%PSITAB(DRIVE%IP))
-   DRIVE%UB    = DRIVE%UBTAB(DRIVE%IP)    + m*(DRIVE%UBTAB(DRIVE%IP+1)-DRIVE%UBTAB(DRIVE%IP))
-   DRIVE%VB    = DRIVE%VBTAB(DRIVE%IP)    + m*(DRIVE%VBTAB(DRIVE%IP+1)-DRIVE%VBTAB(DRIVE%IP))
-   DRIVE%WB    = DRIVE%WBTAB(DRIVE%IP)    + m*(DRIVE%WBTAB(DRIVE%IP+1)-DRIVE%WBTAB(DRIVE%IP))
-   DRIVE%PB    = DRIVE%PBTAB(DRIVE%IP)    + m*(DRIVE%PBTAB(DRIVE%IP+1)-DRIVE%PBTAB(DRIVE%IP))
-   DRIVE%QB    = DRIVE%QBTAB(DRIVE%IP)    + m*(DRIVE%QBTAB(DRIVE%IP+1)-DRIVE%QBTAB(DRIVE%IP))
-   DRIVE%RB    = DRIVE%RBTAB(DRIVE%IP)    + m*(DRIVE%RBTAB(DRIVE%IP+1)-DRIVE%RBTAB(DRIVE%IP))
+   T%DRIVER%XCG   = T%DRIVER%XCGINITIAL + T%DRIVER%XCGTAB(T%DRIVER%IP)   + m*(T%DRIVER%XCGTAB(T%DRIVER%IP+1)-T%DRIVER%XCGTAB(T%DRIVER%IP))
+   T%DRIVER%YCG   = T%DRIVER%YCGINITIAL + T%DRIVER%YCGTAB(T%DRIVER%IP)   + m*(T%DRIVER%YCGTAB(T%DRIVER%IP+1)-T%DRIVER%YCGTAB(T%DRIVER%IP))
+   T%DRIVER%ZCG   = T%DRIVER%ZCGINITIAL + T%DRIVER%ZCGTAB(T%DRIVER%IP)   + m*(T%DRIVER%ZCGTAB(T%DRIVER%IP+1)-T%DRIVER%ZCGTAB(T%DRIVER%IP))
+   T%DRIVER%PHI   = T%DRIVER%PHITAB(T%DRIVER%IP)   + m*(T%DRIVER%PHITAB(T%DRIVER%IP+1)-T%DRIVER%PHITAB(T%DRIVER%IP))
+   T%DRIVER%THETA = T%DRIVER%THETATAB(T%DRIVER%IP) + m*(T%DRIVER%THETATAB(T%DRIVER%IP+1)-T%DRIVER%THETATAB(T%DRIVER%IP))
+   T%DRIVER%PSI   = T%DRIVER%PSITAB(T%DRIVER%IP)   + m*(T%DRIVER%PSITAB(T%DRIVER%IP+1)-T%DRIVER%PSITAB(T%DRIVER%IP))
+   T%DRIVER%UB    = T%DRIVER%UBTAB(T%DRIVER%IP)    + m*(T%DRIVER%UBTAB(T%DRIVER%IP+1)-T%DRIVER%UBTAB(T%DRIVER%IP))
+   T%DRIVER%VB    = T%DRIVER%VBTAB(T%DRIVER%IP)    + m*(T%DRIVER%VBTAB(T%DRIVER%IP+1)-T%DRIVER%VBTAB(T%DRIVER%IP))
+   T%DRIVER%WB    = T%DRIVER%WBTAB(T%DRIVER%IP)    + m*(T%DRIVER%WBTAB(T%DRIVER%IP+1)-T%DRIVER%WBTAB(T%DRIVER%IP))
+   T%DRIVER%PB    = T%DRIVER%PBTAB(T%DRIVER%IP)    + m*(T%DRIVER%PBTAB(T%DRIVER%IP+1)-T%DRIVER%PBTAB(T%DRIVER%IP))
+   T%DRIVER%QB    = T%DRIVER%QBTAB(T%DRIVER%IP)    + m*(T%DRIVER%QBTAB(T%DRIVER%IP+1)-T%DRIVER%QBTAB(T%DRIVER%IP))
+   T%DRIVER%RB    = T%DRIVER%RBTAB(T%DRIVER%IP)    + m*(T%DRIVER%RBTAB(T%DRIVER%IP+1)-T%DRIVER%RBTAB(T%DRIVER%IP))
 
    !Place state in statevector
 
-   DRIVE%STATE(1) = DRIVE%XCG
-   DRIVE%STATE(2) = DRIVE%YCG
-   DRIVE%STATE(3) = DRIVE%ZCG
-   DRIVE%STATE(4) = DRIVE%PHI
-   DRIVE%STATE(5) = DRIVE%THETA
-   DRIVE%STATE(6) = DRIVE%PSI
-   DRIVE%STATE(7) = DRIVE%UB
-   DRIVE%STATE(8) = DRIVE%VB
-   DRIVE%STATE(9) = DRIVE%WB
-   DRIVE%STATE(10) = DRIVE%PB
-   DRIVE%STATE(11) = DRIVE%QB
-   DRIVE%STATE(12) = DRIVE%RB
+   T%DRIVER%STATE(1) = T%DRIVER%XCG
+   T%DRIVER%STATE(2) = T%DRIVER%YCG
+   T%DRIVER%STATE(3) = T%DRIVER%ZCG
+   T%DRIVER%STATE(4) = T%DRIVER%PHI
+   T%DRIVER%STATE(5) = T%DRIVER%THETA
+   T%DRIVER%STATE(6) = T%DRIVER%PSI
+   T%DRIVER%STATE(7) = T%DRIVER%UB
+   T%DRIVER%STATE(8) = T%DRIVER%VB
+   T%DRIVER%STATE(9) = T%DRIVER%WB
+   T%DRIVER%STATE(10) = T%DRIVER%PB
+   T%DRIVER%STATE(11) = T%DRIVER%QB
+   T%DRIVER%STATE(12) = T%DRIVER%RB
 
    ! Helpful variables
 
-   ctheta = cos(DRIVE%THETA)
-   stheta = sin(DRIVE%THETA)
-   cphi = cos(DRIVE%PHI)
-   sphi = sin(DRIVE%PHI)
-   cpsi = cos(DRIVE%PSI)
-   spsi = sin(DRIVE%PSI)
+   ctheta = cos(T%DRIVER%THETA)
+   stheta = sin(T%DRIVER%THETA)
+   cphi = cos(T%DRIVER%PHI)
+   sphi = sin(T%DRIVER%PHI)
+   cpsi = cos(T%DRIVER%PSI)
+   spsi = sin(T%DRIVER%PSI)
 
    ! Reel Position and Velocity
     
-   DRIVE%TIS(1,1) = ctheta*cpsi
-   DRIVE%TIS(2,1) = ctheta*spsi
-   DRIVE%TIS(3,1) = -stheta
-   DRIVE%TIS(1,2) = sphi*stheta*cpsi - cphi*spsi
-   DRIVE%TIS(2,2) = sphi*stheta*spsi + cphi*cpsi
-   DRIVE%TIS(3,2) = sphi*ctheta
-   DRIVE%TIS(1,3) = cphi*stheta*cpsi + sphi*spsi
-   DRIVE%TIS(2,3) = cphi*stheta*spsi - sphi*cpsi
-   DRIVE%TIS(3,3) = cphi*ctheta
+   T%DRIVER%TIS(1,1) = ctheta*cpsi
+   T%DRIVER%TIS(2,1) = ctheta*spsi
+   T%DRIVER%TIS(3,1) = -stheta
+   T%DRIVER%TIS(1,2) = sphi*stheta*cpsi - cphi*spsi
+   T%DRIVER%TIS(2,2) = sphi*stheta*spsi + cphi*cpsi
+   T%DRIVER%TIS(3,2) = sphi*ctheta
+   T%DRIVER%TIS(1,3) = cphi*stheta*cpsi + sphi*spsi
+   T%DRIVER%TIS(2,3) = cphi*stheta*spsi - sphi*cpsi
+   T%DRIVER%TIS(3,3) = cphi*ctheta
 
    !!Compute Driver speed in inertial coordinates
 
-   DRIVE%XDOT = DRIVE%TIS(1,1)*DRIVE%UB + DRIVE%TIS(1,2)*DRIVE%VB + DRIVE%TIS(1,3)*DRIVE%WB  
-   DRIVE%YDOT = DRIVE%TIS(2,1)*DRIVE%UB + DRIVE%TIS(2,2)*DRIVE%VB + DRIVE%TIS(2,3)*DRIVE%WB  
-   DRIVE%ZDOT = DRIVE%TIS(3,1)*DRIVE%UB + DRIVE%TIS(3,2)*DRIVE%VB + DRIVE%TIS(3,3)*DRIVE%WB  
+   T%DRIVER%XDOT = T%DRIVER%TIS(1,1)*T%DRIVER%UB + T%DRIVER%TIS(1,2)*T%DRIVER%VB + T%DRIVER%TIS(1,3)*T%DRIVER%WB  
+   T%DRIVER%YDOT = T%DRIVER%TIS(2,1)*T%DRIVER%UB + T%DRIVER%TIS(2,2)*T%DRIVER%VB + T%DRIVER%TIS(2,3)*T%DRIVER%WB  
+   T%DRIVER%ZDOT = T%DRIVER%TIS(3,1)*T%DRIVER%UB + T%DRIVER%TIS(3,2)*T%DRIVER%VB + T%DRIVER%TIS(3,3)*T%DRIVER%WB  
 
    !!!Compute Reel velocity in Driver frame
 
-   DRIVE%UREEL = DRIVE%UB + DRIVE%QB*(DRIVE%WLREEL-DRIVE%WLCG) - DRIVE%RB*(DRIVE%BLREEL-DRIVE%BLCG) 
-   DRIVE%VREEL = DRIVE%VB + DRIVE%RB*(DRIVE%SLREEL-DRIVE%SLCG) - DRIVE%PB*(DRIVE%WLREEL-DRIVE%WLCG)
-   DRIVE%WREEL = DRIVE%WB + DRIVE%PB*(DRIVE%BLREEL-DRIVE%BLCG) - DRIVE%QB*(DRIVE%SLREEL-DRIVE%SLCG)
+   T%DRIVER%UREEL = T%DRIVER%UB + T%DRIVER%QB*(T%DRIVER%WLREEL-T%DRIVER%WLCG) - T%DRIVER%RB*(T%DRIVER%BLREEL-T%DRIVER%BLCG) 
+   T%DRIVER%VREEL = T%DRIVER%VB + T%DRIVER%RB*(T%DRIVER%SLREEL-T%DRIVER%SLCG) - T%DRIVER%PB*(T%DRIVER%WLREEL-T%DRIVER%WLCG)
+   T%DRIVER%WREEL = T%DRIVER%WB + T%DRIVER%PB*(T%DRIVER%BLREEL-T%DRIVER%BLCG) - T%DRIVER%QB*(T%DRIVER%SLREEL-T%DRIVER%SLCG)
 
-   DRIVE%XREEL = DRIVE%XCG + DRIVE%TIS(1,1)*(DRIVE%SLREEL-DRIVE%SLCG) + DRIVE%TIS(1,2)*(DRIVE%BLREEL-DRIVE%BLCG) + DRIVE%TIS(1,3)*(DRIVE%WLREEL-DRIVE%WLCG)  
-   DRIVE%YREEL = DRIVE%YCG + DRIVE%TIS(2,1)*(DRIVE%SLREEL-DRIVE%SLCG) + DRIVE%TIS(2,2)*(DRIVE%BLREEL-DRIVE%BLCG) + DRIVE%TIS(2,3)*(DRIVE%WLREEL-DRIVE%WLCG)  
-   DRIVE%ZREEL = DRIVE%ZCG + DRIVE%TIS(3,1)*(DRIVE%SLREEL-DRIVE%SLCG) + DRIVE%TIS(3,2)*(DRIVE%BLREEL-DRIVE%BLCG) + DRIVE%TIS(3,3)*(DRIVE%WLREEL-DRIVE%WLCG)  
+   T%DRIVER%XREEL = T%DRIVER%XCG + T%DRIVER%TIS(1,1)*(T%DRIVER%SLREEL-T%DRIVER%SLCG) + T%DRIVER%TIS(1,2)*(T%DRIVER%BLREEL-T%DRIVER%BLCG) + T%DRIVER%TIS(1,3)*(T%DRIVER%WLREEL-T%DRIVER%WLCG)  
+   T%DRIVER%YREEL = T%DRIVER%YCG + T%DRIVER%TIS(2,1)*(T%DRIVER%SLREEL-T%DRIVER%SLCG) + T%DRIVER%TIS(2,2)*(T%DRIVER%BLREEL-T%DRIVER%BLCG) + T%DRIVER%TIS(2,3)*(T%DRIVER%WLREEL-T%DRIVER%WLCG)  
+   T%DRIVER%ZREEL = T%DRIVER%ZCG + T%DRIVER%TIS(3,1)*(T%DRIVER%SLREEL-T%DRIVER%SLCG) + T%DRIVER%TIS(3,2)*(T%DRIVER%BLREEL-T%DRIVER%BLCG) + T%DRIVER%TIS(3,3)*(T%DRIVER%WLREEL-T%DRIVER%WLCG)  
 
-   DRIVE%XREELDOT = DRIVE%TIS(1,1)*DRIVE%UREEL + DRIVE%TIS(1,2)*DRIVE%VREEL + DRIVE%TIS(1,3)*DRIVE%WREEL  
-   DRIVE%YREELDOT = DRIVE%TIS(2,1)*DRIVE%UREEL + DRIVE%TIS(2,2)*DRIVE%VREEL + DRIVE%TIS(2,3)*DRIVE%WREEL  
-   DRIVE%ZREELDOT = DRIVE%TIS(3,1)*DRIVE%UREEL + DRIVE%TIS(3,2)*DRIVE%VREEL + DRIVE%TIS(3,3)*DRIVE%WREEL  
+   T%DRIVER%XREELDOT = T%DRIVER%TIS(1,1)*T%DRIVER%UREEL + T%DRIVER%TIS(1,2)*T%DRIVER%VREEL + T%DRIVER%TIS(1,3)*T%DRIVER%WREEL  
+   T%DRIVER%YREELDOT = T%DRIVER%TIS(2,1)*T%DRIVER%UREEL + T%DRIVER%TIS(2,2)*T%DRIVER%VREEL + T%DRIVER%TIS(2,3)*T%DRIVER%WREEL  
+   T%DRIVER%ZREELDOT = T%DRIVER%TIS(3,1)*T%DRIVER%UREEL + T%DRIVER%TIS(3,2)*T%DRIVER%VREEL + T%DRIVER%TIS(3,3)*T%DRIVER%WREEL  
     
   end if !MODNO = 2
 
@@ -2932,7 +2917,7 @@ SUBROUTINE DRIVER(DRIVE,iflag)
   ! should probably just add these as states but this will do for now
   ! What we will do is just divide everything out by 4 so when this runs 4 times we should
   ! be good.
-  call COMPUTEINTEGRAL(DRIVE) ! Calls integral routine
+  call COMPUTEINTEGRAL(T%DRIVER) ! Calls integral routine
     
   RETURN
   
@@ -2954,7 +2939,6 @@ end if
      !Output driver stuff
      write(25,*) 'Gravity Flag (0=Off, 1=On): ',DRIVE%GRAVOFFON
      write(25,*) 'Aerodynamics Flag (0=Off, 1=On): ',DRIVE%AEROOFFON
-     write(25,*) 'Contact Flag (0=Off, 1=On): ',DRIVE%CONTOFFON
      write(25,*) 'Mass (kg): ',DRIVE%MASS
      write(25,*) 'Weight (N): ',DRIVE%WEIGHT
      write(25,*) 'Gravity (ft/s^2): ',DRIVE%GRAVITY
@@ -3046,7 +3030,6 @@ end if
   if (DRIVE%MODNO .eq. 3) then
      read(unit=94,fmt=*,iostat=readflag) DRIVE%GRAVOFFON
      read(unit=94,fmt=*,iostat=readflag) DRIVE%AEROOFFON
-     read(unit=94,fmt=*,iostat=readflag) DRIVE%CONTOFFON
      read(unit=94,fmt=*,iostat=readflag) DRIVE%WEIGHT
      read(unit=94,fmt=*,iostat=readflag) DRIVE%GRAVITY
      read(unit=94,fmt=*,iostat=readflag) DRIVE%SLCG
@@ -3704,10 +3687,6 @@ SUBROUTINE TOWED_CONTROL(TOW)
      TOW%OMEGAVEC = 0
      TOW%THRUSTVEC = 0
      TOW%MUVEC = 0
-
-     !Get OMEGA0 and KT for DRIVE
-     TOW%KT = TOW%C_T*((4.0D0*TOW%DEN*(TOW%RNEW**4))/(qPI**2))
-     TOW%OMEGA0 = sqrt(TOW%WEIGHT/(4.0D0*TOW%KT))
 
      xdot = TOW%STATEDOT(1)
      ydot = TOW%STATEDOT(2)
