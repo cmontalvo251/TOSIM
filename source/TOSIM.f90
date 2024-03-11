@@ -123,8 +123,6 @@ type ATMOSPHERESTRUCTURE
      integer :: markZ = 1                             ! Units: 'nd', X index placeholder
      integer :: markT = 1                             ! Units: 'nd', X index placeholder
      integer :: DOWNWASHONOFF = 0                     ! Units: 'nd', X index placeholder
-     integer :: THR_DYNOFFON = 0
-     integer :: THR_ELASOFFON = 0
      integer :: CONTROLOFFON = 0
      integer :: WAYPOINT = 1                          ! Defaults to 1 but apparently can change in input file
      integer :: NUMWAYPOINTS = 0                         ! Defaults to 1 but apparently can change in input file
@@ -293,7 +291,6 @@ type ATMOSPHERESTRUCTURE
      real*8 :: THETAINTEGRAL = 0.0                    ! Units: 'ft', Desc: 'THETA integral term in PID Controller'
      real*8 :: PSIINTEGRAL = 0.0                      ! Units: 'ft', Desc: 'PSI integral term in PID Controller'
      real*8 :: UINTEGRAL = 0.0
-     real*8 :: DELTATIME = 0.0                        ! Simulation timestep
      real*8 :: MUTHROTTLE = 0                         ! Units: 'microseconds', Desc: 'PWM signal to motor'
      real*8 :: THRUSTVEC = 0                          ! Units: N, Desc: Thrust
      real*8 :: XCOM(MAXWP) = 500                         ! Units: 'm', X Waypoint command
@@ -435,7 +432,6 @@ type ATMOSPHERESTRUCTURE
   real*8 :: MS_PITCH = 0.0                         ! Units: 'us', Desc: Microsecond impulse to pitch // REVISIT can take this out later
   real*8 :: MS_YAW = 0.0                           ! Units: 'us', Desc: Microsecond impulse to yaw   // REVISIT can take this out later
   real*8 :: PWM2F(4,1) = 0.0                       ! Units: 'lbf',Desc: Force converted as a function of input microsecond pulse
-  real*8 :: DELTATIME = 0.0                        ! Simulation timestep
   real*8 :: SLTETHER = 0.0                         ! Units: 'ft', Desc: Stationline distance from center of mass to tether connection point on towed system
   real*8 :: BLTETHER = 0.0                         ! Units: 'ft', Desc: buttline distance from center of mass to tether connection point on towed system
   real*8 :: WLTETHER = 0.0                         ! Units: 'ft', Desc: waterline distance from center of mass to tether connection point on towed system
@@ -1047,7 +1043,7 @@ SUBROUTINE SIMULATION(T,iflag)
   T%SIM%CPUTIMETOTAL = toctotal - tictotal
 
   write(*,*) 'Driver Integral States'
-  call PRINTINTEGRAL(T%DRIVER)
+  write(*,*) T%DRIVER%XINTEGRAL,T%DRIVER%YINTEGRAL,T%DRIVER%ZINTEGRAL,T%DRIVER%PHIINTEGRAL,T%DRIVER%THETAINTEGRAL,T%DRIVER%PSIINTEGRAL,T%DRIVER%UINTEGRAL
 
   write(25,*) ' '
   write(25,*) 'SIMULATION CPU TIME USER (sec): ',T%SIM%CPUTIMEUSER,tocuser,ticuser
@@ -1337,49 +1333,6 @@ if (iflag .eq. 2) then
  RETURN
 END SUBROUTINE SYSTEMDERIVATIVES
 
-!!!!!!!!!!! SUB ROUTINE HANDSHAKE INIT !!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!! THIS RUNS ONLY ONCE
-
-SUBROUTINE DRIVER_HANDSHAKE_INIT(T)
-  use TOSIMDATATYPES
-  implicit none
-  type(TOSIMSTRUCTURE) T
-  !Pass some tether dynamics stuff to DRIVER
-  T%DRIVER%THR_DYNOFFON = T%THR%DYNOFFON
-  T%DRIVER%THR_ELASOFFON = T%THR%ELASOFFON
-  !Basically pass all things that don't change
-  T%DRIVER%DELTATIME = T%SIM%DELTATIME
-  call DRIVER_HANDSHAKE(T)
-end SUBROUTINE DRIVER_HANDSHAKE_INIT
-
-!!!!!!!!!!!!!!!!!!!!!!! SUBROUTINE HANDSHAKE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-SUBROUTINE DRIVER_HANDSHAKE(T)
-  use TOSIMDATATYPES
-  implicit none
-  type(TOSIMSTRUCTURE) T
-  !Pass Time to DRIVER Module
-  !T%DRIVER%TIME = T%SIM%TIME - T%DRIVER%TIMEON
-  T%DRIVER%TIME = T%SIM%TIME
-  !In order to compute the aero model properly you need
-  !to pass x,y,z to the ATMOSPHERE model
-  if (T%DRIVER%AEROOFFON .eq. 1) then
-     T%ATM%XI = T%DRIVER%STATE(1)
-     T%ATM%YI = T%DRIVER%STATE(2)
-     T%ATM%ZI = T%DRIVER%STATE(3)
-     !Compute Atmopsheric density and winds - Same for Driver
-     call ATMOSPHERE(T,2) !T%ATM%DEN
-     T%DRIVER%VXWIND = T%ATM%VXWIND
-     T%DRIVER%VYWIND = T%ATM%VYWIND
-     T%DRIVER%VZWIND = T%ATM%VZWIND
-     T%DRIVER%DEN = T%ATM%DEN
-  end if
-  !Pass some tether dynamics stuff to DRIVER
-  T%DRIVER%FTETHERX = T%THR%FXPLATFORM
-  T%DRIVER%FTETHERY = T%THR%FYPLATFORM
-  T%DRIVER%FTETHERZ = T%THR%FZPLATFORM
-end SUBROUTINE DRIVER_HANDSHAKE
-
 !!!!!!!!!!!!!!!!!!!1!!! SUBROUTINE STATELIMITS!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SUBROUTINE STATELIMITS(T)
@@ -1559,7 +1512,100 @@ SUBROUTINE CONTROL(T,iflag)
     call TETHERPROPERTIES(T)
 
     !! Controller for TOW
-    call TOWED_CONTROL(T%TOW)
+    if (T%TOW%CONTROLOFFON .eq. 1) then
+       !Quadcopter control
+       T%TOW%OMEGAVEC = 0
+       T%TOW%THRUSTVEC = 0
+       T%TOW%MUVEC = 0
+       
+       xdot = T%TOW%STATEDOT(1)
+       ydot = T%TOW%STATEDOT(2)
+       zdot = T%TOW%STATEDOT(3)
+       phi = T%TOW%STATE(4)
+       theta = T%TOW%STATE(5)
+       psi = T%TOW%STATE(6)
+       p = T%TOW%STATE(10)
+       q = T%TOW%STATE(11)
+       r = T%TOW%STATE(12)
+
+       ! gotocontrols
+       ! T%TOW%XCOMMAND =  xwaypoint(T%TOW%WAYPOINT,1)
+       ! T%TOW%YCOMMAND =  ywaypoint(T%TOW%WAYPOINT,1)
+       ! T%TOW%ZCOMMAND =  zwaypoint(T%TOW%WAYPOINT,1)
+       
+       !T%TOW%ZCOMMAND = -30.0 -- these are now set in the input file 
+       !T%TOW%UCOMMAND = 28.93
+       !T%TOW%YCOMMAND = 0.0
+       
+       !delx = (T%TOW%XCOMMAND - T%TOW%STATE(1))*-1.00D0
+       dely = (T%TOW%YCOMMAND - T%TOW%STATE(2))
+       !write(*,*) 'Zstuff = ',T%TOW%ZCOMMAND,T%TOW%STATE(3)
+       delz = (T%TOW%ZCOMMAND - T%TOW%STATE(3))*-1.00D0
+
+       ! Dwaypoint = sqrt((delx)**2 + (dely)**2 + (delz)**2)
+
+       ! Change this to 4(square) or 8(octagon) depending on the shape you want to simulate
+       ! if (Dwaypoint .lt. 1.0D0) then
+       !   T%TOW%WAYPOINT= T%TOW%WAYPOINT+1
+       !   if (T%TOW%WAYPOINT .gt. nwp) then
+       !     T%TOW%WAYPOINT=1
+       !   end if
+       ! end if
+
+       !!! Attitude Controller
+       T%TOW%PHICOMMAND = 0
+       !T%TOW%PHICOMMAND = 20.0*qPI/180.0
+     
+       ! REVISIT hardcoded xdotcommand = 40 ft/s
+       ! For now the KP and KD gains for 'x' is controlling the 'u' velocity at which the quad is travelling
+       ! Ok shit so the 'u' velocity couldn't really be controlled so -24.5 deg is what 
+       ! the quad needs to be to achieve this velocity
+       ! T%TOW%THETACOMMAND = -24.5*qPI/180!T%TOW%KPXDRIVE*(T%TOW%STATE(7) - 40.0) + T%TOW%KIXDRIVE*T%TOW%XINTEGRAL + T%TOW%KDXDRIVE*(T%TOW%STATEDOT(7))
+       ! T%TOW%THETACOMMAND = T%TOW%KPXDRIVE*delx + T%TOW%KIXDRIVE*T%TOW%XINTEGRAL - T%TOW%KDXDRIVE*xdot
+       T%TOW%THETACOMMAND = 0
+       !write(*,*) 'integral = ',T%TOW%YINTEGRAL,T%TOW%XINTEGRAL
+       !T%TOW%THETACOMMAND = 0.0
+       T%TOW%PSICOMMAND = 0.0
+
+       !write(*,*) 'Xcontrol = ',delx,T%TOW%XINTEGRAL,xdot
+       !write(*,*) 'ptpcom = ',T%TOW%PHICOMMAND,T%TOW%THETACOMMAND,T%TOW%PSICOMMAND
+       
+       if (abs(T%TOW%THETACOMMAND) .gt. 30*qPI/180) then
+          T%TOW%THETACOMMAND = sign(30*qPI/180,T%TOW%THETACOMMAND)
+       end if
+       if (abs(T%TOW%PHICOMMAND) .gt. 30*qPI/180) then
+          T%TOW%PHICOMMAND = sign(30*qPI/180,T%TOW%PHICOMMAND)
+       end if
+       if (abs(T%TOW%PSICOMMAND) .gt. 30*qPI/180) then
+          T%TOW%PSICOMMAND = sign(30*qPI/180,T%TOW%PSICOMMAND)
+       end if
+
+       ! Hovering microseconds and altitude control
+       munominal = 1614.855 + T%TOW%KPZDRIVE*(delz) + T%TOW%KIZDRIVE*T%TOW%ZINTEGRAL +T%TOW%KDZDRIVE*zdot  ! Nominal microsecond pulse for hover
+
+       T%TOW%MS_ROLL = T%TOW%KPPHI*(T%TOW%PHICOMMAND-phi) + T%TOW%KIPHI*T%TOW%PHIINTEGRAL - T%TOW%KDPHI*p
+       T%TOW%MS_PITCH = T%TOW%KPTHETA*(T%TOW%THETACOMMAND - theta) + T%TOW%KITHETA*T%TOW%THETAINTEGRAL- T%TOW%KDTHETA*q
+       T%TOW%MS_YAW = T%TOW%KPPSI*(T%TOW%PSICOMMAND-psi) + T%TOW%KIPSI*T%TOW%PSIINTEGRAL - T%TOW%KDPSI*r
+       
+       !write(*,*) 'Att = ',phi,theta,psi,p,q,r
+
+       T%TOW%MUVEC(1,1) = munominal + T%TOW%MS_ROLL + T%TOW%MS_PITCH + T%TOW%MS_YAW
+       T%TOW%MUVEC(2,1) = munominal - T%TOW%MS_ROLL + T%TOW%MS_PITCH - T%TOW%MS_YAW
+       T%TOW%MUVEC(3,1) = munominal - T%TOW%MS_ROLL - T%TOW%MS_PITCH + T%TOW%MS_YAW
+       T%TOW%MUVEC(4,1) = munominal + T%TOW%MS_ROLL - T%TOW%MS_PITCH - T%TOW%MS_YAW
+
+       !write(*,*) 'muvec = ',T%TOW%MUVEC
+       
+       ! Now we saturate the microseconds so that it doesn't go over 1900 or under 1100
+       do j = 1,4
+          if (T%TOW%MUVEC(j,1) .gt. 1900.00D0) then
+             T%TOW%OMEGAVEC(j,1) = 1900.00D0
+          end if
+          if (T%TOW%MUVEC(j,1) .lt. 1100.00D0) then
+             T%TOW%MUVEC(j,1) = 1100.00D0
+          end if
+       end do
+    end if !Quad control off / on
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   RETURN
@@ -2061,27 +2107,6 @@ END SUBROUTINE ATMOSPHERE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!SUBROUTINE DRIVER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!! README !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!! BEFORE YOU CALL DRIVER(DRIVE,3) to run the routine you must pass a few variables
-!! to this data ball. They are listed below.
-!! DRIVE%TIME -- You must pass the simulation time variable to the local DRIVE variable
-!In order to compute the aero model properly you need
-!to pass x,y,z to the ATMOSPHERE model
-!if (DRIVE%AEROOFFON .eq. 1) then
-!    ATM%XI = DRIVE%STATE(1)
-!     ATM%YI = DRIVE%STATE(2)
-!     ATM%ZI = DRIVER%STATE(3)
-!    Compute Atmopsheric density and winds - Same for DRIVER
-!    call ATMOSPHERE()
-!    !I'm assuming you have an atmospher model that takes XI,YI,ZI
-!    !And returns VX,VY,VZ
-!    DRIVE%VXWIND = ATM%VXWIND
-!    DRIVE%VYWIND = ATM%VYWIND
-!    DRIVE%VZWIND = ATM%VZWIND
-!    DRIVE%DEN = ATM%DEN
-!end if
-!!!!!!!!!!!!!!!!!!!!!!!!!!! SUBROUTINE DRIVER !!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 SUBROUTINE DRIVER(T,iflag)
  use TOSIMDATATYPES
  implicit none
@@ -2213,10 +2238,10 @@ SUBROUTINE DRIVER(T,iflag)
        T%DRIVER%MXCONT = 0.0; T%DRIVER%MYCONT = 0.0; T%DRIVER%MZCONT = 0.0;
 
        !Don't forget to add Tether forces
-       if ((T%DRIVER%THR_DYNOFFON .eq. 1) .and. (T%DRIVER%THR_ELASOFFON .eq. 1)) then
+       if ((T%THR%DYNOFFON .eq. 1) .and. (T%THR%ELASOFFON .eq. 1)) then
           if (isnan(T%DRIVER%FTETHERX) .or. isnan(T%DRIVER%FTETHERY)) then
              write(*,*) 'Sorry dude Nans in tether model detected - I suggest lowering your timestep'
-             write(*,*) 'Current Time = ',T%DRIVER%TIME
+             write(*,*) 'Current Time = ',T%SIM%TIME
              write(*,*) 'Tether Forces = ',T%DRIVER%FTETHERX,T%DRIVER%FTETHERY
              STOP
           else
@@ -2346,11 +2371,11 @@ SUBROUTINE DRIVER(T,iflag)
           !Ramp in speed - assume constant decel/acceleration of 2 ft/s
           dspeed = 3
           tend = abs(T%DRIVER%RESTARTSPEED-T%DRIVER%FINALSPEED)/dspeed
-          if (T%DRIVER%TIME .gt. tend) then
+          if (T%SIM%TIME .gt. tend) then
              !T%DRIVER%SPEED = T%DRIVER%FINALSPEED
              accel = 0
           else
-             !T%DRIVER%SPEED = T%DRIVER%RESTARTSPEED + sign(1.0,T%DRIVER%FINALSPEED-T%DRIVER%RESTARTSPEED)*dspeed*(T%DRIVER%TIME)
+             !T%DRIVER%SPEED = T%DRIVER%RESTARTSPEED + sign(1.0,T%DRIVER%FINALSPEED-T%DRIVER%RESTARTSPEED)*dspeed*(T%SIM%TIME)
              accel = sign(1.0,T%DRIVER%FINALSPEED-T%DRIVER%RESTARTSPEED)*dspeed
           end if
        end if
@@ -2368,7 +2393,7 @@ SUBROUTINE DRIVER(T,iflag)
        call RandUniform(noise)
        freq = 0
        if (T%DRIVER%YDDOTPERIOD .ne. 0) then
-          freq = (2*qPI)/(T%DRIVER%YDDOTPERIOD)*cos((2*qPI)/(T%DRIVER%YDDOTPERIOD)*T%DRIVER%TIME)
+          freq = (2*qPI)/(T%DRIVER%YDDOTPERIOD)*cos((2*qPI)/(T%DRIVER%YDDOTPERIOD)*T%SIM%TIME)
        end if
        T%DRIVER%STATEDOT(8) = 0 + (1.0D0-2*noise)*T%DRIVER%XDDOTNOISE + T%DRIVER%YDDOTSCALE*freq !vdot
        call RandUniform(noise)
@@ -2391,8 +2416,8 @@ SUBROUTINE DRIVER(T,iflag)
 
      T%DRIVER%SPEED = T%DRIVER%FINALSPEED
         
-     ! if (T%DRIVER%TIME .gt. 1000) then
-     !    T%DRIVER%XCG = T%DRIVER%XCGINITIAL + T%DRIVER%SPEED*1000 + (T%DRIVER%SPEED+5)*(T%DRIVER%TIME-1000)
+     ! if (T%SIM%TIME .gt. 1000) then
+     !    T%DRIVER%XCG = T%DRIVER%XCGINITIAL + T%DRIVER%SPEED*1000 + (T%DRIVER%SPEED+5)*(T%SIM%TIME-1000)
      !    speed = T%DRIVER%SPEED+5
      ! end if
      T%DRIVER%XDOT = T%DRIVER%SPEED*cos(T%DRIVER%PSI)
@@ -2400,8 +2425,8 @@ SUBROUTINE DRIVER(T,iflag)
 
      !!Compute CG location -- This assumes that speed is constant
 
-     T%DRIVER%XCG = T%DRIVER%XCGINITIAL + T%DRIVER%SPEED*cos(T%DRIVER%PSI)*T%DRIVER%TIME
-     T%DRIVER%YCG = T%DRIVER%YCGINITIAL + T%DRIVER%SPEED*sin(T%DRIVER%PSI)*T%DRIVER%TIME
+     T%DRIVER%XCG = T%DRIVER%XCGINITIAL + T%DRIVER%SPEED*cos(T%DRIVER%PSI)*T%SIM%TIME
+     T%DRIVER%YCG = T%DRIVER%YCGINITIAL + T%DRIVER%SPEED*sin(T%DRIVER%PSI)*T%SIM%TIME
      T%DRIVER%ZCG = T%DRIVER%ZCGINITIAL
 
      !Compute CG speed
@@ -2457,30 +2482,30 @@ SUBROUTINE DRIVER(T,iflag)
   
    ! Position Pointer  
 
-   if (T%DRIVER%TIME .le. T%DRIVER%TIMETAB(T%DRIVER%IP)) then 
+   if (T%SIM%TIME .le. T%DRIVER%TIMETAB(T%DRIVER%IP)) then 
     ifind = -1 
     do while ((ifind.ne.0) .and. (T%DRIVER%IP.gt.1))
      T%DRIVER%IP = T%DRIVER%IP - 1 
-     if (T%DRIVER%TIMETAB(T%DRIVER%IP)   .le. T%DRIVER%TIME) then 
-     if (T%DRIVER%TIMETAB(T%DRIVER%IP+1) .gt. T%DRIVER%TIME) then 
+     if (T%DRIVER%TIMETAB(T%DRIVER%IP)   .le. T%SIM%TIME) then 
+     if (T%DRIVER%TIMETAB(T%DRIVER%IP+1) .gt. T%SIM%TIME) then 
       ifind = 0
      end if
      end if 
     end do 
    end if
-   if (T%DRIVER%TIME .gt. T%DRIVER%TIMETAB(T%DRIVER%IP+1)) then 
+   if (T%SIM%TIME .gt. T%DRIVER%TIMETAB(T%DRIVER%IP+1)) then 
     ifind = 1
     do while ((ifind.ne.0) .and. (T%DRIVER%IP.lt.T%DRIVER%TABSIZE-1))
      T%DRIVER%IP = T%DRIVER%IP + 1 
-     if (T%DRIVER%TIMETAB(T%DRIVER%IP)   .le. T%DRIVER%TIME) then 
-     if (T%DRIVER%TIMETAB(T%DRIVER%IP+1) .gt. T%DRIVER%TIME) then 
+     if (T%DRIVER%TIMETAB(T%DRIVER%IP)   .le. T%SIM%TIME) then 
+     if (T%DRIVER%TIMETAB(T%DRIVER%IP+1) .gt. T%SIM%TIME) then 
       ifind = 0 
      end if 
      end if 
     end do 
    end if
    if (ifind .eq. 0) then
-    m = (T%DRIVER%TIME-T%DRIVER%TIMETAB(T%DRIVER%IP))/(T%DRIVER%TIMETAB(T%DRIVER%IP+1)-T%DRIVER%TIMETAB(T%DRIVER%IP))
+    m = (T%SIM%TIME-T%DRIVER%TIMETAB(T%DRIVER%IP))/(T%DRIVER%TIMETAB(T%DRIVER%IP+1)-T%DRIVER%TIMETAB(T%DRIVER%IP))
    else if (ifind .eq. -1) then
     m = 0.0
    else if (ifind .eq. 1) then
@@ -2564,7 +2589,17 @@ SUBROUTINE DRIVER(T,iflag)
   ! should probably just add these as states but this will do for now
   ! What we will do is just divide everything out by 4 so when this runs 4 times we should
   ! be good.
-  call COMPUTEINTEGRAL(T%DRIVER) ! Calls integral routine
+  ! Using trapezoidal rule(ish) to compute integral error term
+  ! REVISIT Replaced xintegral with u velocity term!!!!
+  ! The 1/4 is used because this is called once every rk4 call
+  ! and since we're using trap(ish) we need to divide by 4. Untested CJM - 2/13/2018
+  T%DRIVER%XINTEGRAL     = T%DRIVER%XINTEGRAL     + -(1.0/4.0)*((T%DRIVER%XCOMMAND     - T%DRIVER%STATE(1))/2)*T%SIM%DELTATIME
+  T%DRIVER%YINTEGRAL     = T%DRIVER%YINTEGRAL     + (1.0/4.0)*((T%DRIVER%YCOMMAND     - T%DRIVER%STATE(2))/2)*T%SIM%DELTATIME
+  T%DRIVER%ZINTEGRAL     = T%DRIVER%ZINTEGRAL     + -(1.0/4.0)*((T%DRIVER%ZCOMMAND     - T%DRIVER%STATE(3))/2)*T%SIM%DELTATIME
+  T%DRIVER%PHIINTEGRAL   = T%DRIVER%PHIINTEGRAL   +    (1.0/4.0)*((T%DRIVER%PHICOMMAND   - T%DRIVER%STATE(4))/2)*T%SIM%DELTATIME
+  T%DRIVER%THETAINTEGRAL = T%DRIVER%THETAINTEGRAL +    (1.0/4.0)*((T%DRIVER%THETACOMMAND - T%DRIVER%STATE(5))/2)*T%SIM%DELTATIME
+  T%DRIVER%PSIINTEGRAL   = T%DRIVER%PSIINTEGRAL   +    (1.0/4.0)*((T%DRIVER%PHICOMMAND   - T%DRIVER%STATE(6))/2)*T%SIM%DELTATIME
+  T%DRIVER%UINTEGRAL     = T%DRIVER%UINTEGRAL     + -(1.0/4.0)*((T%DRIVER%UCOMMAND     - T%DRIVER%STATE(7))/2)*T%SIM%DELTATIME
     
   RETURN
   
@@ -2794,7 +2829,7 @@ SUBROUTINE AIRWAKE(T,XI,YI,ZI)
   zstar = -rAwP_S(3,1)
 
   !!Loop tstar
-  tstar = T%DRIVER%TIME
+  tstar = T%SIM%TIME
   tshift = 0
   if (tstar .gt. T%DRIVER%TCOORD(NTIMES)) then
      tshift = -floor(abs(tstar-T%DRIVER%TCOORD(1))/T%DRIVER%TCOORD(NTIMES))
@@ -3205,251 +3240,7 @@ SUBROUTINE TOWED_CONTROL(TOW)
   real*8 delmu(4), munominal
   LOGICAL :: DOUBLET = .FALSE.
 
-  if (TOW%CONTROLOFFON .eq. 1) then
-     !Quadcopter control
-     TOW%OMEGAVEC = 0
-     TOW%THRUSTVEC = 0
-     TOW%MUVEC = 0
-
-     xdot = TOW%STATEDOT(1)
-     ydot = TOW%STATEDOT(2)
-     zdot = TOW%STATEDOT(3)
-     phi = TOW%STATE(4)
-     theta = TOW%STATE(5)
-     psi = TOW%STATE(6)
-     p = TOW%STATE(10)
-     q = TOW%STATE(11)
-     r = TOW%STATE(12)
-
-     ! Don't forget to change 'nwp' in declaration block for number of waypoints
-
-     if (nwp .eq. 1) then
-        !! Just trying to stay in hover for now
-        xwaypoint = 0.0D0
-        ywaypoint = 0.0D0
-        zwaypoint = -20.0D0
-
-     elseif(nwp .eq. 2) then
-        ! Up & Down Test, 2
-        xwaypoint(1,1) = 0.0D0
-        xwaypoint(2,1) = 0.0D0
-
-        ywaypoint(1,1) = 0.0D0
-        ywaypoint(2,1) = 0.0D0
-
-        zwaypoint(1,1) = -85.0D0
-        zwaypoint(2,1) = -10.0D0
-     elseif (nwp .eq. 4) then
-        ! Square Pattern, 4
-
-        xwaypoint(1,1) = 40.0D0
-        xwaypoint(2,1) = 40.0D0
-        xwaypoint(3,1) = 0.0D0
-        xwaypoint(4,1) = 0.0D0
-
-        ywaypoint(1,1) = 0.0D0
-        ywaypoint(2,1) = 40.0D0
-        ywaypoint(3,1) = 40.0D0
-        ywaypoint(4,1) = 0.0D0
-
-        ! Keeping constant altitude
-        do ctr = 1,nwp
-           zwaypoint(ctr,1) = -20.0D0
-        end do
-
-     elseif (nwp .eq. 6) then
-        ! Square Pattern, 4
-
-        xwaypoint(1,1) = 100.0D0
-        xwaypoint(2,1) = 0.0D0
-        xwaypoint(3,1) = 0.0D0
-        xwaypoint(4,1) = 0.0D0
-        xwaypoint(5,1) = 0.0D0
-        xwaypoint(6,1) = 0.0D0
-
-        ywaypoint(1,1) = 0.0D0
-        ywaypoint(2,1) = 0.0D0
-        ywaypoint(3,1) = 100.0D0
-        ywaypoint(4,1) = 0.0D0
-        ywaypoint(5,1) = 0.0D0
-        ywaypoint(6,1) = 0.0D0
-
-        ! Keeping constant altitude
-        do ctr = 1,nwp-2
-           zwaypoint(ctr,1) = -10.0D0
-        end do
-        zwaypoint(5,1) = -70.0D0
-        zwaypoint(6,1) = -10.0D0
-
-     elseif (nwp .eq. 8) then
-        !      Octagon Pattern, 8
-        xwaypoint(1,1) = 0
-        xwaypoint(2,1) = 50.0D0
-        xwaypoint(3,1) = 150.0D0
-        xwaypoint(4,1) = 200.0D0
-        xwaypoint(5,1) = 200.0D0
-        xwaypoint(6,1) = 150.0D0
-        xwaypoint(7,1) = 50.0D0
-        xwaypoint(8,1) = 0.0D0
-
-        ywaypoint(1,1) = 100.0D0
-        ywaypoint(2,1) = 200.0D0
-        ywaypoint(3,1) = 200.0D0
-        ywaypoint(4,1) = 100.0D0
-        ywaypoint(5,1) = 0.0D0
-        ywaypoint(6,1) = -100.0D0
-        ywaypoint(7,1) = -100.0D0
-        ywaypoint(8,1) = 0.0D0
-
-        do ctr = 1,nwp
-           zwaypoint(ctr,1) = -10.0D0
-        end do
-     end if !Endif waypoints
-
-     ! gotocontrols
-     ! TOW%XCOMMAND =  xwaypoint(TOW%WAYPOINT,1)
-     ! TOW%YCOMMAND =  ywaypoint(TOW%WAYPOINT,1)
-     ! TOW%ZCOMMAND =  zwaypoint(TOW%WAYPOINT,1)
-
-     !TOW%ZCOMMAND = -30.0 -- these are now set in the input file 
-     !TOW%UCOMMAND = 28.93
-     !TOW%YCOMMAND = 0.0
-
-     !delx = (TOW%XCOMMAND - TOW%STATE(1))*-1.00D0
-     dely = (TOW%YCOMMAND - TOW%STATE(2))
-     !write(*,*) 'Zstuff = ',TOW%ZCOMMAND,TOW%STATE(3)
-     delz = (TOW%ZCOMMAND - TOW%STATE(3))*-1.00D0
-
-     ! Dwaypoint = sqrt((delx)**2 + (dely)**2 + (delz)**2)
-
-     ! Change this to 4(square) or 8(octagon) depending on the shape you want to simulate
-     ! if (Dwaypoint .lt. 1.0D0) then
-     !   TOW%WAYPOINT= TOW%WAYPOINT+1
-     !   if (TOW%WAYPOINT .gt. nwp) then
-     !     TOW%WAYPOINT=1
-     !   end if
-     ! end if
-
-     !!! Attitude Controller
-     TOW%PHICOMMAND = TOW%KPYDRIVE*dely + TOW%KIYDRIVE*TOW%YINTEGRAL - TOW%KDYDRIVE*ydot
-
-     !TOW%PHICOMMAND = 20.0*qPI/180.0
-     
-     ! REVISIT hardcoded xdotcommand = 40 ft/s
-     ! For now the KP and KD gains for 'x' is controlling the 'u' velocity at which the quad is travelling
-     ! Ok shit so the 'u' velocity couldn't really be controlled so -24.5 deg is what 
-     ! the quad needs to be to achieve this velocity
-     ! TOW%THETACOMMAND = -24.5*qPI/180!TOW%KPXDRIVE*(TOW%STATE(7) - 40.0) + TOW%KIXDRIVE*TOW%XINTEGRAL + TOW%KDXDRIVE*(TOW%STATEDOT(7))
-     ! TOW%THETACOMMAND = TOW%KPXDRIVE*delx + TOW%KIXDRIVE*TOW%XINTEGRAL - TOW%KDXDRIVE*xdot
-
-     TOW%THETACOMMAND = TOW%KPXDRIVE*(TOW%STATE(7) - TOW%UCOMMAND) + TOW%KIXDRIVE*TOW%UINTEGRAL
-
-     !write(*,*) 'integral = ',TOW%YINTEGRAL,TOW%XINTEGRAL
-
-     !TOW%THETACOMMAND = 0.0
-     
-     TOW%PSICOMMAND = 0.0
-
-     !write(*,*) 'Xcontrol = ',delx,TOW%XINTEGRAL,xdot
-     !write(*,*) 'ptpcom = ',TOW%PHICOMMAND,TOW%THETACOMMAND,TOW%PSICOMMAND
-
-     if (abs(TOW%THETACOMMAND) .gt. 30*qPI/180) then
-        TOW%THETACOMMAND = sign(30*qPI/180,TOW%THETACOMMAND)
-     end if
-     if (abs(TOW%PHICOMMAND) .gt. 30*qPI/180) then
-        TOW%PHICOMMAND = sign(30*qPI/180,TOW%PHICOMMAND)
-     end if
-     if (abs(TOW%PSICOMMAND) .gt. 30*qPI/180) then
-        TOW%PSICOMMAND = sign(30*qPI/180,TOW%PSICOMMAND)
-     end if
-
-     ! Hovering microseconds and altitude control
-     munominal = 1614.855 + TOW%KPZDRIVE*(delz) + TOW%KIZDRIVE*TOW%ZINTEGRAL +TOW%KDZDRIVE*zdot  ! Nominal microsecond pulse for hover
-
-     TOW%MS_ROLL = TOW%KPPHI*(TOW%PHICOMMAND-phi) + TOW%KIPHI*TOW%PHIINTEGRAL - TOW%KDPHI*p
-     TOW%MS_PITCH = TOW%KPTHETA*(TOW%THETACOMMAND - theta) + TOW%KITHETA*TOW%THETAINTEGRAL- TOW%KDTHETA*q
-     TOW%MS_YAW = TOW%KPPSI*(TOW%PSICOMMAND-psi) + TOW%KIPSI*TOW%PSIINTEGRAL - TOW%KDPSI*r
-
-     !write(*,*) 'Att = ',phi,theta,psi,p,q,r
-
-     TOW%MUVEC(1,1) = munominal + TOW%MS_ROLL + TOW%MS_PITCH + TOW%MS_YAW
-     TOW%MUVEC(2,1) = munominal - TOW%MS_ROLL + TOW%MS_PITCH - TOW%MS_YAW
-     TOW%MUVEC(3,1) = munominal - TOW%MS_ROLL - TOW%MS_PITCH + TOW%MS_YAW
-     TOW%MUVEC(4,1) = munominal + TOW%MS_ROLL - TOW%MS_PITCH - TOW%MS_YAW
-
-     !write(*,*) 'muvec = ',TOW%MUVEC
-
-     ! Now we saturate the microseconds so that it doesn't go over 1900 or under 1100
-     do j = 1,4
-        if (TOW%MUVEC(j,1) .gt. 1900.00D0) then
-           TOW%OMEGAVEC(j,1) = 1900.00D0
-        end if
-        if (TOW%MUVEC(j,1) .lt. 1100.00D0) then
-           TOW%MUVEC(j,1) = 1100.00D0
-        end if
-     end do
- end if
 END SUBROUTINE TOWED_CONTROL
-
-SUBROUTINE COMPUTEINTEGRAL(DRIVE)
- use TOSIMDATATYPES
- implicit none
- type(DRIVERSTRUCTURE) DRIVE
- ! Using trapezoidal rule(ish) to compute integral error term
- ! REVISIT Replaced xintegral with u velocity term!!!!
- ! The 1/4 is used because this is called once every rk4 call
- ! and since we're using trap(ish) we need to divide by 4. Untested CJM - 2/13/2018
- DRIVE%XINTEGRAL     = DRIVE%XINTEGRAL     + -(1.0/4.0)*((DRIVE%XCOMMAND     - DRIVE%STATE(1))/2)*DRIVE%DELTATIME
- DRIVE%YINTEGRAL     = DRIVE%YINTEGRAL     + (1.0/4.0)*((DRIVE%YCOMMAND     - DRIVE%STATE(2))/2)*DRIVE%DELTATIME
- DRIVE%ZINTEGRAL     = DRIVE%ZINTEGRAL     + -(1.0/4.0)*((DRIVE%ZCOMMAND     - DRIVE%STATE(3))/2)*DRIVE%DELTATIME
- DRIVE%PHIINTEGRAL   = DRIVE%PHIINTEGRAL   +    (1.0/4.0)*((DRIVE%PHICOMMAND   - DRIVE%STATE(4))/2)*DRIVE%DELTATIME
- DRIVE%THETAINTEGRAL = DRIVE%THETAINTEGRAL +    (1.0/4.0)*((DRIVE%THETACOMMAND - DRIVE%STATE(5))/2)*DRIVE%DELTATIME
- DRIVE%PSIINTEGRAL   = DRIVE%PSIINTEGRAL   +    (1.0/4.0)*((DRIVE%PHICOMMAND   - DRIVE%STATE(6))/2)*DRIVE%DELTATIME
- DRIVE%UINTEGRAL     = DRIVE%UINTEGRAL     + -(1.0/4.0)*((DRIVE%UCOMMAND     - DRIVE%STATE(7))/2)*DRIVE%DELTATIME
-
-END SUBROUTINE COMPUTEINTEGRAL
-
-SUBROUTINE PRINTINTEGRAL(DRIVE) !!When do I run this?
- use TOSIMDATATYPES
- implicit none
- type(DRIVERSTRUCTURE) DRIVE
- ! Using trapezoidal rule(ish) to compute integral error term
- ! REVISIT Replaced xintegral with u velocity term!!!!
- ! The 1/4 is used because this is called once every rk4 call
- ! and since we're using trap(ish) we need to divide by 4. Untested CJM - 2/13/2018
- write(*,*) DRIVE%XINTEGRAL,DRIVE%YINTEGRAL,DRIVE%ZINTEGRAL,DRIVE%PHIINTEGRAL,DRIVE%THETAINTEGRAL,DRIVE%PSIINTEGRAL,DRIVE%UINTEGRAL
- !95713.325840134436       0.77060269505657364       -38.613821568062889        5.6208864356321653E-005  -3.6252368913735496E-003   1.5246634597683634E-002  -25.123939964081060 
-END SUBROUTINE PRINTINTEGRAL !PRINTINTEGRAL
-
-SUBROUTINE PWM2FORCE(T)
-  use TOSIMDATATYPES
-  implicit none
-  type(TOSIMSTRUCTURE) T
-  real*8 :: pp = 4
-
-   ! IF (abs(DRIVE%MS_ROLL) .gt. DRIVE%MS_MAX) then
-   !    DRIVE%MS_ROLL = sign(DRIVE%MS_MAX,DRIVE%MS_ROLL)
-   ! elseif (abs(DRIVE%MS_ROLL) .lt. DRIVE%MS_MIN) then
-   !    DRIVE%MS_ROLL = sign(DRIVE%MS_MIN,DRIVE%MS_ROLL)
-   ! end if
-
-   ! IF (abs(DRIVE%MS_PITCH) .gt. DRIVE%MS_MAX) then
-   !    DRIVE%MS_PITCH = sign(DRIVE%MS_MAX,DRIVE%MS_PITCH)
-   ! elseif (abs(DRIVE%MS_PITCH) .lt. DRIVE%MS_MIN) then
-   !    DRIVE%MS_PITCH = sign(DRIVE%MS_MIN,DRIVE%MS_PITCH)
-   ! end if
-
-   ! IF (abs(DRIVE%MS_YAW) .gt. DRIVE%MS_MAX) then
-   !    DRIVE%MS_YAW = sign(DRIVE%MS_MAX,DRIVE%MS_YAW)
-   ! elseif (abs(DRIVE%MS_YAW) .lt. DRIVE%MS_MIN) then
-   !    DRIVE%MS_YAW = sign(DRIVE%MS_MIN,DRIVE%MS_YAW)
-   ! end if
-   
-  ! DRIVE%MS_0 = 2.35252990909077E-06*DRIVE%MS_0**2 - (0.00487992485215825)*DRIVE%MS_0 + 1.74554459880932
-    do pp = 1,4
-      T%TOW%PWM2F(pp,1) = 2.35252990909077E-06*T%TOW%MUVEC(1,1)**2 - (0.00487992485215825)*T%TOW%MUVEC(1,1) + 1.74554459880932
-    end do
-END SUBROUTINE PWM2FORCE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!! SUBROUTINE TOWED !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -3617,9 +3408,7 @@ SUBROUTINE TOWED(T,iflag)
     !Recompute KT
     T%TOW%KT = T%TOW%C_T*((T%ATM%DEN*qPI*(T%TOW%RNEW**4)/4))
     
-    !Compute Thrust
-    
-    ! call PWM2FORCE(T)
+    !Compute Thrust using a 2nd order function
     sigmaF = 0.000437554764978899 !0.000437554764978899
     omegaF = 45.42   !18.65
     zetaF  = 0.942     !0.8533
