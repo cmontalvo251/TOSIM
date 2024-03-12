@@ -1307,7 +1307,7 @@ SUBROUTINE CONTROL(T,iflag)
  type(TOSIMSTRUCTURE) T
  LOGICAL :: DOUBLET = .FALSE.
  
-!!!!!!!!!!!!!!!!!!!!!!! COMPUTE iflag = 3 !!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!! COMPUTE iflag = 2a !!!!!!!!!!!!!!!!!!!!!!!!!!
  if (iflag .eq. 2) then  
 
     ! Tether Line Length Control
@@ -1944,14 +1944,6 @@ SUBROUTINE DRIVER(T,iflag)
     pb = T%DRIVER%STATE(10)
     qb = T%DRIVER%STATE(11) 
     rb = T%DRIVER%STATE(12)
-    TVEC(1)    = T%DRIVER%STATE(13)
-    TDOTVEC(1) = T%DRIVER%STATE(14)
-    TVEC(2)    = T%DRIVER%STATE(15)
-    TDOTVEC(2) = T%DRIVER%STATE(16)
-    TVEC(3)    = T%DRIVER%STATE(17)
-    TDOTVEC(3) = T%DRIVER%STATE(18)
-    TVEC(4)    = T%DRIVER%STATE(19)
-    TDOTVEC(4) = T%DRIVER%STATE(20)
     ! TVEC(1) = T%DRIVER%STATE(13)
     ! TVEC(2) = T%DRIVER%STATE(14)
     ! TVEC(3) = T%DRIVER%STATE(15)
@@ -2048,9 +2040,9 @@ SUBROUTINE DRIVER(T,iflag)
              write(*,*) 'Tether Forces = ',T%DRIVER%FTETHERX,T%DRIVER%FTETHERY
              STOP
           else
-             C_Ftether_I(1,1) = T%DRIVER%FTETHERX
-             C_Ftether_I(2,1) = T%DRIVER%FTETHERY
-             C_Ftether_I(3,1) = T%DRIVER%FTETHERZ
+             C_Ftether_I(1,1) = T%THR%FXPLATFORM
+             C_Ftether_I(2,1) = T%THR%FYPLATFORM
+             C_Ftether_I(3,1) = T%THR%FZPLATFORM
              C_Ftether_B = matmul(T%DRIVER%TCI,C_Ftether_I)
              T%DRIVER%FXCONT = C_Ftether_B(1,1)
              T%DRIVER%FYCONT = C_Ftether_B(2,1)
@@ -3289,9 +3281,6 @@ SUBROUTINE TOWED(T,iflag)
    
   end if !AEROFORCES
 
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!END OF AIRCRAFT AERODYNAMIC FORCES AND MOMENTS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
   ! Tether Forces and Moments
 
   T%TOW%MXCONT = 0.0; T%TOW%MYCONT = 0.0; T%TOW%MZCONT = 0.0;
@@ -3309,7 +3298,7 @@ SUBROUTINE TOWED(T,iflag)
         T%TOW%FYCONT = C_Ftether_B(2,1)
         T%TOW%FZCONT = C_Ftether_B(3,1)
         
-        !Skew symmetric operator on cradle cg to tether connection point
+        !Skew symmetric operator on quadcopter cg to tether connection point
     
         S_rCF_B(1,1) = 0.0
         S_rCF_B(1,2) = -rCF_B(3,1)
@@ -3757,11 +3746,12 @@ SUBROUTINE TETHER(T,iflag)
   !Save Tether Force connected to towed system
   !Tether force applied to towed system is a combination of tension force plus
   !The aerodynamics of the tether between the last bead and the connection point
-  !
+  !Ok so this bead is connected to the towed body
   T%THR%FXTETHER = -tiner(T%THR%NBEADS+1,1)
   T%THR%FYTETHER = -tiner(T%THR%NBEADS+1,2)
   T%THR%FZTETHER = -tiner(T%THR%NBEADS+1,3)
 
+  !This is connected to the driver / platform
   T%THR%FXPLATFORM = -tiner(1,1)
   T%THR%FYPLATFORM = -tiner(2,1)
   T%THR%FZPLATFORM = -tiner(3,1)

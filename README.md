@@ -39,10 +39,12 @@ Still the code has a quadcopter as the driver and an aircraft as the towed syste
 
 Version 8.0 
 The following major changes were made for this version:
+0.) The driver is now a truck and the towed system is now a quadcopter
 1.) Nominal.CS file has been moved into each vehicles respective files - Read routines were updated as well
 3.) All remnants of AoA sweeps have been removed
 4.) Echo routine completely removed - Which means read routine is flag eq 1 and then compute is flag 2
 5.) The DRIVER and TOWED functions are now passed the T variable rather than T%DRIVER or T%TOWED
+6.) Made sure that tether reel and connection points are all properly aligned
 
 Version 8.0 Released XXX 2024
 
@@ -52,7 +54,6 @@ Things needed to do for Version 8.0
 	Driver - Needs a drive forward and the hooks (commented for now) for waypoint control
 	Towed - Just needs inner loop control
 	Tether - Can stay the same
-6.) Need to make sure that tether reel and connection points are all properly aligned
 7.) Need to make sure the state vectors are properly aligned since the towed structure now has 8 extra states (thrust of each motor)
 
 
