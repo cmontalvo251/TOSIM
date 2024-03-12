@@ -449,6 +449,7 @@ type ATMOSPHERESTRUCTURE
   integer :: NBEADS = 0                            ! Units: 'nd', Desc: 'Number of Tether Beads'                    
   integer :: DQFLAG = 0                            ! Units: 'nd', Desc: 'Data Quality Flag (0=Data Not Loaded Successfully, 1=Data Loaded Successfully)'
   integer :: NONLINEAR = 0                         ! Units: 'nd', Desc: 'Nonlinearity of Tether'
+  integer :: CONTROLOFFON = 0                      ! Units: 'nd', Desc: 'Control Flag (0=off, 1=On)'
   real*8 :: XTETHER = 0.0                          ! Units: 'ft', Desc: 'X Inertial Position of Tether Attachment Point'
   real*8 :: YTETHER = 0.0                          ! Units: 'ft', Desc: 'Y Inertial Position of Tether Attachment Point'
   real*8 :: ZTETHER = 0.0                          ! Units: 'ft', Desc: 'Z Inertial Position of Tether Attachment Point'
@@ -522,6 +523,7 @@ type ATMOSPHERESTRUCTURE
   real*8 :: TORQUE = 0.0                           ! Units: 'lbf-ft', Desc: Torque applied at reel
   real*8 :: NOMTORQUE = 0.0                        ! Units: 'lbf-ft', Desc: Nominal Torque applied at reel
   real*8 :: TENSION = 0.0                          ! Units: 'lbf', Desc: Tension at Reel
+  real*8 :: TENSIONWINCH = 0.0                     ! Units: 'N', Desc: Tension at the Winch
   real*8 :: TORQUECOMMAND = 0.0                    ! Units: 'lbf-ft', Desc: Torque Command
   real*8 :: IREEL = 0.0                            ! Units: 'slug-ft^2', Desc: Rotational Inertia of Reel
   real*8 :: RREEL = 0.0                            ! Units: 'ft', Desc: radius of reel
@@ -532,6 +534,9 @@ type ATMOSPHERESTRUCTURE
   real*8 :: LDOTCOMMAND = 0.0                      ! Units: 'ft/s', Desc: Pay Out Rate Command
   real*8 :: LDOTNOMINAL = 0.0                      ! Units: 'ft/s', Desc: Nominal Pay Out Rate
   real*8 :: LDOTFACTOR = 1.0                       ! Units: 'ft/s', Desc: Nominal Pay Out Rate
+  real*8 :: KTETHER = 0.0                          ! Units: '?', Desc: Proportional gain at reel point
+  real*8 :: KDTETHER = 0.0                         ! Units: '?', Desc: Derivative gain at reel point
+  real*8 :: KITETHER = 0.0                         ! Units: '?', Desc: Integral gain at reel point
  end type TETHERSTRUCTURE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!! SIMULATION STRUCTURE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -545,12 +550,12 @@ type ATMOSPHERESTRUCTURE
   integer :: ICS = 0                               ! Units: 'nd', Desc: 'Control System Off On Flag'
   integer :: IDEBUG = 0                            ! Units: 'nd', Desc: 'Debug Flag'
   integer :: IDX = 0                               ! Units: 'nd', Desc: 'Integration Index'
-  integer :: IDXOUT = 0                            ! Units: 'nd', Desc: ''
   integer :: IECHOOFFON = 1                        ! Units: 'nd', Desc: 'Input Data Echo Flag'
   integer :: DQFLAG = 0                            ! Units: 'nd', Desc: 'Data Quality Flag (0=Data Not Loaded Successfully, 1=Data Loaded Successfully)'
   integer :: CREATERESTART = 0                     ! Units: 'nd', Desc: 'Create Restart Point'
   integer :: RESTART = 0                           ! Units: 'nd', Desc: 'Use a restart file'
   integer :: ACTUATORONOFF = 0                     ! Units: 'nd', Desc: Turn on actuator dynamics or not
+  real*8  :: UPDATERATE = 1                        ! Units: 'Hz', Desc: 'feedback update rate'
   real*8 :: TIME = 0.0                             ! Units: 's', Desc: 'Time'
   real*8 :: RESTARTTIME = 0                        ! Units: 's', Desc: 'Time to create restart time
   real*8 :: DELTATIME = 0.0                        ! Units: 's', Desc: 'Delta Time'
@@ -757,24 +762,12 @@ SUBROUTINE SIMULATION(T,iflag)
   ! Open Time Simulation Output Files
 
   open(unit=92,file=T%STATEOUTPUTFILE)
-  write(25,*) ' '
-  write(25,*) 'STATE VECTOR OUTPUT FILE CREATED: ',trim(T%STATEOUTPUTFILE)
-  write(25,*) ' '
   rewind(92)
   open(unit=96,file=T%MISCOUTPUTFILE)
-  write(25,*) ' '
-  write(25,*) 'MISCELLANEOUS VECTOR OUTPUT FILE CREATED: ',trim(T%MISCOUTPUTFILE)
-  write(25,*) ' '
   rewind(96)
   open(unit=91,file=T%CONTROLOUTPUTFILE)
-  write(25,*) ' '
-  write(25,*) 'CONTROL VECTOR OUTPUT FILE CREATED: ',trim(T%CONTROLOUTPUTFILE)
-  write(25,*) ' '
   rewind(91)
   open(unit=83,file=T%FORCEOUTPUTFILE)
-  write(25,*) ' '
-  write(25,*) 'FORCE VECTOR OUTPUT FILE CREATED: ',trim(T%FORCEOUTPUTFILE)
-  write(25,*) ' '
   rewind(83)
  
   ! Integrate Equations of Motion
@@ -984,18 +977,15 @@ SUBROUTINE SIMULATION(T,iflag)
   write(*,*) 'Driver Integral States'
   write(*,*) T%DRIVER%XINTEGRAL,T%DRIVER%YINTEGRAL,T%DRIVER%ZINTEGRAL,T%DRIVER%PHIINTEGRAL,T%DRIVER%THETAINTEGRAL,T%DRIVER%PSIINTEGRAL,T%DRIVER%UINTEGRAL
 
-  write(25,*) ' '
-  write(25,*) 'SIMULATION CPU TIME USER (sec): ',T%SIM%CPUTIMEUSER,tocuser,ticuser
-  write(25,*) 'SIMULATION CPU TIME SYSTEM (sec): ',T%SIM%CPUTIMESYSTEM,tocsystem,ticsystem
-  write(25,*) 'SIMULATION CPU TIME TOTAL (sec): ',T%SIM%CPUTIMETOTAL,toctotal,tictotal
-  write(25,*) ' '
+  write(*,*) ' '
+  write(*,*) 'SIMULATION CPU TIME USER (sec): ',T%SIM%CPUTIMEUSER,tocuser,ticuser
+  write(*,*) 'SIMULATION CPU TIME SYSTEM (sec): ',T%SIM%CPUTIMESYSTEM,tocsystem,ticsystem
+  write(*,*) 'SIMULATION CPU TIME TOTAL (sec): ',T%SIM%CPUTIMETOTAL,toctotal,tictotal
+  write(*,*) ' '
  
   write(*,*) ' '
   write(*,*) 'TIME SIMULATION COMPLETE'
   write(*,*) ' '
-  write(25,*) ' '
-  write(25,*) 'TIME SIMULATION COMPLETE'
-  write(25,*) ' '
 
   ! Close Output Files
 
@@ -1030,7 +1020,7 @@ SUBROUTINE SIMULATION(T,iflag)
   read(unit=90,fmt=*,iostat=readflag) readreal; T%SIM%ICS = int(readreal)
   read(unit=90,fmt=*,iostat=readflag) readreal; T%SIM%ACTUATORONOFF = int(readreal)
   read(unit=90,fmt=*,iostat=readflag) readreal; T%SIM%IDEBUG = int(readreal)
-  read(unit=90,fmt=*,iostat=readflag) readreal; T%SIM%IDXOUT = int(readreal)
+  read(unit=90,fmt=*,iostat=readflag) T%SIM%UPDATERATE
   ! read(unit=90,fmt=*,iostat=readflag) readreal; T%SIM%CREATERESTART = int(readreal)
   ! read(unit=90,fmt=*,iostat=readflag) T%SIM%RESTARTTIME
   read(unit=90,fmt=*,iostat=readflag) readreal; T%SIM%RESTART = int(readreal)
@@ -1323,7 +1313,7 @@ SUBROUTINE CONTROL(T,iflag)
     ! Tether Line Length Control
     lencommand = T%THR%NOMLEN !Default value is to keep tether at nominal length
 
-    if (T%THR%TETHERCONTROLOFFON .eq. 1) then
+    if (T%THR%CONTROLOFFON .eq. 1) then
        ! Extension according to precomputed Bezier curve profile
        lencommand = 0.0 
        if (T%SIM%TIME .le. T%THR%TCOM(1)) then
@@ -1340,7 +1330,7 @@ SUBROUTINE CONTROL(T,iflag)
     end if
 
     !!Constant tension controller
-    if (T%THR%TETHERCONTROLOFFON .eq. 2) then
+    if (T%THR%CONTROLOFFON .eq. 2) then
        ldotnom = 0
        T%THR%LDOTNOMINAL = ldotnom
        tension = T%THR%TENSIONWINCH
@@ -1365,7 +1355,7 @@ SUBROUTINE CONTROL(T,iflag)
        T%THR%PREVLEN = lencommand
     end if
 
-    if (T%THR%TETHERCONTROLOFFON .eq. 3) then
+    if (T%THR%CONTROLOFFON .eq. 3) then
        ! Extension according to precomputed Bezier curve profile
        if (T%THR%LDOTFACTOR .eq. 1) then
           lencommand = 0.0 
@@ -3899,6 +3889,10 @@ SUBROUTINE TETHER(T,iflag)
   read(unit=94,fmt=*,iostat=readflag) T%THR%IREEL
   read(unit=94,fmt=*,iostat=readflag) T%THR%RREEL
   read(unit=94,fmt=*,iostat=readflag) T%THR%TAU
+  read(unit=94,fmt=*,iostat=readflag) T%THR%CONTROLOFFON
+  read(unit=94,fmt=*,iostat=readflag) T%THR%KTETHER
+  read(unit=94,fmt=*,iostat=readflag) T%THR%KDTETHER
+  read(unit=94,fmt=*,iostat=readflag) T%THR%KITETHER
 
   close(94) 
 
