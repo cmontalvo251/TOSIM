@@ -585,7 +585,6 @@ end type SIMULATIONSTRUCTURE
   character(256) :: WINGSXINPUTFILE = ' '          ! Units: 'nd', Desc: 'WingsX Input File'
   character(128) :: TCOMINPUTFILE = ' '            ! Units: 'nd', Desc: 'Tether control system input file'
   character(128) :: SIMINPUTFILE = ' '             ! Units: 'nd', Desc: 'Simulation Input File'
-  character(128) :: RUNLOGFILE = ' '               ! Units: 'nd', Desc: 'Run Log File'
   character(128) :: STATEOUTPUTFILE = ' '          ! Units: 'nd', Desc: 'State Output File'
   character(128) :: MISCOUTPUTFILE = ' '           ! Units: 'nd', Desc: 'Miscellaneous Output File'
   character(128) :: CONTROLOUTPUTFILE = ' '        ! Units: 'nd', Desc: 'Control Output File'
@@ -626,7 +625,7 @@ PROGRAM TOSIM
 
  call getarg(1,T%FILEINPUTFILE)
  if (len(trim(T%FILEINPUTFILE)) .lt. 1) then
-    default = 'Input_Files/Hovering/TOSIM.ifiles'
+    default = 'Input_Files/Forward_Truck/TOSIM.ifiles'
     write(*,'(a)') 'Enter input file otherwise will use the following file: ',default
     write(*,*) 'Hit enter if you just wish to continue....'
     read(5,'(a)')rec
@@ -676,9 +675,6 @@ PROGRAM TOSIM
     end if
     if ((inputfiletype.eq.'TCOM') .or. (inputfiletype.eq.'tcom') .or. (inputfiletype.eq.'Tcom')) then
         T%TCOMINPUTFILE = inputfilename;  
-    end if
-    if ((inputfiletype.eq.'LOG') .or. (inputfiletype.eq.'log') .or. (inputfiletype.eq.'log')) then
-        T%RUNLOGFILE = inputfilename;  
     end if
     if ((inputfiletype.eq.'SOUT') .or. (inputfiletype.eq.'sout') .or. (inputfiletype.eq.'Sout')) then
         T%STATEOUTPUTFILE = inputfilename;  

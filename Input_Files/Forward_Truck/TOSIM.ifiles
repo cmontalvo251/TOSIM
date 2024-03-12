@@ -1,11 +1,9 @@
-'ATM'		'Input_Files/Hovering/TOSIM.ATM'						!Atmosphere input file  
-'THR'   	'Input_Files/Hovering/TOSIM.THR'						!Tether input file
-'TCOM'  	'Input_Files/Hovering/PayOutIn.TCOM'		!Tether Command Length File
-'DRIVER'  	'Input_Files/Hovering/Truck.TCK'			!Driver input file                 
-'TOW'   	'Input_Files/Hovering/Quad.COPTER'		!Towed Main Input file          
-'CS'    	'Input_Files/Hovering/Nominal.CS'			!Control system input file
-'SIM'   	'Input_Files/Hovering/TOSIM.SIM'					!Simulation input file  
-'LOG'   	'Output_Files/TOSIM.LOG'							!Log out file    
+'ATM'		'Input_Files/Forward_Truck/TOSIM.ATM'						!Atmosphere input file  
+'THR'   	'Input_Files/Forward_Truck/TOSIM.THR'						!Tether input file
+'TCOM'  	'Input_Files/Forward_Truck/PayOutIn.TCOM'		!Tether Command Length File
+'DRIVER'  	'Input_Files/Forward_Truck/Truck.TCK'			!Driver input file                 
+'TOW'   	'Input_Files/Forward_Truck/Quad.COPTER'		!Towed Main Input file          
+'SIM'   	'Input_Files/Forward_Truck/TOSIM.SIM'					!Simulation input file  
 'SOUT'  	'Output_Files/State.OUT'							!State output file      
 'MOUT'  	'Output_Files/Misc.OUT'								!Miscellaneous output file 
 'COUT'  	'Output_Files/Controls.OUT'							!Control output file 
