@@ -1308,7 +1308,11 @@ SUBROUTINE CONTROL(T,iflag)
  LOGICAL :: DOUBLET = .FALSE.
  
 !!!!!!!!!!!!!!!!!!!!!!! COMPUTE iflag = 2a !!!!!!!!!!!!!!!!!!!!!!!!!!
- if (iflag .eq. 2) then  
+ if (iflag .eq. 2) then
+
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!! TETHER !!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     ! Tether Line Length Control
     lencommand = T%THR%NOMLEN !Default value is to keep tether at nominal length
@@ -1402,7 +1406,9 @@ SUBROUTINE CONTROL(T,iflag)
     end if
 
     if (T%THR%LEN .gt. 478) then
-       T%THR%LDOTFACTOR = 0
+       T%THR%LDOTFACTOR = 0 !What?? CJM 3/11/2024
+       write(*,*) 'Yo. Check the code.'
+       PAUSE; STOP;
     end if
 
     !! Controllers from above set the lencommand of the tether
@@ -1435,6 +1441,10 @@ SUBROUTINE CONTROL(T,iflag)
 
     call TETHERPROPERTIES(T)
 
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!! TETHER !!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     !! Controller for TOW
     if (T%TOW%CONTROLOFFON .eq. 1) then
        !Quadcopter control
@@ -1462,7 +1472,7 @@ SUBROUTINE CONTROL(T,iflag)
        !T%TOW%YCOMMAND = 0.0
        
        !delx = (T%TOW%XCOMMAND - T%TOW%STATE(1))*-1.00D0
-       dely = (T%TOW%YCOMMAND - T%TOW%STATE(2))
+       !dely = (T%TOW%YCOMMAND - T%TOW%STATE(2))
        !write(*,*) 'Zstuff = ',T%TOW%ZCOMMAND,T%TOW%STATE(3)
        delz = (T%TOW%ZCOMMAND - T%TOW%STATE(3))*-1.00D0
 
@@ -1477,7 +1487,7 @@ SUBROUTINE CONTROL(T,iflag)
        ! end if
 
        !!! Attitude Controller
-       T%TOW%PHICOMMAND = 0
+       T%TOW%PHICOMMAND = 0 !Steady and level
        !T%TOW%PHICOMMAND = 20.0*qPI/180.0
      
        ! REVISIT hardcoded xdotcommand = 40 ft/s
@@ -1530,7 +1540,9 @@ SUBROUTINE CONTROL(T,iflag)
           end if
        end do
     end if !Quad control off / on
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    
 
   RETURN
 end if
