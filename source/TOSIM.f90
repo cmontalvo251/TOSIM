@@ -199,11 +199,11 @@ type ATMOSPHERESTRUCTURE
      real*8 :: PBTAB(MAXNDRIVER) = 0.0             ! Units: 'rad/s', Desc: 'PB Roll Rate of Driver Table'
      real*8 :: QBTAB(MAXNDRIVER) = 0.0             ! Units: 'rad/s', Desc: 'QB Pitch Rate of Driver Table'
      real*8 :: RBTAB(MAXNDRIVER) = 0.0             ! Units: 'rad/s', Desc: 'RB Yaw Rate of Driver Table'
-     real*8 :: INITIALSTATE(20) = 0                    ! Units: 'varies', Desc: 'Initial State Vector'
-     real*8 :: NOMINALSTATE(20) = 0                    ! Units: 'varies', Desc: 'Initial State Vector'
-     real*8 :: STATE(20) = 0                           ! Units: 'varies', Desc: 'State Vector'
-     real*8 :: STATEDOT(20) = 0                        ! Units: 'varies', Desc: 'State Dot Vector'
-     real*8 :: KRKBODY(20,4) = 0.0                  ! Units: 'md', RK4 vector
+     real*8 :: INITIALSTATE(12) = 0                    ! Units: 'varies', Desc: 'Initial State Vector'
+     real*8 :: NOMINALSTATE(12) = 0                    ! Units: 'varies', Desc: 'Initial State Vector'
+     real*8 :: STATE(12) = 0                           ! Units: 'varies', Desc: 'State Vector'
+     real*8 :: STATEDOT(12) = 0                        ! Units: 'varies', Desc: 'State Dot Vector'
+     real*8 :: KRKBODY(12,4) = 0.0                  ! Units: 'md', RK4 vector
      real*8 :: TIS(3,3) = 0.0                          ! Units: 'nd', Desc: 'Transformation from Driver to Inertial Reference Frame'
      real*8 :: TIC(3,3) = 0.0                          ! Units: 'nd', Desc: 'Transformation from Driver to Inertial Reference Frame'
      real*8 :: TCI(3,3) = 0.0                          ! Units: 'nd', Desc: 'Transformation from Driver to Inertial Reference Frame'
@@ -287,10 +287,10 @@ type ATMOSPHERESTRUCTURE
      real*8 :: XINTEGRAL = 0
      real*8 :: YINTEGRAL = 0
      real*8 :: ZINTEGRAL = 0
+     real*8 :: UINTEGRAL = 0
      real*8 :: PHIINTEGRAL = 0.0                      ! Units: 'ft', Desc: 'PHI integral term in PID Controller'
      real*8 :: THETAINTEGRAL = 0.0                    ! Units: 'ft', Desc: 'THETA integral term in PID Controller'
      real*8 :: PSIINTEGRAL = 0.0                      ! Units: 'ft', Desc: 'PSI integral term in PID Controller'
-     real*8 :: UINTEGRAL = 0.0
      real*8 :: MUTHROTTLE = 0                         ! Units: 'microseconds', Desc: 'PWM signal to motor'
      real*8 :: THRUSTVEC = 0                          ! Units: N, Desc: Thrust
      real*8 :: XCOM(MAXWP) = 500                         ! Units: 'm', X Waypoint command
@@ -385,13 +385,13 @@ type ATMOSPHERESTRUCTURE
   real*8 :: INITIALPHI = 0.0                       ! Units: 'rad', Desc: 'Initial Euler Roll Angle of Aircraft'
   real*8 :: INITIALTHETA = 0.0                     ! Units: 'rad', Desc: 'Initial Euler Pitch Angle of Aircraft'
   real*8 :: INITIALPSI = 0.0                       ! Units: 'rad', Desc: 'Initial Euler Yaw Angle of Aircraft'
-  real*8 :: INITIALSTATE(13) = 0.0                 ! Units: 'vd', Desc: 'Initial Aircraft State Vector'
+  real*8 :: INITIALSTATE(21) = 0.0                 ! Units: 'vd', Desc: 'Initial Aircraft State Vector'
   real*8 :: PHI = 0                                ! Units: 'rad', Desc: Aircraft roll angle
   real*8 :: THETA = 0                              ! Units: 'rad', Desc: Aircraft roll angle
   real*8 :: PSI = 0                                ! Units: 'rad', Desc: Aircraft roll angle
-  real*8 :: STATE(13) = 0.0                        ! Units: 'vd', Desc: 'Aircraft State Vector'
-  real*8 :: STATEPREV(13) = 0.0                    ! Units: 'vd', Desc: 'Aircraft State Vector before camera snapshot'
-  real*8 :: STATEDOT(13) = 0.0                     ! Units: 'vd', Desc: 'Aircraft State Vector Derivative'
+  real*8 :: STATE(21) = 0.0                        ! Units: 'vd', Desc: 'Aircraft State Vector'
+  real*8 :: STATEPREV(21) = 0.0                    ! Units: 'vd', Desc: 'Aircraft State Vector before camera snapshot'
+  real*8 :: STATEDOT(21) = 0.0                     ! Units: 'vd', Desc: 'Aircraft State Vector Derivative'
   real*8 :: VXWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial I Axis'
   real*8 :: VYWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial J Axis'
   real*8 :: VZWIND = 0.0                           ! Units: 'ft/s', Desc: 'Atmospheric Wind Along Inertial K Axis'
@@ -790,8 +790,7 @@ SUBROUTINE SIMULATION(T,iflag)
    !!OUTPUTS OUTPUTFILES STANDARD OUTS FILE OUTPUTS
    if (mod(i-1,T%SIM%IOUTSKIP) .eq. 0) then 
       !State.OUT File
-      ! REVISIT subtracted 8 to get rid of thrust states
-    write(92,fmt='(1000F30.10)') T%SIM%TIME,T%SIM%STATE(1:T%SIM%NOSTATES-7),T%SIM%STATEDOT(1:T%SIM%NOSTATES-7)
+    write(92,fmt='(1000F30.10)') T%SIM%TIME,T%SIM%STATE(1:T%SIM%NOSTATES),T%SIM%STATEDOT(1:T%SIM%NOSTATES)
       !Misc.OUT File
     write(96,fmt='(1000F30.10)') T%SIM%TIME,T%TOW%VXWIND,T%TOW%VYWIND,T%TOW%VZWIND,T%THR%NBEADS*1.0D0,T%THR%STATE(7*T%THR%NBEADS+1)
     ! T%SIM%TIME,T%TOW%VXWIND,T%TOW%VYWIND,T%TOW%VZWIND,T%THR%NBEADS*1.0D0,T%TOW%FXCONT,T%TOW%FYCONT,T%TOW%FZCONT,T%TOW%MXCONT,T%TOW%MYCONT,T%TOW%MZCONT
@@ -801,7 +800,6 @@ SUBROUTINE SIMULATION(T,iflag)
       !Force Vector File
     write(83,fmt='(1000F30.10)') T%SIM%TIME,T%THR%FXGRAV(1:T%THR%NBEADS),T%THR%FYGRAV(1:T%THR%NBEADS),T%THR%FZGRAV(1:T%THR%NBEADS),T%THR%FXELAS(1:T%THR%NBEADS),T%THR%FYELAS(1:T%THR%NBEADS),T%THR%FZELAS(1:T%THR%NBEADS),T%THR%FXAERO(1:T%THR%NBEADS),T%THR%FYAERO(1:T%THR%NBEADS),T%THR%FZAERO(1:T%THR%NBEADS)
    end if 
-
    
    if (npts .gt. 100) then
       if (mod(i,npts/100) .eq. 1) then 
@@ -1002,9 +1000,7 @@ SUBROUTINE SIMULATION(T,iflag)
  
  if (iflag .eq. 1) then
 
-  !!!13 = aircraft,12 = Driver,7*T%TH%NBEADS + 1 = tether,2 = actuator dynamics
-  !!! REVISIT Nghia : Added 8 states for thrust and thrustdot for each rotor
-  
+  !!!13 = quadcopter,12 = Driver,7*T%TH%NBEADS + 1 = tether,8 = thrust and thrustdot for quadcopter rotors
   T%SIM%NOSTATES = 13 + 12 + 7*T%THR%NBEADS + 1 + 8
   
   open(unit=90,file=T%SIMINPUTFILE,status='old',iostat=openflag)
@@ -1094,7 +1090,7 @@ SUBROUTINE SIMULATION(T,iflag)
      T%DRIVER%RESTARTSPEED = 0
 
      !Read Driver initial states
-        ! write(*,*) 'Driver States'
+     ! write(*,*) 'Driver States'
      do i=1,12
         ! write(*,*) T%DRIVER%INITIALSTATE(i)
         read(unit=90,fmt=*,iostat=readflag) T%DRIVER%INITIALSTATE(i)
@@ -1103,22 +1099,12 @@ SUBROUTINE SIMULATION(T,iflag)
      T%DRIVER%STATE(1:12) = T%DRIVER%INITIALSTATE(1:12)
 
      !!!!Read Towed Initial States!!!
-
-        ! write(*,*) 'Aircraft States'
-     do i=1,12
+     ! write(*,*) 'Quadcopter towed states' - 13 states with quats and then 8 states for thrusts
+     do i=1,20
         ! write(*,*) T%TOW%INITIALSTATE(i)
         read(unit=90,fmt=*,iostat=readflag) T%TOW%INITIALSTATE(i)
      end do
-
-     !Read Driver Thrust initial states
-        ! write(*,*) 'Thrust States'
-     do i=1,8
-        ! write(*,*) T%DRIVER%INITIALSTATE(i)
-        read(unit=90,fmt=*,iostat=readflag) T%DRIVER%INITIALSTATE(i+12)
-     end do
-     T%DRIVER%STATE(13:20) = T%DRIVER%INITIALSTATE(13:20)
      !!!Convert Phi,theta,psi to quaternions!!!
-
      T%TOW%INITIALPHI = T%TOW%INITIALSTATE(4)
      T%TOW%INITIALTHETA = T%TOW%INITIALSTATE(5)
      T%TOW%INITIALPSI = T%TOW%INITIALSTATE(6)
@@ -1133,25 +1119,18 @@ SUBROUTINE SIMULATION(T,iflag)
      T%TOW%INITIALSTATE(5) = cos(T%TOW%INITIALPSI/2.0)*cos(T%TOW%INITIALTHETA/2.0)*sin(T%TOW%INITIALPHI/2.0) - sin(T%TOW%INITIALPSI/2.0)*sin(T%TOW%INITIALTHETA/2.0)*cos(T%TOW%INITIALPHI/2.0)  ! q1
      T%TOW%INITIALSTATE(4) = cos(T%TOW%INITIALPSI/2.0)*cos(T%TOW%INITIALTHETA/2.0)*cos(T%TOW%INITIALPHI/2.0) + sin(T%TOW%INITIALPSI/2.0)*sin(T%TOW%INITIALTHETA/2.0)*sin(T%TOW%INITIALPHI/2.0)  ! q0
      T%TOW%INITIALSTATE(3) = T%TOW%INITIALSTATE(3) ! zcg 
-     !T%TOW%INITIALSTATE(3) = T%THR%LEN ! zcg 
      T%TOW%INITIALSTATE(2) = T%TOW%INITIALSTATE(2) ! ycg
      T%TOW%INITIALSTATE(1) = T%TOW%INITIALSTATE(1) ! xcg
 
      !!!!!! Compute initial Tether points !!!!!!!!!!
-
      call DRIVER(T,2) ! Compute location of reel !!!!!Reel Location = T%DRIVER%(XYZ)REEL
-
      !!Place Driver states in initial state vector
-     T%DRIVER%INITIALSTATE(1:20) = T%DRIVER%STATE(1:20)
-
-     !pass aircraft state to global state
-
-     T%TOW%STATE(1:13) = T%TOW%INITIALSTATE(1:13)
+     T%DRIVER%INITIALSTATE(1:12) = T%DRIVER%STATE(1:12)
+     !pass towed state to global state
+     T%TOW%STATE(1:21) = T%TOW%INITIALSTATE(1:21)
 
      ! Compute location of connection point on Towed Platform
-
-     call TOWED(T,2) !Cradle tether connection point Location = T%THR%(XYZ)TETHER
-
+     call TOWED(T,2) !tether connection point Location = T%THR%(XYZ)TETHER
      stateindex = 0
      xslope = (T%THR%XTETHER - T%DRIVER%XREEL)/(T%THR%NBEADS+1)
      yslope = (T%THR%YTETHER - T%DRIVER%YREEL)/(T%THR%NBEADS+1)
@@ -1172,14 +1151,12 @@ SUBROUTINE SIMULATION(T,iflag)
      end do
 
      !!!!PLACE LOCAL INITIAL STATES INTO GLOBAL INITIAL STATES
-     !!TOWED STATES
-     T%SIM%INITIALSTATE(1:13) = T%TOW%INITIALSTATE(1:13)
-     !!DRIVER STATES(14:25)
-     T%SIM%INITIALSTATE(14:25) = T%DRIVER%INITIALSTATE(1:12)
+     !!DRIVER STATES
+     T%SIM%INITIALSTATE(1:12) = T%DRIVER%INITIALSTATE(1:12)
+     !!TOWED STATES(13:33)
+     T%SIM%INITIALSTATE(13:33) = T%DRIVER%INITIALSTATE(1:21)
      !!!TETHER STATES
-     T%SIM%INITIALSTATE(26:T%SIM%NOSTATES-8) = T%THR%INITIALSTATE(1:7*T%THR%NBEADS+1)
-     !!!REVISIT THRUST STATES
-     T%SIM%INITIALSTATE(T%SIM%NOSTATES-7:T%SIM%NOSTATES) = T%DRIVER%INITIALSTATE(13:20)
+     T%SIM%INITIALSTATE(34:T%SIM%NOSTATES) = T%THR%INITIALSTATE(1:7*T%THR%NBEADS+1)
   end if
 
   !Initialize Time Vector
@@ -1193,7 +1170,6 @@ SUBROUTINE SIMULATION(T,iflag)
   T%SIM%DQFLAG = 1
 
   write(*,*) 'SIMULATION Load Complete'
-
 
   RETURN
  
@@ -1214,46 +1190,35 @@ SUBROUTINE SYSTEMDERIVATIVES(T,iflag)
 
 if (iflag .eq. 2) then
    
-    stateindex = 0 
-    
     ! Towed State Derivatives
-
     T%TOW%STATEDOT = 0.0
-    T%TOW%STATE(1:13) = T%SIM%STATE(stateindex+1:stateindex+13)
+    T%TOW%STATE(1:21) = T%SIM%STATE(13:33)
     if (T%TOW%DYNOFFON .eq. 1) then
        call TOWED(T,2)
-       T%SIM%STATEDOT(stateindex+1:stateindex+13) = T%TOW%STATEDOT(1:13)
+       T%SIM%STATEDOT(13:33) = T%TOW%STATEDOT(1:21)
     end if
-    stateindex = stateindex + 13
-
     ! Driver Motion or Derivation
     if (T%DRIVER%OFFON .eq. 1) then
        if ((T%DRIVER%MODNO .eq. 0) .or. (T%DRIVER%MODNO .eq. 3)) then !0 and 3 are our integration models
-          T%DRIVER%STATE(1:12) = T%SIM%STATE(stateindex+1:stateindex+12)
-          T%DRIVER%STATE(13:20) = T%SIM%STATE((T%SIM%NOSTATES-7):T%SIM%NOSTATES)
+          T%DRIVER%STATE(1:12) = T%SIM%STATE(1:12)
        end if
        call DRIVER(T,2)
        if ((T%DRIVER%MODNO .eq. 0) .or. (T%DRIVER%MODNO .eq. 3)) then
-          T%SIM%STATEDOT(stateindex+1:stateindex+12) = T%DRIVER%STATEDOT(1:12)
-          T%SIM%STATEDOT((T%SIM%NOSTATES-7):T%SIM%NOSTATES) = T%DRIVER%STATEDOT(13:20)
+          T%SIM%STATEDOT(1:12) = T%DRIVER%STATEDOT(1:12)
        else
-          T%SIM%STATE(stateindex+1:stateindex+12) = T%DRIVER%STATE(1:12)
+          T%SIM%STATE(1:12) = T%DRIVER%STATE(1:12)
        end if
     else
        T%DRIVER%TIMEON = T%SIM%TIME
     end if
-    stateindex = stateindex + 12
-
     ! Tether State Derivatives
     
     T%THR%STATEDOT = 0.0
-    T%THR%STATE(1:7*T%THR%NBEADS+1) = T%SIM%STATE(stateindex+1:stateindex+7*T%THR%NBEADS+1)
+    T%THR%STATE(1:7*T%THR%NBEADS+1) = T%SIM%STATE(34:T%SIM%NOSTATES)
     if (T%THR%DYNOFFON .eq. 1) then
        call TETHER(T,2)
-       T%SIM%STATEDOT(stateindex+1:stateindex+7*T%THR%NBEADS+1) = T%THR%STATEDOT(1:7*T%THR%NBEADS+1)
+       T%SIM%STATEDOT(34:T%SIM%NOSTATES) = T%THR%STATEDOT(1:7*T%THR%NBEADS+1)
     end if
-    stateindex = stateindex + 7*T%THR%NBEADS + 1
-
     RETURN
     
  end if
@@ -1274,7 +1239,7 @@ SUBROUTINE STATELIMITS(T)
 
  if (T%TOW%DYNOFFON .eq. 1) then
   stateindex = 0.0
-  T%TOW%STATE(1:13) = T%SIM%STATE(stateindex+1:stateindex+13)
+  T%TOW%STATE(1:21) = T%SIM%STATE(13:33)
   q0 = T%TOW%STATE(4)
   q1 = T%TOW%STATE(5)
   q2 = T%TOW%STATE(6)
@@ -1284,7 +1249,7 @@ SUBROUTINE STATELIMITS(T)
   T%TOW%STATE(5) = q1/norm
   T%TOW%STATE(6) = q2/norm
   T%TOW%STATE(7) = q3/norm  
-  T%SIM%STATE(stateindex+1:stateindex+13) = T%TOW%STATE(1:13)
+  T%SIM%STATE(13:33) = T%TOW%STATE(1:21)
  end if
 
  RETURN
@@ -1303,7 +1268,7 @@ SUBROUTINE CONTROL(T,iflag)
  real*8 delx,delz,phi,theta,psi,p,q,r,xdot,ydot,zdot,omegaNot,addpitch,addroll,addyaw
  real*8 domegaLeft,omegaRight,domegaFront,omegaBack,domegaDiag,omegaOpp,omegaDiag,omegaFront
  real*8 xwaypoint(nwp,1),ywaypoint(nwp,1),zwaypoint(nwp,1),Dwaypoint
- real*8 delmu(4),munominal,MAXANGLE
+ real*8 delmu(4),munominal,MAXANGLE,z,udriver
  type(TOSIMSTRUCTURE) T
  LOGICAL :: DOUBLET = .FALSE.
  
@@ -1451,16 +1416,21 @@ SUBROUTINE CONTROL(T,iflag)
        T%TOW%OMEGAVEC = 0
        T%TOW%THRUSTVEC = 0
        T%TOW%MUVEC = 0
-       
+
+       z = T%TOW%STATE(3)
        xdot = T%TOW%STATEDOT(1)
        ydot = T%TOW%STATEDOT(2)
        zdot = T%TOW%STATEDOT(3)
-       phi = T%TOW%STATE(4)
-       theta = T%TOW%STATE(5)
-       psi = T%TOW%STATE(6)
-       p = T%TOW%STATE(10)
-       q = T%TOW%STATE(11)
-       r = T%TOW%STATE(12)
+       q0 = T%TOW%STATE(4) 
+       q1 = T%TOW%STATE(5)
+       q2 = T%TOW%STATE(6)
+       q3 = T%TOW%STATE(7)
+       phi   = atan2(2.*(q0*q1 + q2*q3),1.-2.*(q1**2 + q2**2));
+       theta = asin (2.*(q0*q2 - q3*q1));
+       psi   = atan2(2.*(q0*q3 + q1*q2),1.-2.*(q2**2 + q3**2));
+       p = T%TOW%STATE(11)
+       q = T%TOW%STATE(12)
+       r = T%TOW%STATE(13)
 
        ! gotocontrols
        ! T%TOW%XCOMMAND =  xwaypoint(T%TOW%WAYPOINT,1)
@@ -1474,7 +1444,7 @@ SUBROUTINE CONTROL(T,iflag)
        !delx = (T%TOW%XCOMMAND - T%TOW%STATE(1))*-1.00D0
        !dely = (T%TOW%YCOMMAND - T%TOW%STATE(2))
        !write(*,*) 'Zstuff = ',T%TOW%ZCOMMAND,T%TOW%STATE(3)
-       delz = (T%TOW%ZCOMMAND - T%TOW%STATE(3))*-1.00D0
+       delz = (T%TOW%ZCOMMAND - z)*-1.00D0
 
        ! Dwaypoint = sqrt((delx)**2 + (dely)**2 + (delz)**2)
 
@@ -1542,8 +1512,20 @@ SUBROUTINE CONTROL(T,iflag)
     end if !Quad control off / on
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    !!!!!!!!!!!!!!DRIVER CONTROLLER!!!!!!!!!!!!!!!!!!!!!!!!
+    if (T%DRIVER%CONTROLOFFON .gt. 0) then
+       !!For now let's just do a speed controller
+       udriver = T%DRIVER%STATE(7)
+       T%DRIVER%MUTHROTTLE = T%DRIVER%KPXDRIVE*(udriver - T%DRIVER%UCOMMAND) + T%DRIVER%KIXDRIVE*T%DRIVER%UINTEGRAL
+       !Saturation controller
+       if (T%DRIVER%MUTHROTTLE .gt. 1900.00D0) then
+          T%DRIVER%MUTHROTTLE = 1900.00D0
+       end if
+       if (T%DRIVER%MUTHROTTLE .lt. 1100.00D0) then
+          T%DRIVER%MUTHROTTLE = 1100.00D0
+       end if
+    endif
     
-
   RETURN
 end if
 
@@ -1932,7 +1914,7 @@ SUBROUTINE DRIVER(T,iflag)
  real*8 Gammavec(3,1),bquad,C_Ftether_I(3,1),C_Ftether_B(3,1),S_rCF_B(3,3),C_Mtether_B(3,1)
  real*8 xcgdot,ycgdot,zcgdot,phidot,thetadot,psidot,ubdot,vbdot,wbdot,c1,c2,c3,pbdot,qbdot,rbdot
  real*8 rReel_I(3,1),rCG_I(3,1),v_CG_I(3,1),S_wt_B(3,3),v_Reel_I(3,1),deti
- real*8 TVEC(4),TDOTVEC(4),TDBLDOTVEC(4),S,q_inf_S,q_inf
+ real*8 S,q_inf_S,q_inf
  real*8 sigmaF,omegaF,zetaF,C1F(4),C2F(4),C3F(4),idx,W2Tpwm(4,1),W0,j
  character*256 xgridname,ygridname,zgridname
  character*1 letter
@@ -2015,6 +1997,8 @@ SUBROUTINE DRIVER(T,iflag)
        T%DRIVER%FXAERO = 0.0; T%DRIVER%FYAERO = 0.0; T%DRIVER%FZAERO = 0.0;
        T%DRIVER%MXAERO = 0.0; T%DRIVER%MYAERO = 0.0; T%DRIVER%MZAERO = 0.0;
 
+       ! We're just going to put a thrust force here in the Aero model
+       ! even if it's off
        T%DRIVER%FXAERO = T%DRIVER%C_T*T%DRIVER%MUTHROTTLE
        
        if (T%DRIVER%AEROOFFON .eq. 1) then
@@ -2126,15 +2110,6 @@ SUBROUTINE DRIVER(T,iflag)
        T%DRIVER%STATEDOT(10) = pbdot 
        T%DRIVER%STATEDOT(11) = qbdot 
        T%DRIVER%STATEDOT(12) = rbdot
-       T%DRIVER%STATEDOT(13) = TDOTVEC(1)
-       T%DRIVER%STATEDOT(14) = TDBLDOTVEC(1)
-       T%DRIVER%STATEDOT(15) = TDOTVEC(2)
-       T%DRIVER%STATEDOT(16) = TDBLDOTVEC(2)
-       T%DRIVER%STATEDOT(17) = TDOTVEC(3)
-       T%DRIVER%STATEDOT(18) = TDBLDOTVEC(3)
-       T%DRIVER%STATEDOT(19) = TDOTVEC(4)
-       T%DRIVER%STATEDOT(20) = TDBLDOTVEC(4)
-
        !write(*,*) 'Statedot = ',T%DRIVER%STATEDOT
 
        !!Save some stuff for Tether model
@@ -2142,7 +2117,7 @@ SUBROUTINE DRIVER(T,iflag)
        T%DRIVER%YDOT = ycgdot
        T%DRIVER%ZDOT = zcgdot
 
-       !Compute Reel Locations - r_reel = r_cg + TIB*r_body
+       !Compute Reel Location - rTether = r_cg + TIB*r_body
        rCG_I(1,1) = xcg 
        rCG_I(2,1) = ycg
        rCG_I(3,1) = zcg ! + (1/3) !REVISIT
@@ -3032,23 +3007,6 @@ SUBROUTINE AIRWAKE(T,XI,YI,ZI)
 
 END SUBROUTINE AIRWAKE
 
-SUBROUTINE TOWED_CONTROL(TOW)
-  use TOSIMDATATYPES
-  implicit none
-  type(TOWEDSTRUCTURE) TOW
-  integer iflag,openflag,readflag,i,stateindex,now(3),ctr,j
-  integer , parameter :: nwp = 1
-  real*8 readreal,phicommand,deltheta,delpsi,dely,delydot,rAS_I(3,1),vAS_I(3,1),thetacommand, xcommand, ycommand, zcommand
-  ! real*8 rAS_A(3,1),vAS_A(3,1),lencommand,rGS_I(3,1),vGS_I(3,1),psicp,rGS_P(3,1),vGS_P(3,1),tension,len
-  real*8 angles(2,1),delphi,delphidot,ldotnom,ldot,n1,q0,q1,q2,q3,pb,qb,rb,vb,xcg,ycg,zcg,vaero,wb
-  real*8 delx,delz,phi,theta,psi,p,q,r,xdot,ydot,zdot,omegaNot,addpitch,addroll,addyaw
-  real*8 domegaLeft,omegaRight,domegaFront,omegaBack,domegaDiag,omegaOpp,omegaDiag,omegaFront
-  real*8 xwaypoint(nwp,1),ywaypoint(nwp,1),zwaypoint(nwp,1),Dwaypoint
-  real*8 delmu(4), munominal
-  LOGICAL :: DOUBLET = .FALSE.
-
-END SUBROUTINE TOWED_CONTROL
-
 !!!!!!!!!!!!!!!!!!!!!!!!!! SUBROUTINE TOWED !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SUBROUTINE TOWED(T,iflag)
@@ -3097,14 +3055,14 @@ SUBROUTINE TOWED(T,iflag)
   pb = T%TOW%STATE(11) 
   qb = T%TOW%STATE(12)
   rb = T%TOW%STATE(13)
-  TVEC(1)    = T%TOW%STATE(13)
-  TDOTVEC(1) = T%TOW%STATE(14)
-  TVEC(2)    = T%TOW%STATE(15)
-  TDOTVEC(2) = T%TOW%STATE(16)
-  TVEC(3)    = T%TOW%STATE(17)
-  TDOTVEC(3) = T%TOW%STATE(18)
-  TVEC(4)    = T%TOW%STATE(19)
-  TDOTVEC(4) = T%TOW%STATE(20)
+  TVEC(1)    = T%TOW%STATE(14)
+  TDOTVEC(1) = T%TOW%STATE(15)
+  TVEC(2)    = T%TOW%STATE(16)
+  TDOTVEC(2) = T%TOW%STATE(17)
+  TVEC(3)    = T%TOW%STATE(18)
+  TDOTVEC(3) = T%TOW%STATE(19)
+  TVEC(4)    = T%TOW%STATE(20)
+  TDOTVEC(4) = T%TOW%STATE(21)
 
   !Compute phi,theta,psi
   !REVISIT - I've got a function for that -DK 8/18/2015 - It even checks for gimbal lock state
@@ -3405,7 +3363,15 @@ SUBROUTINE TOWED(T,iflag)
   T%TOW%STATEDOT(11) = pbdot 
   T%TOW%STATEDOT(12) = qbdot
   T%TOW%STATEDOT(13) = rbdot
-   
+  T%TOW%STATEDOT(14) = TDOTVEC(1)
+  T%TOW%STATEDOT(15) = TDBLDOTVEC(1)
+  T%TOW%STATEDOT(16) = TDOTVEC(2)
+  T%TOW%STATEDOT(17) = TDBLDOTVEC(2)
+  T%TOW%STATEDOT(18) = TDOTVEC(3)
+  T%TOW%STATEDOT(19) = TDBLDOTVEC(3)
+  T%TOW%STATEDOT(20) = TDOTVEC(4)
+  T%TOW%STATEDOT(21) = TDBLDOTVEC(4)
+  
   RETURN
   
  end if !!For the compute flag
