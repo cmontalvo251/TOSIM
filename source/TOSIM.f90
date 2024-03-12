@@ -1669,7 +1669,7 @@ SUBROUTINE ATMOSPHERE(T,iflag)
   if (T%DRIVER%AIRWAKE .eq. 1) then
      !Add in Driver airwake velocity
      T%DRIVER%TIME = T%SIM%TIME
-     call AIRWAKE(T%DRIVER,T%ATM%XI,T%ATM%YI,T%ATM%ZI)
+     call AIRWAKE(T,T%ATM%XI,T%ATM%YI,T%ATM%ZI)
      T%ATM%VWAKE = T%DRIVER%VWAKE
   end if
   ! PAUSE; STOP;

@@ -1,6 +1,6 @@
 1		!Turn dynamics on(1) or off0)                    
 1 		!Gravity on(1) or off(0)                
-1 		!Aerodynamics on(1) or off(0), (2=alpha_sweeps,will end code after sweep)                                                                
+1 		!Aerodynamics on(1) or off(0)                                                                
 1 		!Elastic forces on(1) or off(0)                                                        
 1 		!Number of beads(May not exceed 100 unless you edit the source code)                 
 2.32123E-06 	!Mass per unit length (slugs/ft)     2.32123E-06                    
@@ -20,8 +20,8 @@
 2.205 		!Rotational Inertia of Reel(slugs-ft^2)                 
 1.64 		!Radius of Reel(ft)                 
 5.0 		!Time Constant of Torque at Reel
-0		!Tether Line control off(0) on(1=Pay In/Out)(2=Tension)(3=Tension+Pay Out)
-0.0		!Kpreel proportional gain on reel controller(2.0)
+0			!Tether Line control off(0) on(1=Pay In/Out)(2=Tension)(3=Tension+Pay Out)
+0.0			!Kpreel proportional gain on reel controller(2.0)
 0.0 		!Kdreel derivative gain on reel controller(3.0)
 0.0 		!Kireel integral gain on reel controller(1.0)
 

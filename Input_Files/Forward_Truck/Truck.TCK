@@ -17,12 +17,12 @@
 0.000		!Ixy
 0.000		!Ixz
 0.000		!Iyz (lb*ft^2) OR 2.428e-4 (kg*m^2)
-1.0		!Turn_Radius(ft) (The turn radius of a quad is super small so I just set it to 1)
+1.0			!Turn_Radius(ft) (The turn radius of a quad is super small so I just set it to 1)
 0.01094		!dxD - Longitudinal drag factor (max speed v = 52 ft/s)
 0.0335291245362469	!C_T Thrust factor
 1100		! PWM_min (microseconds)
 1900		! PWM_max (microseconds)
-1		!Controller on (1) off (0)
+1			!Controller on (1) off (0)
 0.005		!kpx (truck)
 0.0125		!kix (truck) - used for forward velocity
 0.015      	!kdx  (truck)
@@ -32,7 +32,7 @@
 0.0		!PHIINTEGRAL , integral term for phi in PID controller
 0.0		!THETAINTEGRAL , integral term for theta in PID controller
 0.0		!PSIINTEGRAL , integral term for psi in PID controller
-0.0		!UCOMMAND x setpoint, truck (ft)
+0.0		!UCOMMAND velocity setpoint, truck (ft/s)
 0.0		!YCOMMAND y setpoint, truck (ft)
 0.0		!ZCOMMAND z setpoint, truck (ft)
 
