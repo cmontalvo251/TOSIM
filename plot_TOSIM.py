@@ -13,7 +13,7 @@ else:
     print('Need SIMULATE flag. Put a 0 or 1 if you want to simulate or not. Defaulting to 0')
     SIMULATE = 0
     
-if SIMULATE == 1:
+if SIMULATE > 0:
     ##Compile the code
     os.system('make')
     ##Run the code
@@ -23,6 +23,9 @@ if SIMULATE == 1:
     #os.system('./LinuxRun.exe Input_Files/Hovering/TOMAD.ifiles')
     #os.system('./Simulation.exe Input_Files/Hovering/TOSIM.ifiles')
     os.system('./Simulation.exe Input_Files/Forward_Truck/TOSIM.ifiles')
+
+    if SIMULATE > 1:
+        sys.exit()
 else:
     print('Skipping Simulation and just plotting')
 

@@ -1544,6 +1544,7 @@ SUBROUTINE CONTROL(T,iflag)
        !!For now let's just do a speed controller
        udriver = T%DRIVER%STATE(7)
        T%DRIVER%MUTHROTTLE = T%DRIVER%KPXDRIVE*(T%DRIVER%UCOMMAND-udriver) + T%DRIVER%KIXDRIVE*T%DRIVER%UINTEGRAL + T%DRIVER%MS_MIN
+       !write(*,*) 'MUTHROTTLE,Velocity = ',T%DRIVER%MUTHROTTLE,T%DRIVER%STATE(7)
        !Saturation controller
        if (T%DRIVER%MUTHROTTLE .gt. 1900.00D0) then
           T%DRIVER%MUTHROTTLE = 1900.00D0
@@ -1943,7 +1944,7 @@ SUBROUTINE DRIVER(T,iflag)
  real*8 Gammavec(3,1),bquad,C_Ftether_I(3,1),C_Ftether_B(3,1),S_rCF_B(3,3),C_Mtether_B(3,1)
  real*8 xcgdot,ycgdot,zcgdot,phidot,thetadot,psidot,ubdot,vbdot,wbdot,c1,c2,c3,pbdot,qbdot,rbdot
  real*8 rReel_I(3,1),rCG_I(3,1),v_CG_I(3,1),S_wt_B(3,3),v_Reel_I(3,1),deti
- real*8 S,q_inf_S,q_inf
+ real*8 S,q_inf_S,q_inf,groundforce
  real*8 sigmaF,omegaF,zetaF,C1F(4),C2F(4),C3F(4),idx,W2Tpwm(4,1),W0,j
  character*256 xgridname,ygridname,zgridname
  character*1 letter
@@ -2007,6 +2008,11 @@ SUBROUTINE DRIVER(T,iflag)
        T%DRIVER%TIC(2,3) = cphi * stheta * spsi - sphi * cpsi;
        T%DRIVER%TIC(3,3) = cphi * ctheta;
 
+       ! State Derivatives
+       xcgdot = T%DRIVER%TIC(1,1)*ub + T%DRIVER%TIC(1,2)*vb + T%DRIVER%TIC(1,3)*wb
+       ycgdot = T%DRIVER%TIC(2,1)*ub + T%DRIVER%TIC(2,2)*vb + T%DRIVER%TIC(2,3)*wb
+       zcgdot = T%DRIVER%TIC(3,1)*ub + T%DRIVER%TIC(3,2)*vb + T%DRIVER%TIC(3,3)*wb  
+
        ! Inertial to body Transformation Matrix
        
        T%DRIVER%TCI = transpose(T%DRIVER%TIC)
@@ -2016,9 +2022,13 @@ SUBROUTINE DRIVER(T,iflag)
        T%DRIVER%FXGRAV = 0.0; T%DRIVER%FYGRAV = 0.0; T%DRIVER%FZGRAV = 0.0;
        T%DRIVER%MXGRAV = 0.0; T%DRIVER%MYGRAV = 0.0; T%DRIVER%MZGRAV = 0.0;
        if (T%DRIVER%GRAVOFFON .eq. 1) then
-          T%DRIVER%FXGRAV = T%DRIVER%TIC(3,1)*T%DRIVER%WEIGHT
-          T%DRIVER%FYGRAV = T%DRIVER%TIC(3,2)*T%DRIVER%WEIGHT
-          T%DRIVER%FZGRAV = T%DRIVER%TIC(3,3)*T%DRIVER%WEIGHT
+          GROUNDFORCE = 0
+          if (zcg .gt. 0) then
+             groundforce = 10000*zcg + 1000*zcgdot
+          end if
+          T%DRIVER%FXGRAV = T%DRIVER%TIC(3,1)*(T%DRIVER%WEIGHT - groundforce)
+          T%DRIVER%FYGRAV = T%DRIVER%TIC(3,2)*(T%DRIVER%WEIGHT - groundforce)
+          T%DRIVER%FZGRAV = T%DRIVER%TIC(3,3)*(T%DRIVER%WEIGHT - groundforce)
        end if
 
        ! Aerodynamic Forces and Moments - Still Same for DRIVER
@@ -2048,7 +2058,7 @@ SUBROUTINE DRIVER(T,iflag)
 
           V_A = sqrt(uaero**2 + vaero**2 + waero**2)
           q_inf = 0.5*T%DRIVER%DEN*(V_A**2) !This assumes the reference area is 1
-          S = 1.0
+          S = 10.0
           q_inf_S = q_inf*S
 
           T%DRIVER%FXAERO = T%DRIVER%FXAERO - q_inf_S*T%DRIVER%DXD
@@ -2103,12 +2113,6 @@ SUBROUTINE DRIVER(T,iflag)
        T%DRIVER%MXTOTAL = T%DRIVER%MXGRAV + T%DRIVER%MXAERO + T%DRIVER%MXCONT
        T%DRIVER%MYTOTAL = T%DRIVER%MYGRAV + T%DRIVER%MYAERO + T%DRIVER%MYCONT
        T%DRIVER%MZTOTAL = T%DRIVER%MZGRAV + T%DRIVER%MZAERO + T%DRIVER%MZCONT
-
-       ! State Derivatives
-
-       xcgdot = T%DRIVER%TIC(1,1)*ub + T%DRIVER%TIC(1,2)*vb + T%DRIVER%TIC(1,3)*wb
-       ycgdot = T%DRIVER%TIC(2,1)*ub + T%DRIVER%TIC(2,2)*vb + T%DRIVER%TIC(2,3)*wb
-       zcgdot = T%DRIVER%TIC(3,1)*ub + T%DRIVER%TIC(3,2)*vb + T%DRIVER%TIC(3,3)*wb  
 
        phidot = pb + sphi * ttheta * qb + cphi * ttheta * rb;
        thetadot = cphi * qb - sphi * rb;
