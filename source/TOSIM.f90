@@ -3549,7 +3549,10 @@ SUBROUTINE TETHER(T,iflag)
   do i=1,T%THR%NBEADS+1
    tension(i) = T%THR%STATE(stateindex+1) ! Tension 
    stateindex = stateindex + 1
-  end do
+end do
+
+!write(*,*) 'Tether State = ',T%THR%STATE(1:7*T%THR%NBEADS+1)
+!PAUSE;STOP
 
   ! Construct Tether Line Position and Velocity Matrices
   

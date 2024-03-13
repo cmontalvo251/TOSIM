@@ -82,14 +82,14 @@ for idx in range(0,3):
 #is at the end
 tether_state = state_data[:,34:]
 ylabelTHR = ['X','Y','Z','XDOT','YDOT','ZDOT']
-NBEADS = 0
-for n in range(0,NBEADS+1):
+NBEADS = 1
+for n in range(0,NBEADS):
     for idx in range(0,6): 
-        print('Plotting Tether State = ',ylabelTHR[idx])
+        print('Plotting Tether State = ',ylabelTHR[idx],' ',n)
         plti = P.plottool(fontSize,'Time(sec)',ylabelTHR[idx],'Tether')
         plti.plot(time,tether_state[:,6*n+idx],'k-',linewidth=2)
         pp.savefig()
-for n in range(0,NBEADS+1):
+for n in range(0,NBEADS+1): #There is 1 more tension state than beads
     print('Plotting Tether State = T',n)
     plti = P.plottool(fontSize,'Time(sec)','T','Tether')
     plti.plot(time,tether_state[:,6*NBEADS+n],'k-',linewidth=2)
