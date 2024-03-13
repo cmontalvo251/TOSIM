@@ -36,7 +36,7 @@ state_data = np.loadtxt('Output_Files/State.OUT')
 [r,c] = np.shape(state_data)
 print('Rows,Cols = ',r,c)
 
-fontSize = 14
+fontSize = 10
 
 ###Ok so the State.OUT file has a very large number of columns. Let's see what we got
 #The first column is time

@@ -28,7 +28,7 @@
 0.0		!Psi_TOW(rad)                        
 0.0		!U_TOW(ft/s)                        
 0.0		!V_TOW(ft/s)                        
-0.0		!W_TOW(ft/s)                        
+0.3		!W_TOW(ft/s)                        
 0.0		!P_TOW(rad/s)                        
 0.00		!Q_TOW(rad/s)                        
 0.0		!R_TOW(rad/s)   
