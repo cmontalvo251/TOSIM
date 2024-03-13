@@ -1,8 +1,7 @@
 1		!Turn module off(0) or on(1)
 3		!Truck Module Type(0=Integration Model(Very simple, not 6DOF),1=Constant Speed,2=Table Lookup,3=Truck 6DOF Model)
-1		!Gravity on (1) of off (0)
+0		!Gravity on (1) of off (0)
 1		!Aerodynamics on(1) or off(0)
-0		!Contact Forces on(1) or off(0)
 2.82635		!Weight (lbf) OR 1.282 (kg) 
 32.2		!Gravity (ft/s^2)
 0.0		!Stationline center of mass(m)
@@ -27,12 +26,9 @@
 0.0125		!kix (truck) - used for forward velocity
 0.015      	!kdx  (truck)
 0.0		!XINTEGRAL , integral term for x in PID controller
-0.0		!YINTEGRAL , integral term for y in PID controller
-0.0		!ZINTEGRAL , integral term for z in PID controller
-0.0		!PHIINTEGRAL , integral term for phi in PID controller
 0.0		!THETAINTEGRAL , integral term for theta in PID controller
 0.0		!PSIINTEGRAL , integral term for psi in PID controller
-0.0		!UCOMMAND velocity setpoint, truck (ft/s)
+10.0		!UCOMMAND velocity setpoint, truck (ft/s)
 0.0		!YCOMMAND y setpoint, truck (ft)
 0.0		!ZCOMMAND z setpoint, truck (ft)
 

@@ -605,7 +605,6 @@ end module TOSIMDATATYPES
 
 PROGRAM TOSIM
  use TOSIMDATATYPES
- !USE Math_Module, ONLY: Math_Init - Archaic from AREA-I days
  implicit none
  integer openflag,readflag,LENGTH
  character(128) inputfilename
@@ -1094,16 +1093,31 @@ SUBROUTINE SIMULATION(T,iflag)
      !Put initial state vector into the state vector
      T%DRIVER%STATE(1:12) = T%DRIVER%INITIALSTATE(1:12)
 
+     !write(*,*) 'Driver Initial State = ',T%DRIVER%INITIALSTATE(1:12)
+     !write(*,*) 'Driver State = ',T%DRIVER%STATE(1:12)
+
      !!!!Read Towed Initial States!!!
      ! write(*,*) 'Quadcopter towed states' - 13 states with quats and then 8 states for thrusts
      do i=1,20
         ! write(*,*) T%TOW%INITIALSTATE(i)
         read(unit=90,fmt=*,iostat=readflag) T%TOW%INITIALSTATE(i)
      end do
+
+     !write(*,*) 'Towed Initial States from input file = ',T%TOW%INITIALSTATE(1:20)
+     
      !!!Convert Phi,theta,psi to quaternions!!!
      T%TOW%INITIALPHI = T%TOW%INITIALSTATE(4)
      T%TOW%INITIALTHETA = T%TOW%INITIALSTATE(5)
      T%TOW%INITIALPSI = T%TOW%INITIALSTATE(6)
+
+     T%TOW%INITIALSTATE(21) = T%TOW%INITIALSTATE(20) ! T4dot
+     T%TOW%INITIALSTATE(20) = T%TOW%INITIALSTATE(19) ! T4
+     T%TOW%INITIALSTATE(19) = T%TOW%INITIALSTATE(18) ! T3dot
+     T%TOW%INITIALSTATE(18) = T%TOW%INITIALSTATE(17) ! T3
+     T%TOW%INITIALSTATE(17) = T%TOW%INITIALSTATE(16) ! T2dot
+     T%TOW%INITIALSTATE(16) = T%TOW%INITIALSTATE(15) ! T2
+     T%TOW%INITIALSTATE(15) = T%TOW%INITIALSTATE(14) ! T1dot 
+     T%TOW%INITIALSTATE(14) = T%TOW%INITIALSTATE(13) ! T1
      T%TOW%INITIALSTATE(13) = T%TOW%INITIALSTATE(12) ! rb 
      T%TOW%INITIALSTATE(12) = T%TOW%INITIALSTATE(11) ! qb
      T%TOW%INITIALSTATE(11) = T%TOW%INITIALSTATE(10) ! pb
@@ -1117,6 +1131,9 @@ SUBROUTINE SIMULATION(T,iflag)
      T%TOW%INITIALSTATE(3) = T%TOW%INITIALSTATE(3) ! zcg 
      T%TOW%INITIALSTATE(2) = T%TOW%INITIALSTATE(2) ! ycg
      T%TOW%INITIALSTATE(1) = T%TOW%INITIALSTATE(1) ! xcg
+
+     !write(*,*) 'Towed Initial States after converting to quats = ',T%TOW%INITIALSTATE(1:21)
+     !PAUSE;STOP
 
      !!!!!! Compute initial Tether points !!!!!!!!!!
      call DRIVER(T,2) ! Compute location of reel !!!!!Reel Location = T%DRIVER%(XYZ)REEL
@@ -1146,18 +1163,28 @@ SUBROUTINE SIMULATION(T,iflag)
         stateindex = stateindex + 1
      end do
 
+     !write(*,*) '------------------------------------------------'
+     !write(*,*) 'driver states = ',T%DRIVER%INITIALSTATE(1:12)
+     !write(*,*) 'towed states = ',T%TOW%INITIALSTATE(1:21)
+
      !!!!PLACE LOCAL INITIAL STATES INTO GLOBAL INITIAL STATES
      !!DRIVER STATES
      T%SIM%INITIALSTATE(1:12) = T%DRIVER%INITIALSTATE(1:12)
+     !write(*,*) 'Sim state (1:12) = ',T%SIM%INITIALSTATE(1:12)
      !!TOWED STATES(13:33)
-     T%SIM%INITIALSTATE(13:33) = T%DRIVER%INITIALSTATE(1:21)
+     T%SIM%INITIALSTATE(13:33) = T%TOW%INITIALSTATE(1:21)
+     !write(*,*) 'Sim state (13:33) = ',T%SIM%INITIALSTATE(13:33)
      !!!TETHER STATES
      T%SIM%INITIALSTATE(34:T%SIM%NOSTATES) = T%THR%INITIALSTATE(1:7*T%THR%NBEADS+1)
   end if
 
   !Initialize Time Vector
+  !write(*,*) 'NOSTATES = ',T%SIM%NOSTATES
   T%SIM%TIME = T%SIM%INITIALTIME
   T%SIM%STATE(1:T%SIM%NOSTATES) = T%SIM%INITIALSTATE(1:T%SIM%NOSTATES)
+
+  !write(*,*) 'Sim initial states = ',T%SIM%INITIALSTATE(1:33)
+  !write(*,*) 'Sim states = ',T%SIM%STATE(1:33)
 
   ! State Limits
   
@@ -1184,7 +1211,11 @@ SUBROUTINE SYSTEMDERIVATIVES(T,iflag)
 
 !!!!!!!!!!!!!!!!!!!!!!!! COMPUTE iflag = 3!!!!!!!!!!!!!!!!!
 
-if (iflag .eq. 2) then
+ if (iflag .eq. 2) then
+
+    !write(*,*) 'Driver States = ',T%SIM%STATE(1:12)
+    !write(*,*) 'Towed States = ',T%SIM%STATE(13:33)
+    !PAUSE;STOP
    
     ! Towed State Derivatives
     T%TOW%STATEDOT = 0.0
@@ -1512,7 +1543,7 @@ SUBROUTINE CONTROL(T,iflag)
     if (T%DRIVER%CONTROLOFFON .gt. 0) then
        !!For now let's just do a speed controller
        udriver = T%DRIVER%STATE(7)
-       T%DRIVER%MUTHROTTLE = T%DRIVER%KPXDRIVE*(udriver - T%DRIVER%UCOMMAND) + T%DRIVER%KIXDRIVE*T%DRIVER%UINTEGRAL
+       T%DRIVER%MUTHROTTLE = T%DRIVER%KPXDRIVE*(T%DRIVER%UCOMMAND-udriver) + T%DRIVER%KIXDRIVE*T%DRIVER%UINTEGRAL + T%DRIVER%MS_MIN
        !Saturation controller
        if (T%DRIVER%MUTHROTTLE .gt. 1900.00D0) then
           T%DRIVER%MUTHROTTLE = 1900.00D0
@@ -1520,7 +1551,9 @@ SUBROUTINE CONTROL(T,iflag)
        if (T%DRIVER%MUTHROTTLE .lt. 1100.00D0) then
           T%DRIVER%MUTHROTTLE = 1100.00D0
        end if
-    endif
+    else
+       T%DRIVER%MUTHROTTLE = T%DRIVER%MS_MIN
+    end if
     
   RETURN
 end if
@@ -1956,7 +1989,7 @@ SUBROUTINE DRIVER(T,iflag)
 
        ! Unwrap State Vector - This is the same for the DRIVEDRIVER
 
-       ! Aircraft to Inertial Transformation Matrix - Same for DRIVEDRIVER
+       ! Body to Inertial Transformation Matrix - Same for DRIVEDRIVER
        ctheta = cos(theta);
        stheta = sin(theta);
        ttheta = stheta / ctheta;
@@ -1974,7 +2007,7 @@ SUBROUTINE DRIVER(T,iflag)
        T%DRIVER%TIC(2,3) = cphi * stheta * spsi - sphi * cpsi;
        T%DRIVER%TIC(3,3) = cphi * ctheta;
 
-       ! Inertial to copter Transformation Matrix
+       ! Inertial to body Transformation Matrix
        
        T%DRIVER%TCI = transpose(T%DRIVER%TIC)
   
@@ -1995,7 +2028,9 @@ SUBROUTINE DRIVER(T,iflag)
 
        ! We're just going to put a thrust force here in the Aero model
        ! even if it's off
-       T%DRIVER%FXAERO = T%DRIVER%C_T*T%DRIVER%MUTHROTTLE
+       if (T%DRIVER%CONTROLOFFON .gt. 0) then
+          T%DRIVER%FXAERO = T%DRIVER%C_T*(T%DRIVER%MUTHROTTLE - T%DRIVER%MS_MIN)
+       end if
        
        if (T%DRIVER%AEROOFFON .eq. 1) then
           vATM_I(1,1) = T%DRIVER%VXWIND
@@ -2061,7 +2096,6 @@ SUBROUTINE DRIVER(T,iflag)
        end if
 
        ! Total Forces and Moments
-       
        T%DRIVER%FXTOTAL = T%DRIVER%FXGRAV + T%DRIVER%FXAERO + T%DRIVER%FXCONT
        T%DRIVER%FYTOTAL = T%DRIVER%FYGRAV + T%DRIVER%FYAERO + T%DRIVER%FYCONT
        !write(*,*) 'Z Force = ',T%DRIVER%FZGRAV,T%DRIVER%FZAERO,T%DRIVER%FZCONT
@@ -2079,6 +2113,8 @@ SUBROUTINE DRIVER(T,iflag)
        phidot = pb + sphi * ttheta * qb + cphi * ttheta * rb;
        thetadot = cphi * qb - sphi * rb;
        psidot = (sphi / ctheta) * qb + (cphi / ctheta) * rb;
+       !write(*,*) 'Forces = ',T%DRIVER%FXTOTAL,T%DRIVER%FYTOTAL,T%DRIVER%FZTOTAL
+       !write(*,*) 'Mass = ',T%DRIVER%MASS
        ubdot = T%DRIVER%FXTOTAL/T%DRIVER%MASS + rb*vb - qb*wb
        vbdot = T%DRIVER%FYTOTAL/T%DRIVER%MASS + pb*wb - rb*ub
        !write(*,*) 'Weight and Z =',T%DRIVER%FZTOTAL,T%DRIVER%MASS
@@ -2377,7 +2413,11 @@ SUBROUTINE DRIVER(T,iflag)
   T%DRIVER%PHIINTEGRAL   = T%DRIVER%PHIINTEGRAL   +    (1.0/4.0)*((T%DRIVER%PHICOMMAND   - T%DRIVER%STATE(4))/2)*T%SIM%DELTATIME
   T%DRIVER%THETAINTEGRAL = T%DRIVER%THETAINTEGRAL +    (1.0/4.0)*((T%DRIVER%THETACOMMAND - T%DRIVER%STATE(5))/2)*T%SIM%DELTATIME
   T%DRIVER%PSIINTEGRAL   = T%DRIVER%PSIINTEGRAL   +    (1.0/4.0)*((T%DRIVER%PHICOMMAND   - T%DRIVER%STATE(6))/2)*T%SIM%DELTATIME
-  T%DRIVER%UINTEGRAL     = T%DRIVER%UINTEGRAL     + -(1.0/4.0)*((T%DRIVER%UCOMMAND     - T%DRIVER%STATE(7))/2)*T%SIM%DELTATIME
+  T%DRIVER%UINTEGRAL     = T%DRIVER%UINTEGRAL     + (1.0/4.0)*((T%DRIVER%UCOMMAND     - T%DRIVER%STATE(7))/2)*T%SIM%DELTATIME
+
+  !write(*,*) 'Driver state = ',T%DRIVER%STATE
+  !write(*,*) 'Driver state dot = ',T%DRIVER%STATEDOT
+  !PAUSE;STOP
     
   RETURN
   
@@ -2426,13 +2466,16 @@ end if
      read(unit=94,fmt=*,iostat=readflag) T%DRIVER%XINTEGRAL 
      read(unit=94,fmt=*,iostat=readflag) T%DRIVER%THETAINTEGRAL
      read(unit=94,fmt=*,iostat=readflag) T%DRIVER%PSIINTEGRAL
-     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%UCOMMAND !!Changed to UCOMMAND for forward flight 
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%UCOMMAND !!Changed to UCOMMAND for forward flight
+     !write(*,*) 'Ucommand = ',T%DRIVER%UCOMMAND
+     !PAUSE;STOP
      read(unit=94,fmt=*,iostat=readflag) T%DRIVER%YCOMMAND
      read(unit=94,fmt=*,iostat=readflag) T%DRIVER%ZCOMMAND
 
      T%DRIVER%WAYPOINT = 1 !This is always defaulted to 1
 
      !!!DO SOME CALCULATIONS ON driver
+     !write(*,*) 'Driver Weight,Gravity = ',T%DRIVER%WEIGHT,T%DRIVER%GRAVITY
      T%DRIVER%MASS = T%DRIVER%WEIGHT/T%DRIVER%GRAVITY 
      deti = + T%DRIVER%IXX*(T%DRIVER%IYY*T%DRIVER%IZZ-T%DRIVER%IYZ*T%DRIVER%IYZ) - T%DRIVER%IXY*(T%DRIVER%IXY*T%DRIVER%IZZ-T%DRIVER%IYZ*T%DRIVER%IXZ) + T%DRIVER%IXZ*(T%DRIVER%IXY*T%DRIVER%IYZ-T%DRIVER%IYY*T%DRIVER%IXZ)
      T%DRIVER%IXXI = (T%DRIVER%IYY*T%DRIVER%IZZ-T%DRIVER%IYZ*T%DRIVER%IYZ)/deti
@@ -4221,7 +4264,6 @@ END SUBROUTINE FIND2
 
 SUBROUTINE WRFMODEL(T)
   use TOSIMDATATYPES
-  !USE Math_Module, ONLY: M2FT, FT2M - Archaic from AREA-I days
   implicit none
   integer stepX,stepY,stepZ,stepT,extrapX,extrapY,extrapZ,extrapT,cord2(2)
   integer markX,markY,markZ,markT,gust,body
@@ -4679,7 +4721,6 @@ END SUBROUTINE WRFMODEL
 
 SUBROUTINE TURBULENCE(T)
   use TOSIMDATATYPES
-  !USE Math_Module, ONLY: FT2M, M2FT - Archaic from AREA-I days
   implicit none
   integer stepX,stepY,stepZ,stepT,extrapX,extrapY,extrapZ,extrapT,cord2(2)
   integer markX,markY,markZ,markT,gust,body
