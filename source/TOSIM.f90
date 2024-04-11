@@ -316,6 +316,61 @@ type ATMOSPHERESTRUCTURE
   real*8 :: DYD = 0                                ! Quadcopter aero parameter
   real*8 :: RNEW = 0                               ! Quadcopter aero parameter
   real*8 :: C_T = 0                                ! Quadcopter aero parameter
+  real*8 :: SAREA = 0                              ! Reference area of aircraft (m^2)
+  real*8 :: B = 0                                  ! Wingspan of aircraft(ft)
+  real*8 :: C_BAR = 0                              ! Mean chord of aircraft(ft)
+  real*8 :: PD = 0                                 ! propellor diameter (ft)
+  real*8 :: C_L = 0                                ! Lift coefficient (nd)
+  real*8 :: CXb = 0                                ! Axial coefficient (nd)
+  real*8 :: CYb = 0                                ! Lateral coefficient (nd)
+  real*8 :: CZb = 0                                ! Normal coefficient (nd)
+  real*8 :: Cll = 0                                ! Roll moment coefficient (nd)
+  real*8 :: Cm = 0                                 ! Pitch moment coefficient (nd)
+  real*8 :: Cn = 0                                 ! Yaw moment coefficient (nd)
+  real*8 :: C_D = 0                                ! Drag coefficient (nd)
+  real*8 :: C_L_0 = 0                              ! zero lift slope
+  real*8 :: C_L_ALPHA = 0                          ! lift curve slope
+  real*8 :: C_L_ALPHAHAT = 0                       ! dynamic lift curve slope
+  real*8 :: C_L_UHAT = 0                           ! increase in lift with speed
+  real*8 :: C_L_Q = 0                              ! increase in lift with q
+  real*8 :: C_D_Q = 0                              ! increase in drag with q
+  real*8 :: C_L_DE = 0                             ! increase in lift with elevator
+  real*8 :: C_L_DF = 0                             ! increase in lift with flaps
+  real*8 :: C_L_M = 0                              ! lift with mach no.
+  real*8 :: C_D_DF = 0                             ! drag with flaps
+  real*8 :: C_M_DF = 0                             ! moment with flaps
+  real*8 :: C_Y_BETA = 0                           ! side force w.r.t sideslip
+  real*8 :: C_Y_P = 0                              ! side force w.r.t roll rate
+  real*8 :: C_Y_R = 0                              ! side force w.r.t. yaw rate
+  real*8 :: C_Y_DR = 0                             ! side force w.r.t. rudder
+  real*8 :: C_Y_DA = 0                             ! side force w.r.t. aileron
+  real*8 :: C_D_0 = 0                              ! zero lift drag
+  real*8 :: C_D_ALPHA2 = 0                         ! drag polar
+  real*8 :: C_D_ALPHAHAT = 0                       ! dynamic drag polar
+  real*8 :: C_D_UHAT = 0                           ! increase in drag with speed
+  real*8 :: C_D_DE = 0                             ! inrease in drag with elevator
+  real*8 :: C_D_M = 0                              ! inrease in drag with mach no.
+  real*8 :: C_L_BETA = 0                           ! roll moment w.r.t beta
+  real*8 :: C_L_P = 0                              ! roll moment w.r.t roll rate
+  real*8 :: C_L_R = 0                              ! roll moment w.r.t. yaw rate
+  real*8 :: C_L_DR = 0                             ! roll moment w.r.t. rudder
+  real*8 :: C_L_DA = 0                             ! roll moment w.r.t. aileron
+  real*8 :: C_roll_ALPHA = 0                       ! roll moment w.r.t. angle of attack
+  real*8 :: C_N_ALPHA = 0                          ! yaw moment w.r.t. angle of attack
+  real*8 :: C_M_0 = 0                              ! zero lift moment
+  real*8 :: C_M_ALPHA = 0                          ! pitch moment curve
+  real*8 :: C_M_ALPHAHAT = 0                       ! dynamic moment curve
+  real*8 :: C_M_UHAT = 0                           ! increase in pitch moment w.r.t speed
+  real*8 :: C_M_Q = 0                              ! pitch moment w.r.t. q
+  real*8 :: C_M_DE = 0                             ! pitch moment w.r.t elevator
+  real*8 :: C_M_M = 0                              ! pitch moment w.r.t mach no.
+  real*8 :: C_M_BETA = 0                           ! pitch moment w.r.t beta
+  real*8 :: C_N_BETA = 0                           ! yaw moment w.r.t. beta
+  real*8 :: C_N_P = 0                              ! yaw moment w.r.t. roll rate
+  real*8 :: C_N_R = 0                              ! yaw moment w.r.t. yaw rate
+  real*8 :: C_N_DR = 0                             ! yaw moment w.r.t. rudder
+  real*8 :: C_N_DA = 0                             ! yaw moment w.r.t. aileron
+  real*8 :: C_X_DT = 0                             ! Thrust w.r.t. delthrust
   real*8 :: C_TAU = 0                              ! Quadcopter aero parameter
   real*8 :: LPHI12 = 0                             ! Quadcopter aero parameter
   real*8 :: LPHI34 = 0                             ! Quadcopter aero parameter
@@ -1299,7 +1354,7 @@ SUBROUTINE CONTROL(T,iflag)
  type(TOSIMSTRUCTURE) T
  LOGICAL :: DOUBLET = .FALSE.
  
-!!!!!!!!!!!!!!!!!!!!!!! COMPUTE iflag = 2a !!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!! COMPUTE iflag = 2 !!!!!!!!!!!!!!!!!!!!!!!!!!
  if (iflag .eq. 2) then
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1536,6 +1591,15 @@ SUBROUTINE CONTROL(T,iflag)
              T%TOW%MUVEC(j,1) = 1100.00D0
           end if
        end do
+
+       !!WE NEED TO ADD CONTROLS FOR AILERON, RUDDER, ELEVATOR,FLAPS
+       T%TOW%FLAPS = 0.0D0
+       T%TOW%AILERON = 0.00D0
+       T%TOW%ELEVATOR = 0.00D0
+       T%TOW%RUDDER = 0.00D0
+
+       !!ADD CONTROL SYSTEM FROM FASTCASST
+
     end if !Quad control off / on
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -3206,9 +3270,9 @@ SUBROUTINE TOWED(T,iflag)
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TOWED AERODYNAMIC MODEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    if (V_A .eq. 0) then
-        V_A = uaero
-    end if
+    !if (V_A .eq. 0) then
+    !    V_A = uaero
+    !end if
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Quadcopter Aerodynamic Model written by Lisa Schibelius - 12/2016!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -3277,8 +3341,7 @@ SUBROUTINE TOWED(T,iflag)
     Gammavec(1,1) = T%TOW%IRR * omegar * qb
     Gammavec(2,1) = -T%TOW%IRR * omegar * pb
     Gammavec(3,1) = 0
-    !gotodynamics
-
+    
     !!!!!!!!! Aerodynamics
     bquad = T%TOW%C_TAU*((T%ATM%DEN*qPI*(T%TOW%RNEW**5)/4))
 
@@ -3292,6 +3355,62 @@ SUBROUTINE TOWED(T,iflag)
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!END OF QUADCOPTER AERODYNAMIC MODEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    
+   !!!!!SINCE WE ARE SIMULATING A HYBRID VEHICLE FOR THE TOWED SYSTEM WE WILL INCLUDE A AIRCRAFT AERO MODEL AS WELL
+
+   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TOWED AERODYNAMIC MODEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    !!Dynamic pressure
+    q_inf = 0.5*T%ATM%DEN*(V_A**2)
+    q_inf_S = 0.5*T%ATM%DEN*(V_A**2)*T%TOW%SAREA  
+
+    !Mach number
+    T%ATM%SOS = 1086.336; !HARDCODED REVISIT REVISIT
+    MACH = V_A/T%ATM%SOS
+
+    !!Angle of attack and sideslip and alfahat/uhat/phat/qhat/rhat
+    if (abs(uaero) .gt. 0) then
+        alfa = atan2(waero,uaero)
+    else
+        alfa = 0
+    end if
+    
+    if (V_A .gt. 0) then
+        beta = asin(vaero/V_A)
+        wbdot = T%TOW%STATEDOT(10)
+        alfadot = wbdot/V_A
+        alfahat = alfadot * T%TOW%C_BAR / (2*V_A)
+        uhat = uaero/V_A
+        phat = pb*T%TOW%B    /(2*V_A)
+        qhat = qb*T%TOW%C_BAR/(2*V_A)
+        rhat = rb*T%TOW%B    /(2*V_A)
+    else
+        beta = 0
+        alfahat = 0
+        uhat = 0
+        phat = 0
+        qhat = 0
+        rhat = 0
+    end if
+    calfa = cos(alfa)
+    salfa = sin(alfa)
+
+    !!!Lift Drag and Side force
+    T%TOW%C_L = T%TOW%C_L_M*MACH + T%TOW%C_L_ALPHAHAT*alfahat + T%TOW%C_L_0 + T%TOW%C_L_ALPHA*alfa + T%TOW%C_L_UHAT*uhat + T%TOW%C_L_Q*qhat + T%TOW%C_L_DE*T%TOW%ELEVATOR + T%TOW%C_L_DF*T%TOW%FLAPS
+    C_Y = T%TOW%C_Y_BETA*beta + T%TOW%C_Y_P*phat + T%TOW%C_Y_R*rhat + T%TOW%C_Y_DR*T%TOW%RUDDER + T%TOW%C_Y_DA*T%TOW%AILERON
+    T%TOW%C_D = T%TOW%C_D_M*MACH + T%TOW%C_D_ALPHAHAT*alfahat + T%TOW%C_D_0 + T%TOW%C_D_ALPHA2*alfa + (T%TOW%C_L**2)/(PI*AR) + T%TOW%C_D_UHAT*uhat + T%TOW%C_D_DE*T%TOW%ELEVATOR + T%TOW%C_D_Q*qhat + T%TOW%C_D_DF*T%TOW%FLAPS
+
+    !!Roll,pitch and yaw coefficients
+    T%TOW%Cll = T%TOW%C_roll_ALPHA*alfa + T%TOW%C_L_BETA*beta + T%TOW%C_L_P*phat + T%TOW%C_L_R*rhat + T%TOW%C_L_DR*T%TOW%RUDDER + T%TOW%C_L_DA*T%TOW%AILERON
+    T%TOW%Cm = T%TOW%C_M_BETA*beta + T%TOW%C_M_M*MACH + T%TOW%C_M_ALPHAHAT*alfahat + T%TOW%C_M_0 + T%TOW%C_M_ALPHA*alfa + T%TOW%C_M_UHAT*uhat + T%TOW%C_M_Q*qhat + T%TOW%C_M_DE*T%TOW%ELEVATOR + T%TOW%C_M_DF*T%TOW%FLAPS
+    T%TOW%Cn = T%TOW%C_N_ALPHA*alfa + T%TOW%C_N_BETA*beta + T%TOW%C_N_P*phat + T%TOW%C_N_R*rhat + T%TOW%C_N_DR*T%TOW%RUDDER + T%TOW%C_N_DA*T%TOW%AILERON
+
+    T%TOW%FXAERO = T%TOW%FXAERO - q_inf_S*(calfa*(T%TOW%C_D) - salfa*T%TOW%C_L)
+    T%TOW%FYAERO = T%TOW%FYAERO + q_inf_S*C_Y
+    T%TOW%FZAERO = T%TOW%FZAERO - q_inf_S*(salfa*(T%TOW%C_D) + calfa*T%TOW%C_L)
+    T%TOW%MXAERO = T%TOW%MXAERO + q_inf_S*T%TOW%B*T%TOW%Cll
+    T%TOW%MYAERO = T%TOW%MYAERO + q_inf_S*T%TOW%C_BAR*T%TOW%Cm
+    T%TOW%MZAERO = T%TOW%MZAERO + q_inf_S*T%TOW%B*T%TOW%Cn
+
   end if !AEROFORCES
 
   ! Tether Forces and Moments
@@ -3460,6 +3579,51 @@ SUBROUTINE TOWED(T,iflag)
   read(unit=94,fmt=*,iostat=readflag) T%TOW%LTHETA34
   read(unit=94,fmt=*,iostat=readflag) T%TOW%OMEGAMAX
   read(unit=94,fmt=*,iostat=readflag) T%TOW%IRR
+
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%SAREA
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%B 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_BAR
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_0 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_M 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_M 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_M 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_ALPHA
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_ALPHA2
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_roll_ALPHA 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_ALPHA  
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_N_ALPHA 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_ALPHAHAT 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_ALPHAHAT 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_ALPHAHAT 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_UHAT 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_UHAT 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_UHAT 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_Y_BETA
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_BETA
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_BETA
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_N_BETA
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_Q 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_Q
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_Q
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_Y_P 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_P 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_N_P 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_Y_R 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_R   
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_N_R   
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_DE
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_DE
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_DE
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_Y_DA
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_DA
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_N_DA
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_Y_DR
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_DR
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_N_DR
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_DF 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_DF 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_DF 
+
   read(unit=94,fmt=*,iostat=readflag) T%TOW%MS_MIN
   read(unit=94,fmt=*,iostat=readflag) T%TOW%MS_MAX
   read(unit=94,fmt=*,iostat=readflag) readreal; T%TOW%CONTROLOFFON = int(readreal)

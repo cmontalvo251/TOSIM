@@ -2,7 +2,7 @@
 'THR'   	'Input_Files/Forward_Truck/TOSIM.THR'						!Tether input file
 'TCOM'  	'Input_Files/Forward_Truck/PayOutIn.TCOM'		!Tether Command Length File
 'DRIVER'  	'Input_Files/Forward_Truck/Truck.TCK'			!Driver input file                 
-'TOW'   	'Input_Files/Forward_Truck/Quad.COPTER'		!Towed Main Input file          
+'TOW'   	'Input_Files/Forward_Truck/Hybrid.VEH'		!Towed Main Input file          
 'SIM'   	'Input_Files/Forward_Truck/TOSIM.SIM'					!Simulation input file  
 'SOUT'  	'Output_Files/State.OUT'							!State output file      
 'MOUT'  	'Output_Files/Misc.OUT'								!Miscellaneous output file 
