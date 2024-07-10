@@ -1,9 +1,10 @@
 #!/usr/bin/python
+import sys
+sys.path.append('Supplemental_Files')
 import plotting as P
 import mio as M
 from pdf import *
 import os
-import sys
 import matplotlib.pyplot as plt
 import sixdof as SIX
 
