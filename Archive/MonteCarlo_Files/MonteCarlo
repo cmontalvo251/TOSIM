@@ -1,0 +1,135 @@
+#!/bin/bash
+
+
+#Remove all txt files
+rm Output_Files/*.txt
+rm Output_Files/*.OUT
+make
+
+THRFILE='Input_Files/Tethers/TOMAD.THR';
+#remember to substract 1 to start at 0 (so 54 and 55 is actually the yaw stiffness and damping
+ROW1=11 #KV
+ROW2=12 #KE
+NPTS=10
+PARAM1ST=1
+PARAM1END=60000000
+PARAM2ST=1
+PARAM2END=10000000
+
+#echo 'PARAMETERS = '$PARAM1ST $PARAM1END
+
+echo 'Computing Matrices'
+
+DBLST1=$(echo "scale=10; ${PARAM1ST}" | bc)
+DBLEND1=$(echo "scale=10; ${PARAM1END}" | bc)
+DBLST2=$(echo "scale=10; ${PARAM2ST}" | bc)
+DBLEND2=$(echo "scale=10; ${PARAM2END}" | bc)
+
+#echo 'DOUBLES = ' $DBLST1 $DBLEND1
+
+DIFF1=$(echo $DBLEND1- $DBLST1 | bc)
+DIFF2=$(echo $DBLEND2- $DBLST2 | bc)
+
+#echo 'DIFFERENCES = ' $DIFF1
+
+STEP1=$(echo "scale=10; $DIFF1/($NPTS-1)" | bc)
+STEP2=$(echo "scale=10; $DIFF2/($NPTS-1)" | bc)
+
+echo 'Step 1 = ' $STEP1
+echo 'Step 2 = ' $STEP2
+
+#Create a backup
+echo 'Creating Backup File'
+CURRENTDATE=$(date +%N)
+echo $CURRENTDATE
+cp $THRFILE $THRFILE.$CURRENTDATE.backup
+
+##Read in THR file
+echo 'Reading in File'
+exec 10<&0
+exec < $THRFILE
+declare -a ARRAY
+let count=0
+while read LINE
+do
+    ARRAY[$count]=$LINE
+    ((count++))
+done
+
+#declare -a RESTARTFILE
+#let countR=0
+
+echo 'Running Monte Carlo...'
+
+for (( i=1; i<=$NPTS; ++i ))
+do 
+    echo 'i='$i
+    for (( j=1; j<=$NPTS; ++j ))
+    do
+	echo 'j='$j
+	#Create Param1 and Param2
+	PARAM1=$(echo "scale=10; ($i-1)*$STEP1+$DBLST1" | bc)
+	PARAM2=$(echo "scale=10; ($j-1)*$STEP2+$DBLST2" | bc)
+	# echo 'Param1 = ' $PARAM1
+	# echo 'Param2 = ' $PARAM2
+
+	ARRAY[$ROW1]=$(echo $PARAM1 "!(Kv) Modulus of tether line (lbf/ft^2)")
+	ARRAY[$ROW2]=$(echo $PARAM2 "!(Cv) Damping Modulus of Tether line (lbf-s/ft^2)")
+
+	echo ${ARRAY[$ROW1]}
+	echo ${ARRAY[$ROW2]}
+
+	#Write contents of ARRAY to PAPAFile
+	rm $THRFILE
+	exec 10<> $THRFILE
+	for (( k=0; k<$count; ++k ))
+	do
+	    echo ${ARRAY[$k]} >> $THRFILE
+	done
+	exec 10>&-
+
+	#Run Code
+	echo 'Running Code'
+	./LinuxRun.exe Input_Files/TOMAD.ifiles 1> outfile
+	echo 'Code Finished'
+
+	#Rename output files
+	STATE=$(echo "Output_Files/State_"$i"_"$j".OUT")
+	# MISC=$(echo "Output_Files/Misc_"$i"_"$j".OUT")
+	# CONTROL=$(echo "Output_Files/Controls_"$i"_"$j".OUT")
+	# RESTARTFILE=$(echo "Output_Files/Default_"$i"_"$j".RESTART")
+	# EIGFILE=$(echo "Output_Files/A_"$i"_"$j".txt")
+
+	cp Output_Files/State.OUT $STATE
+	# cp Output_Files/Misc.OUT $MISC
+	# cp Output_Files/Controls.OUT $CONTROL
+	# cp Output_Files/Default.RESTART $RESTARTFILE
+	# cp Output_Files/A.txt $EIGFILE
+
+	#Open up Restart File
+	# echo 'Reading Restart File'
+	# exec 11<&0
+	# exec < Output_Files/Default.RESTART
+	# countR=0
+	# while read LINE
+	# do
+	#     RESTARTFILE[$countR]=$LINE
+	#     ((countR++))
+	# done
+	# exec 11>&-
+	# echo 'Restart File Read'
+
+	# ZERO=0
+
+	# #######HEADING ANGLE OF CANOPY############
+	# CANOPYPSI=${RESTARTFILE[7]:0:25}
+	# CRADLEPSI=${RESTARTFILE[10]:0:25}
+	# ALTITUDE=${RESTARTFILE[4]:0:25}
+	
+	# ./TestNum $CANOPYPSI 0.05
+	# ./TestNum $CRADLEPSI 0.05
+	# ./TestNum $ALTITUDE 0.01
+
+    done
+done
+

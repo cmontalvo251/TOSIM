@@ -1,0 +1,9 @@
+4	!Atmospheric Wind Type(1=constant,2=equation,3=table look up,4=WRF Model)    
+0.0	!Time On  
+1.0	 !Wind scale 
+1.0	!Turblevel    
+0	!Offset Heading(rad)    
+-9.02 !Vx_Wave_speed(ft/s)    
+9.02 !Vy_Wave_speed(ft/s)   
+'Input_Files/WRF_Model/' !WRF Data location    
+0.0	!Randomize Windfield(type in a percentage 0.1 = 10% gaussian distribution)  

@@ -1,0 +1,60 @@
+1	!Turn dynamics on(1) or off(0)
+1	!Gravity on(1) or off(0)
+1	!Aerodynamics on(1) or off(0)
+0	!Contact Forces on(1) or off(0)
+12.54	!Mass (kg)
+0	!Stationline center of mass(m)
+0	!buttline center of mass(m)
+0	!waterline center of mass(m)
+0.0422	!Ixx(kg*m^2)
+0.0422	!Iyy
+0.0422	!Izz
+0	!Ixy
+0	!Ixz
+0	!Iyz
+0.0730		!Reference_Area(m^2)
+2.04		!Wingspan(m)
+0.3215		!Mean_chord(m)
+20		!Trim_Velocity(m/s)
+0.33		!Propellor Diameter(m)
+0.00		!C_L_0
+0.0 		!C_L_alpha
+0.0		!C_L_u
+0.0 		!C_L_q
+0.0 		!C_L_de
+0.0		!C_y_beta
+0.00		!C_y_p
+0.0		!C_y_r
+0.0		!C_y_dr
+0.0		!C_y_da
+0.0 		!C_D_0
+0.0 		!C_D_alpha2(computed)
+0.0000 		!C_D_u
+0.0		!C_D_de	
+0.0      	!C_l_beta
+0.0		!C_l_p
+0.0		!C_l_r
+0.0     	!C_l_dr
+0.0      	!C_l_da
+0.0 		!C_m_0
+0.0	 	!C_m_alpha
+0.0 		!C_m_u
+0.0	 	!C_m_q
+0.0 		!C_m_de
+0.0       	!C_n_beta
+0.0      	!C_n_p
+0.0		!C_n_r
+0.0		!C_n_dr
+0.0		!C_n_da
+0		!Thrust Model (0 = linear, 1 = Table look up)
+0.0 		!C_x_delThrust(7.6509)
+2		!Engine Model Table Size
+0.035		!C_T 1
+0.0		!C_T 2
+0		!J 1
+0.6		!J 2
+550		!Omega(rad/s) at delthrust = 0.0
+1250		!Omega(rad/s) at delthrust = 0.9
+0.0		!delthrust 1
+0.9		!delthrust 2
+

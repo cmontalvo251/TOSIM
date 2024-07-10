@@ -1,0 +1,38 @@
+1	!Turn dynamics on(1) or off(0)
+1	!Gravity on(1) or off(0)
+1	!Aerodynamics on(1) or off(0)
+1	!Elastic forces on(1) or off(0)
+3	!Number of beads(May not exceed 100 unless you edit the source code)
+0.0148	!Mass per unit length (kg/m)
+300	!Unstretched total length of tether(m)
+500	!Maximum length(m)
+10	!Minimum length(m)
+0.0025	!Diameter of tether line(m)
+700000	!(Ke)Stiffness of tether line (N/m)
+200000	!(Kv)Stiffness of tether line (N/m)
+10000	!(Cv)Damping of tether line (Ns/m)
+0.3	!Tether material Poisson's Ratio(nd)
+1.0	!Skin Friction drag(nd)
+1.0	!Flate plate drag(nd)
+
+%%%%Data from Costello
+length = 1000 ft
+weight per length of 0.01 lbf/ft
+diameter of 0.0082 ft
+total line stiffness of 62,500 lbf/ft = 910,200 N/m
+damping ratio constant of 0.3
+number of beads = 100
+poisson's ratio for tether meterial = 0.3
+root of tension filter = 30.0
+
+
+100	!Unstretched total length of tether(m)
+500	!Maximum length(m)
+10	!Minimum length(m)
+0.0025	!Diameter of tether line(m)
+225	!(Ke)Stiffness of tether line (N/m)
+28.125	!(Kv)Stiffness of tether line (N/m)
+8.43750	!(Cv)Damping of tether line (Ns/m)
+0.3	!Tether material Poisson's Ratio(nd)
+1.0	!Skin Friction drag(nd)
+1.0	!Flate plate drag(nd)

@@ -1,0 +1,77 @@
+1	!Turn dynamics on(1) or off(0)
+1	!Gravity on(1) or off(0)
+1	!Aerodynamics on(1) or off(0)
+1 	!Run Alpha Sweeps? on (1) off (0)   
+     0.38194        Reference area (ft^2) [wing area]
+      1.3958        Lateral reference length (ft) [wing span]
+     0.27363        Longitudinal reference length (ft) [wing chord]
+  75.000        Reference airspeed (ft/sec)
+ 0.23630E-02    Reference air density (slug/ft^3)
+  8.0000        Reference level flight lift (lbf)
+  0.0000        Reference angle of attack (deg)
+     0.32700        Reference Ixx (slug-ft^2)
+     0.23100        Reference Iyy (slug-ft^2)
+     0.53300        Reference Izz (slug-ft^2)
+    -0.13800E-02	    Reference Ixy (slug-ft^2) -0.13800E-02
+    -0.23000E-02    Reference Ixz (slug-ft^2) -0.23000E-02
+    -0.68200E-02    Reference Iyz (slug-ft^2) -0.68200E-02
+      0.0000        Reference hx (slug-ft^2/sec)
+      0.0000        Reference hy (slug-ft^2/sec)
+      0.0000        Reference hz (slug-ft^2/sec)
+ 0.92124E-01    Reference drag coefficient
+      0.0000        Reference CL,M
+      0.0000        Reference CD,M
+      0.0000        Reference Cm,M
+  5.5897        Reference CL,alpha
+-0.35619E-02    Reference CD,alpha
+ 0    Reference Cl,alpha
+ -16.644        Reference Cm,alpha
+ 0    Reference Cn,alpha
+     0.31631        Reference CL,alphahat
+      0.0000        Reference CD,alphahat
+     -2.1674        Reference Cm,alphahat
+  0.0000        Reference CL,uhat
+  0.0000        Reference CD,uhat
+  0.0000        Reference Cm,uhat
+     -5.8947        Reference CY,beta
+    -0.11712E-01    Reference Cl,beta
+     0    Reference Cm,beta
+      7.1018        Reference Cn,beta
+  48.679        Reference CL,qbar
+ 0.23832E-03    Reference CD,qbar
+ -277.75        Reference Cm,qbar
+     0.24909E-02    Reference CY,pbar
+    -0.88812        Reference Cl,pbar
+    -0.44282E-02    Reference Cn,pbar
+  14.265        Reference CY,rbar
+ 0.30946E-02    Reference Cl,rbar
+ -18.311        Reference Cn,rbar
+      2.2035        Reference CL,delta-e
+     0.28760E-02    Reference CD,delta-e
+     -14.408        Reference Cm,delta-e
+-0.35223E-02    Reference CY,delta-a
+-0.35988E-01    Reference Cl,delta-a
+ 0.45021E-02    Reference Cn,delta-a
+    -0.74847E-02    Reference CY,delta-r
+     0.78085        Reference Cl,delta-r
+     0.93732E-02    Reference Cn,delta-r
+  0.0000        Reference CL,delta-f
+  0.0000        Reference CD,delta-f
+  0.0000        Reference Cm,delta-f
+      0.0000        Reference elevator trim deflection (deg)
+      0.0000        NOT SET ----- Reference CD3, change in CD with CS^2
+  1.5583        Maximum lift coefficient
+  16.000        Angle of attack at which CLmax occurs (deg)
+  13.        Angle of upper limit of linear lift (deg)
+  -1.        Post-CLmax lift slope (per radian) 
+     -1.5753        Minimum lift coefficient
+     -16.000        Angle of attack at which CLmin occurs (deg)
+      -13.        Angle of lower limit of linear lift (deg)
+      -1.        Post-CLmin lift slope (per radian) 
+  0.        T0: Full-throttle static thrust at STP (lbf)
+  0.        T': Coefficient of V for thrust at STP (lbf-sec/ft)
+  0.        T'': Coefficient of V^2 for thrust at STP (lbf-sec^2/ft^2)
+  1.0000        a: density exponent T=throttle[(T0+T'V+T''V^2)(rho/rho0)^a]
+  0.0000        Thrust offset, positive below CG (ft)
+  0.0000        Thrust slope, dT/dV (lbf-sec/ft)
+

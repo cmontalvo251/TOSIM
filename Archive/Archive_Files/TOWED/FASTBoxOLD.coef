@@ -1,0 +1,76 @@
+1		!Turn dynamics on(1) or off(0)                      
+1		!Gravity on(1) or off(0)                      
+1		!Aerodynamics on(1) or off(0) or Wings(2) or Wings Sim Tables(3)                     
+1		!Run Alpha Sweeps? on (1) off (0)                      
+0.0645835	!Reference area (ft^2) [box cross-sectional area]    SAREA                 
+0.328084	!Lateral reference length (ft) [span of box, set at 10cm]  B                    
+0.656168	!Longitudinal reference length (ft) [chord length, set at 20.2cm] c_bar       a              
+10.000		!Reference airspeed (ft/sec)                      
+0.23630E-02	!Reference air density (slug/ft^3)                      
+0.339512	!Weight? (lbf) (8.0) ~0.339512 lbf,154g payload experimented. 0.99208 for 450g payload.
+0.0000		!Reference angle of attack (deg)                      
+0.002426	!Reference Ixx (slug-ft^2)                      
+0.000649	!Reference Iyy (slug-ft^2)                      
+0.002121	!Reference Izz (slug-ft^2)                      
+0.000434	!Reference Ixy (slug-ft^2)                      
+-0.00072356	!Reference Ixz (slug-ft^2)                      
+0.000215	!Reference Iyz (slug-ft^2)                      
+0.0000		!Reference hx (slug-ft^2/sec)                      
+0.0000		!Reference hy (slug-ft^2/sec)                      
+0.0000		!Reference hz (slug-ft^2/sec)                      
+-0.7889602	!Reference CX                     
+-0.4038202	!Reference CY                      
+-0.4038202	!Reference CZ                      
+-0.3207103	!Reference CL                      
+0.1245958	!Reference CM                      
+-0.4038202	!Reference CN                      
+-3.0000000	!Reference CLP                      
+-0.0807640	!Reference CMQ                      
+-0.0807640	!Reference CNR                      
+0.0000		!Reference CL,alphahat                      
+0.0000		!Reference CD,alphahat                      
+0.0000		!Reference Cm,alphahat                      
+0.0000		!Reference CL,uhat                      
+0.0000		!Reference CD,uhat                      
+0.0000		!Reference Cm,uhat                      
+0.0000		!Reference CY,beta                      
+0.0000		!Reference Cl,beta                      
+0.0000		!Reference Cm,beta                      
+0.0000		!Reference Cn,beta                      
+0.0000		!Reference CL,qbar                      
+0.0000		!Reference CD,qbar                      
+0.0000		!Reference Cm,qbar                      
+0.0000		!Reference CY,pbar                      
+0.0000		!Reference Cl,pbar                      
+0.0000		!Reference Cn,pbar                      
+0.0000		!Reference CY,rbar                      
+0.0000		!Reference Cl,rbar                      
+0.0000		!Reference Cn,rbar                      
+0.0000		!Reference CL,delta-e                      
+0.0000		!Reference CD,delta-e                      
+0.0000		!Reference Cm,delta-e                      
+0.0000		!Reference CY,delta-a                      
+0.0000	    !Reference Cl,delta-a                      
+0.0000    	!Reference Cn,delta-a                      
+0.0000  		  !Reference CY,delta-r                      
+0.0000        	!Reference Cl,delta-r                      
+0.0000	    	!Reference Cn,delta-r                      
+0.0000        	!Reference CL,delta-f                      
+0.0000        	!Reference CD,delta-f                      
+0.0000        	!Reference Cm,delta-f                      
+0.0000        	!Reference elevator trim deflection (deg)                      
+0.0000        	!NOT SET ----- Reference CD3, change in CD with CS^2                      
+0.0000        	!Maximum lift coefficient                      
+0.0000        	!Angle of attack at which CLmax occurs (deg)                      
+0.0000    	!Angle of upper limit of linear lift (deg)                      
+0.0000    	!Post-CLmax lift slope (per radian)                       
+0.0000        	!Minimum lift coefficient                      
+0.0000        	!Angle of attack at which CLmin occurs (deg)                      
+0.0000     	!Angle of lower limit of linear lift (deg)                      
+0.0000      	!Post-CLmin lift slope (per radian)                       
+0.0000        	!T0: Full-throttle static thrust at STP (lbf)                      
+0.0000        	!T': Coefficient of V for thrust at STP (lbf-sec/ft)                      
+0.0000        	!T'': Coefficient of V^2 for thrust at STP (lbf-sec^2/ft^2)                      
+0.0000        	!a: density exponent T=throttle[(T0+T'V+T''V^2)(rho/rho0)^a]                      
+0.0000        	!Thrust offset, positive below CG (ft)                      
+0.0000        	!Thrust slope, dT/dV (lbf-sec/ft)                      

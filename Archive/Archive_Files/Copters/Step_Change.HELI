@@ -1,0 +1,16 @@
+1       !Turn module off(0) or on(1)
+2	!Heli Module Type(1=Constant Speed,2=Table Lookup)
+-16.0	!Stationline of reel point in heli reference frame(ft)
+8.5	!Buttline of reel point in heli reference frame(ft)
+0	!Waterline of reel point in heli reference frame(ft)
+0	!Heli air wake on or off(0=off,1=on)  
+'/cygdrive/c/Users/carlos/Work/EDC/Ship_Airwake_Data/DDG_81_WOD_25kt_000deg/Wake_Data_Coarse/' !Heli Airwake Data location
+-48.713 !Stationline of heli airwake start in heli reference frame(ft)
+0	!Buttline of heli airwake start in heli reference frame(ft)
+3.253	!Waterline of heli airwake start in heli reference frame(ft)
+4 !Table Size 
+0      0               0            0           0          0          0                   0         0             0         0          0                0
+50     0               0            0           0          0          0                   0         0             0         0          0                0
+52     0               0            0           0          0          0                   0         0             0         0          0                0
+120    0               0            0           0          0          0                   0         0             0         0          0                0
+
