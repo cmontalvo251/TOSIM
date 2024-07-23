@@ -1,5 +1,5 @@
 0.0	 	!Initial Time(sec)                        
-10.0	 	!Final Time(sec)  
+1.0	 	!Final Time(sec)  
 0.00001		!Timestep(sec) (0.000005 for tether beads >2)                      
 10000		!Output skip (10000)                        
 1		!Control system on(1) or off(0)                        

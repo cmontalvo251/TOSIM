@@ -38,11 +38,14 @@ def xlim_auto(x0,xf,x,y):
     plt.ylim([miny,1.15*np.max(y[i])])
 
 def plottool(fontsize,xlabel,ylabel,title):
-    # print(type(fontsize))
-    # print(type(str))
+    #print('Plottool...')
+    #print(fontsize,xlabel,ylabel,title)
     if type(fontsize) != type('s'):
+        #print('Changing Font Size')
         plt.rcParams.update({'font.size': fontsize})
+    #print('Creating Figure')
     fig = plt.figure()
+    #print('Figure Created')
     rect = fig.patch
     rect.set_facecolor('white')
     plti = fig.add_subplot(1,1,1)
@@ -50,6 +53,7 @@ def plottool(fontsize,xlabel,ylabel,title):
     plti.set_xlabel(xlabel)
     plti.set_ylabel(ylabel)
     plti.set_title(title)
+    
     plti.get_yaxis().get_major_formatter().set_useOffset(False)
     plti.get_xaxis().get_major_formatter().set_useOffset(False)
     if title == 'Latitude vs. Longitude':

@@ -50,6 +50,7 @@ ylabel = ['x (ft)','y (ft)','z (ft)','Roll Angle (deg)','Pitch Angle (deg)','Yaw
 for idx in range(0,12):
     print('Plotting Driver State = ',ylabel[idx])
     plti = P.plottool(fontSize,'Time(sec)',ylabel[idx],'Driver')
+    #print('Plot created...')
     plti.plot(time,driver_state[:,idx],'k-',linewidth=2)
     plt.gcf().subplots_adjust(left=0.18)
     pp.savefig()

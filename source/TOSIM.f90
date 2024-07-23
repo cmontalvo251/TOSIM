@@ -317,6 +317,7 @@ type ATMOSPHERESTRUCTURE
   real*8 :: RNEW = 0                               ! Quadcopter aero parameter
   real*8 :: C_T = 0                                ! Quadcopter aero parameter
   real*8 :: SAREA = 0                              ! Reference area of aircraft (m^2)
+  real*8 :: AR = 0                                 ! Aspect ratio of aircraft (nd)
   real*8 :: B = 0                                  ! Wingspan of aircraft(ft)
   real*8 :: C_BAR = 0                              ! Mean chord of aircraft(ft)
   real*8 :: PD = 0                                 ! propellor diameter (ft)
@@ -3134,7 +3135,7 @@ SUBROUTINE TOWED(T,iflag)
  real*8 sphilse,cphilse,sgamlse,cgamlse,ulse,vlse,wlse,cllse,cdlse,liftlse,draglse,sangle,cangle
  real*8 fxloc,fyloc,fzloc,ct,J,T_0,T_A,Q_A,V_A,omega,rps,alfa,beta,C_Y,C_n,C_m,uaero,vaero,waero
  real*8 C_Ftether_I(3,1),C_Ftether_B(3,1),alfahat,alfadot,MACH,C_Mtether_B(3,1),rCF_B(3,1),S_rCF_B(3,3)
- real*8 vF_I(3,1),vC_I(3,1),rC_I(3,1),rF_I(3,1),S_wt_B(3,3),phat,rhat,qhat,uhat,AR
+ real*8 vF_I(3,1),vC_I(3,1),rC_I(3,1),rF_I(3,1),S_wt_B(3,3),phat,rhat,qhat,uhat
  real*8 xcgcp, ycgcp, zcgcp,TVEC(4),TDOTVEC(4),TDBLDOTVEC(4),Gammavec(3,1),zetaF
  real*8 thrust,sumomega,sigmaF,omegar,omegaF,C3F(4),C2F(4),C1F(4),bquad,forcevec(4,1)
  integer idx
@@ -3397,12 +3398,27 @@ SUBROUTINE TOWED(T,iflag)
     !!!Lift Drag and Side force
     T%TOW%C_L = T%TOW%C_L_M*MACH + T%TOW%C_L_ALPHAHAT*alfahat + T%TOW%C_L_0 + T%TOW%C_L_ALPHA*alfa + T%TOW%C_L_UHAT*uhat + T%TOW%C_L_Q*qhat + T%TOW%C_L_DE*T%TOW%ELEVATOR + T%TOW%C_L_DF*T%TOW%FLAPS
     C_Y = T%TOW%C_Y_BETA*beta + T%TOW%C_Y_P*phat + T%TOW%C_Y_R*rhat + T%TOW%C_Y_DR*T%TOW%RUDDER + T%TOW%C_Y_DA*T%TOW%AILERON
-    T%TOW%C_D = T%TOW%C_D_M*MACH + T%TOW%C_D_ALPHAHAT*alfahat + T%TOW%C_D_0 + T%TOW%C_D_ALPHA2*alfa + (T%TOW%C_L**2)/(PI*AR) + T%TOW%C_D_UHAT*uhat + T%TOW%C_D_DE*T%TOW%ELEVATOR + T%TOW%C_D_Q*qhat + T%TOW%C_D_DF*T%TOW%FLAPS
+
+    !!COMPUTE DRAG COEFFICIENT
+    T%TOW%C_D = T%TOW%C_D_M*MACH + T%TOW%C_D_ALPHAHAT*alfahat + T%TOW%C_D_0 + T%TOW%C_D_ALPHA2*alfa
+    !write(*,*) "CD part 1= ",T%TOW%C_D
+    T%TOW%C_D = T%TOW%C_D + (T%TOW%C_L**2)/(PI*T%TOW%AR) + T%TOW%C_D_UHAT*uhat + T%TOW%C_D_DE*T%TOW%ELEVATOR
+    !write(*,*) 'Params = ',AR,uhat,T%TOW%ELEVATOR
+    !write(*,*) 'AR = ',T%TOW%AR
+    !write(*,*) "CD part 2=",T%TOW%C_D
+    T%TOW%C_D = T%TOW%C_D + T%TOW%C_D_Q*qhat + T%TOW%C_D_DF*T%TOW%FLAPS
+    !write(*,*) "CD = ",T%TOW%C_D
+    !PAUSE
 
     !!Roll,pitch and yaw coefficients
     T%TOW%Cll = T%TOW%C_roll_ALPHA*alfa + T%TOW%C_L_BETA*beta + T%TOW%C_L_P*phat + T%TOW%C_L_R*rhat + T%TOW%C_L_DR*T%TOW%RUDDER + T%TOW%C_L_DA*T%TOW%AILERON
     T%TOW%Cm = T%TOW%C_M_BETA*beta + T%TOW%C_M_M*MACH + T%TOW%C_M_ALPHAHAT*alfahat + T%TOW%C_M_0 + T%TOW%C_M_ALPHA*alfa + T%TOW%C_M_UHAT*uhat + T%TOW%C_M_Q*qhat + T%TOW%C_M_DE*T%TOW%ELEVATOR + T%TOW%C_M_DF*T%TOW%FLAPS
     T%TOW%Cn = T%TOW%C_N_ALPHA*alfa + T%TOW%C_N_BETA*beta + T%TOW%C_N_P*phat + T%TOW%C_N_R*rhat + T%TOW%C_N_DR*T%TOW%RUDDER + T%TOW%C_N_DA*T%TOW%AILERON
+
+    !write(*,*) "FXAERO BEFORE",T%TOW%FXAERO
+    !write(*,*) q_inf_S,calfa,T%TOW%C_D,salfa,T%TOW%C_L
+    !write(*,*) 'CD = ',T%TOW%C_D
+    !PAUSE
 
     T%TOW%FXAERO = T%TOW%FXAERO - q_inf_S*(calfa*(T%TOW%C_D) - salfa*T%TOW%C_L)
     T%TOW%FYAERO = T%TOW%FYAERO + q_inf_S*C_Y
@@ -3410,6 +3426,9 @@ SUBROUTINE TOWED(T,iflag)
     T%TOW%MXAERO = T%TOW%MXAERO + q_inf_S*T%TOW%B*T%TOW%Cll
     T%TOW%MYAERO = T%TOW%MYAERO + q_inf_S*T%TOW%C_BAR*T%TOW%Cm
     T%TOW%MZAERO = T%TOW%MZAERO + q_inf_S*T%TOW%B*T%TOW%Cn
+
+    !write(*,*) "FXAERO AFTER",T%TOW%FXAERO
+    !PAUSE
 
   end if !AEROFORCES
 
@@ -3465,6 +3484,9 @@ SUBROUTINE TOWED(T,iflag)
   T%TOW%MXTOTAL = T%TOW%MXGRAV + T%TOW%MXAERO + T%TOW%MXCONT
   T%TOW%MYTOTAL = T%TOW%MYGRAV + T%TOW%MYAERO + T%TOW%MYCONT
   T%TOW%MZTOTAL = T%TOW%MZGRAV + T%TOW%MZAERO + T%TOW%MZCONT
+
+  !!write(*,*) T%TOW%FXTOTAL,T%TOW%FXGRAV,T%TOW%FXAERO,T%TOW%FXCONT
+  !PAUSE
   
   ! State Derivatives
   
@@ -3533,6 +3555,10 @@ SUBROUTINE TOWED(T,iflag)
   T%TOW%STATEDOT(19) = TDBLDOTVEC(3)
   T%TOW%STATEDOT(20) = TDOTVEC(4)
   T%TOW%STATEDOT(21) = TDBLDOTVEC(4)
+
+  !write(*,*) T%TOW%STATEDOT
+  !write(*,*) T%TOW%FXTOTAL,T%TOW%FYTOTAL,T%TOW%FZTOTAL
+  !PAUSE
   
   RETURN
   
@@ -3656,6 +3682,7 @@ SUBROUTINE TOWED(T,iflag)
   read(unit=94,fmt=*,iostat=readflag) T%TOW%ZCOMMAND
   close(94) 
    
+  !Comptue mass and inverse of inertia
   T%TOW%MASS = T%TOW%WEIGHT/T%GRAVITY
   deti = + T%TOW%IXX*(T%TOW%IYY*T%TOW%IZZ-T%TOW%IYZ*T%TOW%IYZ) - T%TOW%IXY*(T%TOW%IXY*T%TOW%IZZ-T%TOW%IYZ*T%TOW%IXZ) + T%TOW%IXZ*(T%TOW%IXY*T%TOW%IYZ-T%TOW%IYY*T%TOW%IXZ)
   T%TOW%IXXI = (T%TOW%IYY*T%TOW%IZZ-T%TOW%IYZ*T%TOW%IYZ)/deti
@@ -3664,6 +3691,9 @@ SUBROUTINE TOWED(T,iflag)
   T%TOW%IYYI = (T%TOW%IXX*T%TOW%IZZ-T%TOW%IXZ*T%TOW%IXZ)/deti
   T%TOW%IYZI = (T%TOW%IXY*T%TOW%IXZ-T%TOW%IXX*T%TOW%IYZ)/deti
   T%TOW%IZZI = (T%TOW%IXX*T%TOW%IYY-T%TOW%IXY*T%TOW%IXY)/deti
+
+  !Compute Aspect Ratio
+  T%TOW%AR = T%TOW%B**2/T%TOW%SAREA
 
   write(*,*) 'TOWED Load Complete'
  
