@@ -1,6 +1,6 @@
 !!!!!!!!!!!!!!! MODULE TOSIMDATATYPES!!!!!!!!!!!!!!!!!!!!!!!!!!
 module TOSIMDATATYPES
-IMPLICIT NONE
+IMPLICIT NONE 
  integer,parameter :: MAXNBEADS = 100              ! Units: 'nd', Desc: 'Maximum Number of Tether Beads'
  integer,parameter :: MAXNALT = 200                ! Units: 'nd', Desc: 'Maximum Number of Atmosphere Altitude Table Points'
  integer,parameter :: MAXNLSE = 20                 ! Units: 'nd', Desc: 'Maximum Number of Lifting Surface Elements'
@@ -443,8 +443,8 @@ type ATMOSPHERESTRUCTURE
   real*8 :: INITIALPSI = 0.0                       ! Units: 'rad', Desc: 'Initial Euler Yaw Angle of Aircraft'
   real*8 :: INITIALSTATE(21) = 0.0                 ! Units: 'vd', Desc: 'Initial Aircraft State Vector'
   real*8 :: PHI = 0                                ! Units: 'rad', Desc: Aircraft roll angle
-  real*8 :: THETA = 0                              ! Units: 'rad', Desc: Aircraft roll angle
-  real*8 :: PSI = 0                                ! Units: 'rad', Desc: Aircraft roll angle
+  real*8 :: THETA = 0                              ! Units: 'rad', Desc: Aircraft pitch angle
+  real*8 :: PSI = 0                                ! Units: 'rad', Desc: Aircraft yaw angle
   real*8 :: STATE(21) = 0.0                        ! Units: 'vd', Desc: 'Aircraft State Vector'
   real*8 :: STATEPREV(21) = 0.0                    ! Units: 'vd', Desc: 'Aircraft State Vector before camera snapshot'
   real*8 :: STATEDOT(21) = 0.0                     ! Units: 'vd', Desc: 'Aircraft State Vector Derivative'
@@ -781,6 +781,8 @@ SUBROUTINE SIMULATION(T,iflag)
  real*4 tictotal,ticuser,ticsystem,toctotal,tocuser,tocsystem,elapsed(2)
  real*4 etime,aoa,unominal,wnominal,ALFAMAX
  real*8 krkactuator(NOACTUATORS,4),nomactuator(NOACTUATORS)
+ real*8 control_aileron, control_elevator, control_rudder
+ !real*8 aileron_index, elevator_index,rudder_index
  real*8 zint
  type(TOSIMSTRUCTURE) T
 
@@ -848,6 +850,7 @@ SUBROUTINE SIMULATION(T,iflag)
       ! T%SIM%STATE(T%SIM%NOSTATES-7:T%SIM%NOSTATES),T%SIM%STATEDOT(T%SIM%NOSTATES-7:T%SIM%NOSTATES)
       !Control OUT File
     write(91,fmt='(1000F30.10)') T%SIM%TIME,T%TOW%AILERON,T%TOW%ELEVATOR,T%TOW%RUDDER,T%TOW%FLAPS,T%TOW%OMEGAVEC(1:4,1), T%DRIVER%FYGRAV, T%DRIVER%FYAERO, T%DRIVER%FYCONT
+    !write(91,fmt='(1000F30.10)') T%SIM%TIME,control_aileron,control_elevator,control_rudder,T%TOW%FLAPS,T%TOW%OMEGAVEC(1:4,1), T%DRIVER%FYGRAV, T%DRIVER%FYAERO, T%DRIVER%FYCONT
       !Force Vector File
     write(83,fmt='(1000F30.10)') T%SIM%TIME,T%THR%FXGRAV(1:T%THR%NBEADS),T%THR%FYGRAV(1:T%THR%NBEADS),T%THR%FZGRAV(1:T%THR%NBEADS),T%THR%FXELAS(1:T%THR%NBEADS),T%THR%FYELAS(1:T%THR%NBEADS),T%THR%FZELAS(1:T%THR%NBEADS),T%THR%FXAERO(1:T%THR%NBEADS),T%THR%FYAERO(1:T%THR%NBEADS),T%THR%FZAERO(1:T%THR%NBEADS)
    end if 
@@ -892,20 +895,7 @@ SUBROUTINE SIMULATION(T,iflag)
           T%SIM%STATE(k) = nominalstate(k) + krkbody(k,j-1)/rkalfa(j)
        end do
        !Actuator Dynamics
-       if (T%SIM%ACTUATORONOFF .eq. 1) then
-          do k = 1,NOACTUATORS
-             T%SIM%ACTUATOR(k) = nomactuator(k) + krkactuator(k,j-1)/rkalfa(j)
-          end do
-       end if
-    end if
 
-
-    if (j .ne. 1) then
-       T%SIM%TIME = nominaltime + T%SIM%DELTATIME/rkalfa(j)
-       do k=1,T%SIM%NOSTATES
-          T%SIM%STATE(k) = nominalstate(k) + krkbody(k,j-1)/rkalfa(j)
-       end do
-       !Actuator Dynamics
        if (T%SIM%ACTUATORONOFF .eq. 1) then
           do k = 1,NOACTUATORS
              T%SIM%ACTUATOR(k) = nomactuator(k) + krkactuator(k,j-1)/rkalfa(j)
@@ -947,6 +937,7 @@ SUBROUTINE SIMULATION(T,iflag)
    ! Step Time
 
    T%SIM%TIME = nominaltime + T%SIM%DELTATIME
+
 
    ! Step States
 
@@ -1126,6 +1117,8 @@ SUBROUTINE SIMULATION(T,iflag)
 
      !Read controls
 
+     !call controls(T, 2)
+
      read(unit=90,fmt=*,iostat=readflag) T%TOW%DELTHRUST
      read(unit=90,fmt=*,iostat=readflag) T%TOW%ELEVATOR
      read(unit=90,fmt=*,iostat=readflag) T%TOW%AILERON
@@ -1162,9 +1155,9 @@ SUBROUTINE SIMULATION(T,iflag)
      !write(*,*) 'Towed Initial States from input file = ',T%TOW%INITIALSTATE(1:20)
      
      !!!Convert Phi,theta,psi to quaternions!!!
-     T%TOW%INITIALPHI = T%TOW%INITIALSTATE(4)
-     T%TOW%INITIALTHETA = T%TOW%INITIALSTATE(5)
-     T%TOW%INITIALPSI = T%TOW%INITIALSTATE(6)
+     T%TOW%INITIALPHI = T%TOW%INITIALSTATE(4) 
+     T%TOW%INITIALTHETA = T%TOW%INITIALSTATE(5) 
+     T%TOW%INITIALPSI = T%TOW%INITIALSTATE(6) 
 
      T%TOW%INITIALSTATE(21) = T%TOW%INITIALSTATE(20) ! T4dot
      T%TOW%INITIALSTATE(20) = T%TOW%INITIALSTATE(19) ! T4
@@ -1352,8 +1345,18 @@ SUBROUTINE CONTROL(T,iflag)
  real*8 domegaLeft,omegaRight,domegaFront,omegaBack,domegaDiag,omegaOpp,omegaDiag,omegaFront
  real*8 xwaypoint(nwp,1),ywaypoint(nwp,1),zwaypoint(nwp,1),Dwaypoint
  real*8 delmu(4),munominal,MAXANGLE,z,udriver
+ real*8 KDPHI, KDPSI, KDTHETA, KPPHI, KPPSI, KPTHETA,PSICOMMAND, THETAINTEGRAL, PHIINTEGRAL,PSIINTEGRAL
+ real*8 KP_a,KD_a,KP_e,KD_e,KP_r,KD_r,KI_a,KI_e,KI_r
+ real*8 control_aileron,control_elevator,control_rudder
+ real*8 k_phi, k_p      ! Gains for roll control (aileron)
+ real*8 k_theta, k_q    ! Gains for pitch control (elevator)
+ real*8 k_psi, k_r      ! Gains for yaw control (rudder)
+ real*8 error_phi, error_theta, error_psi
+
+
  type(TOSIMSTRUCTURE) T
  LOGICAL :: DOUBLET = .FALSE.
+
  
 !!!!!!!!!!!!!!!!!!!!!!! COMPUTE iflag = 2 !!!!!!!!!!!!!!!!!!!!!!!!!!
  if (iflag .eq. 2) then
@@ -1594,12 +1597,60 @@ SUBROUTINE CONTROL(T,iflag)
        end do
 
        !!WE NEED TO ADD CONTROLS FOR AILERON, RUDDER, ELEVATOR,FLAPS
-       T%TOW%FLAPS = 0.0D0
-       T%TOW%AILERON = 0.00D0
-       T%TOW%ELEVATOR = 0.00D0
-       T%TOW%RUDDER = 0.00D0
+       !T%TOW%FLAPS = 0.0D0
+       !T%TOW%AILERON = 0.0D0
+       !T%TOW%ELEVATOR = 0.0D0
+       !T%TOW%RUDDER = 0.0D0
 
-       !!ADD CONTROL SYSTEM FROM FASTCASST
+       !!ADD CONTROL - PID
+       KP_a = 40.0D0
+       KI_a = 50.0D0
+       KD_a = 20.0D0
+       KP_e = 40.0D0
+       KI_e = 10.0D0
+       KD_e = 25.0D0
+       KP_r = 15.0D0
+       KI_r = 50.0D0
+       KD_r = 60.0D0
+       PHICOMMAND = 0.00D0
+       THETACOMMAND = 0.00D0
+       PSICOMMAND = 0.00D0
+
+       control_aileron = -KP_a *(PHI-PHICOMMAND) + KD_a*p + KI_a*(PHIINTEGRAL)                !KPPHI*(PHI-PHICOMMAND) + KDPHI*p           
+       control_elevator = KP_e*(THETA-THETACOMMAND) + KD_e*q + KI_e*(THETAINTEGRAL)           !KPTHETA*(THETA-THETACOMMAND) + KDTHETA*q          
+       control_rudder = -KP_r*(PSI-PSICOMMAND) +KD_r*r + KI_r*(PSIINTEGRAL)                   !KPPSI*(PSI-PSICOMMAND) + KDPSI*r
+
+       !!WE NEED TO ADD CONTROLS FOR AILERON, RUDDER, ELEVATOR,FLAPS
+       T%TOW%FLAPS = 0.0D0
+       T%TOW%AILERON = control_aileron
+       T%TOW%ELEVATOR = control_elevator
+       T%TOW%RUDDER = control_rudder
+
+        !write(*,*) 'control_aileron = ',control_aileron
+        !write(*,*) 'control_elevator = ',control_elevator
+        !write(*,*) 'control_rudder = ',control_rudder
+        !write(*,*) 'KPPHI = ',KPPHI
+        !write(*,*) 'KP_a = ',KP_a
+        !write(*,*) 'PHI = ',PHI
+        !write(*,*) 'PHICOMMAND = ',PHICOMMAND
+        !write(*,*) 'KDPHI = ',KDPHI
+        !write(*,*) 'KD_a = ',Kd_a
+        !write(*,*) 'p = ',p
+        !write(*,*) 'KPTHETA = ',KPTHETA
+        !write(*,*) 'KP_e = ',KP_E
+        !write(*,*) 'THETA = ',THETA
+        !write(*,*) 'THETACOMMAND = ',THETACOMMAND
+        !write(*,*) 'KDTHETA = ',KDTHETA
+        !write(*,*) 'KD_e = ',KD_e
+        !write(*,*) 'q = ',q
+        !write(*,*) 'KPPSI = ',KPPSI
+        !write(*,*) 'KP_r = ',KP_r
+        !write(*,*) 'PSI = ',PSI
+        !write(*,*) 'PSICOMMAND = ',PSICOMMAND
+        !write(*,*) 'KDPSI = ',KDPSI
+        !write(*,*) 'KD_r = ',KD_r
+        !write(*,*) 'r = ',r
+       
 
     end if !Quad control off / on
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1625,6 +1676,7 @@ SUBROUTINE CONTROL(T,iflag)
 end if
 
 END SUBROUTINE CONTROL
+
 
 !!!!!!!!!!!!!!!!!!!1!!! SUBROUTINE ATMOSPHERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -3478,7 +3530,7 @@ SUBROUTINE TOWED(T,iflag)
 
   ! Total Forces and Moments
 
-  T%TOW%FXTOTAL = T%TOW%FXGRAV + T%TOW%FXAERO + T%TOW%FXCONT
+  T%TOW%FXTOTAL = T%TOW%FXGRAV + T%TOW%FXAERO + T%TOW%FXCONT         !T%DRIVER%XDOT maybe
   T%TOW%FYTOTAL = T%TOW%FYGRAV + T%TOW%FYAERO + T%TOW%FYCONT 
   T%TOW%FZTOTAL = T%TOW%FZGRAV + T%TOW%FZAERO + T%TOW%FZCONT
   T%TOW%MXTOTAL = T%TOW%MXGRAV + T%TOW%MXAERO + T%TOW%MXCONT

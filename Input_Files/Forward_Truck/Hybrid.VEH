@@ -1,21 +1,21 @@
 1		!Turn module off(0) or on(1)                                 
 1		!Gravity on(1) or off(0)
 1		!Aerodynamics on(1) or off(0)
-2.82635	!Weight (lbf) OR 1.282 (kg) 
-32.2	!Gravity (ft/s^2)
+3	!Weight (lbf) OR 1.282 (kg)  2.82635
+32.2	!Gravity (ft/s^2)  
 0.0		!Stationline center of mass(m)
 0.0		!buttline center of mass(m)
 0.0		!waterline center of mass(m)
-0.0     !Stationline of Tether Attachment Point on Towed in Towed Reference Frame(ft) 
-0.0 		!Buttline of Tether Attachment Point on Towed in Towed Reference Frame(ft)
-0.0     !Waterline of Tether Attachment Point on Towed in Towed Reference Frame(ft)
+-0.1     !Stationline of Tether Attachment Point on Towed in Towed Reference Frame(ft)
+0.0 	!Buttline of Tether Attachment Point on Towed in Towed Reference Frame(ft)
+-0.15     !Waterline of Tether Attachment Point on Towed in Towed Reference Frame(ft)
 0.00367319330305115		!Ixx (slugs*ft^2)
 0.00367319330305115		!Iyy (slugs*ft^2)
 0.0064860248447205		!Izz (slugs*ft^2)
 0.000		!Ixy
 0.000		!Ixz
 0.000		!Iyz (lb*ft^2) OR 2.428e-4 (kg*m^2)
-1.0			!Turn_Radius(ft) (The turn radius of a quad is super small so I just set it to 1)
+1.5			!Turn_Radius(ft) (The turn radius of a quad is super small so I just set it to 1)
 0.01		!Alc - Some of these parameters are wrong. Using quad_drag.m 
 0.01		!Als - Lisa Schibelius created these and should be
 0.01094		!dxD - Lateral drag factor (max speed u = 52 ft/s) We are assuming wmax = 8.2 ft/s or 2.5 m/s
@@ -30,13 +30,13 @@
 1250		!OMEGAMAX (rad/s) ; 950kV *12.6V = 11970 RPM based on battery specs
 0.00006491284467800415	!Ir OR 8.801e-5 (kg*m^2)
 0.498		!Reference area (ft^2) [wing area]                    
-0.995		!Lateral reference length (ft) [wing span]                   
-0.5			!Longitudinal reference length (ft) [wing chord]                      
+0.995		!Lateral reference length (ft) [wing span]                try maybe 2.5                 
+0.5	        !Longitudinal reference length (ft) [wing chord]          try maybe 0.75                   
 0.0135		!Zero Lift Drag (CD0)                     
 0.0000		!Reference CL,M          (Not used)            
 0.0000		!Reference CD,M          (Not used)
 0.0000		!Reference Cm,M          (Not used)
-4.1875		!Reference CL,alpha                      
+4.1875		!Reference CL,alpha                       
 0.0175		!Reference CD,alpha                      
 0.0000		!Reference Cl,alpha		 (Not used)
 -2.753		!Reference Cm,alpha                      
@@ -74,9 +74,9 @@
 0.0000		!Reference Cm,delta-f                      
 1100		! PWM_min (microseconds)
 1900		! PWM_max (microseconds)
-1 			!Copter Control
+1 			!Copter Control  
 0.005		!kpx (quadcopter)
-0.0125	!kix (quadcopter) - used for forward velocity
+0.0125	    !kix (quadcopter) - used for forward velocity
 0.015      	!kdx  (quadcopter)
 0.002141   	!kpy (quadcopter)
 0.000321		!kiy (quadcopter)	Off if no WRF
@@ -101,4 +101,4 @@
 0.0			!PSIINTEGRAL , integral term for psi in PID controller
 0.0			!UCOMMAND x setpoint, quad (ft)
 0.0			!YCOMMAND y setpoint, quad (ft)
--30.0			!ZCOMMAND z setpoint, quad (ft)
+-30.0		!ZCOMMAND z setpoint, quad (ft)  

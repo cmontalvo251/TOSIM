@@ -1,7 +1,7 @@
 1		!Turn module off(0) or on(1)                                 
 1		!Gravity on(1) or off(0)
 1		!Aerodynamics on(1) or off(0)
-2.82635	!Weight (lbf) OR 1.282 (kg) 
+5	  !Weight (lbf) OR 1.282 (kg) 
 32.2	!Gravity (ft/s^2)
 0.0		!Stationline center of mass(m)
 0.0		!buttline center of mass(m)
@@ -15,7 +15,7 @@
 0.000		!Ixy
 0.000		!Ixz
 0.000		!Iyz (lb*ft^2) OR 2.428e-4 (kg*m^2)
-1.0			!Turn_Radius(ft) (The turn radius of a quad is super small so I just set it to 1)
+2.0			!Turn_Radius(ft) (The turn radius of a quad is super small so I just set it to 1)
 0.01		!Alc - Some of these parameters are wrong. Using quad_drag.m 
 0.01		!Als - Lisa Schibelius created these and should be
 0.01094		!dxD - Lateral drag factor (max speed u = 52 ft/s) We are assuming wmax = 8.2 ft/s or 2.5 m/s

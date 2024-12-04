@@ -3,7 +3,7 @@
 1		!Gravity on(1) or off(0)
 1		!Aerodynamics on(1) or off(0)
 0		!Contact Forces on(1) or off(0)
-2.82635	!Weight (lbf) OR 1.282 (kg) 
+2.82635	!Weight (lbf) OR 1.282 (kg)
 32.2	!Gravity (ft/s^2)
 0.0		!Stationline center of mass(m)
 0.0		!buttline center of mass(m)
