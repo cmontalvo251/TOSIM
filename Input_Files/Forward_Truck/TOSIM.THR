@@ -1,4 +1,4 @@
-1		!Turn dynamics on(1) or off0)                    
+0		!Turn dynamics on(1) or off0)                    
 1 		!Gravity on(1) or off(0)                
 1 		!Aerodynamics on(1) or off(0)  
 1 		!Elastic forces on(1) or off(0)                                                        

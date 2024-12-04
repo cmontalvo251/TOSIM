@@ -1,6 +1,6 @@
 1		!Turn module off(0) or on(1)                                 
 1		!Gravity on(1) or off(0)
-1		!Aerodynamics on(1) or off(0)
+3		!Aerodynamics 0(off),1(quad only),2(airplane only),3(both)
 3	!Weight (lbf) OR 1.282 (kg)  2.82635
 32.2	!Gravity (ft/s^2)  
 0.0		!Stationline center of mass(m)
