@@ -1352,7 +1352,7 @@ SUBROUTINE CONTROL(T,iflag)
  integer , parameter :: nwp = 1
  real*8 readreal,phicommand,deltheta,delpsi,dely,delydot,rAS_I(3,1),vAS_I(3,1),thetacommand, xcommand, ycommand, zcommand
  real*8 rAS_A(3,1),vAS_A(3,1),lencommand,rGS_I(3,1),vGS_I(3,1),psicp,rGS_P(3,1),vGS_P(3,1),tension,len
- real*8 angles(2,1),delphi,delphidot,ldotnom,ldot,n1,q0,q1,q2,q3,pb,qb,rb,vb,xcg,ycg,zcg,vaero,wb
+ real*8 angles(2,1),delphi,delphidot,ldotnom,ldot,n1,q0,q1,q2,q3,pb,qb,rb,vb,xcg,ycg,zcg,vaero,wb,uaero
  real*8 delx,delz,phi,theta,psi,p,q,r,xdot,ydot,zdot,omegaNot,addpitch,addroll,addyaw
  real*8 domegaLeft,omegaRight,domegaFront,omegaBack,domegaDiag,omegaOpp,omegaDiag,omegaFront
  real*8 xwaypoint(nwp,1),ywaypoint(nwp,1),zwaypoint(nwp,1),Dwaypoint
@@ -1508,8 +1508,10 @@ SUBROUTINE CONTROL(T,iflag)
     !!!!!!!!!!!!!! TETHER !!!!!!!!!!!!!!!!!
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    !! Controller for TOW
-    if (T%TOW%CONTROLOFFON .eq. 1) then
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Controller for TOW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Quad control!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    if (T%TOW%CONTROLOFFON .eq. 1 .OR. T%TOW%CONTROLOFFON .eq.3) then
        !Quadcopter control
        T%TOW%OMEGAVEC = 0
        T%TOW%THRUSTVEC = 0
@@ -1583,9 +1585,10 @@ SUBROUTINE CONTROL(T,iflag)
        end if
 
        ! Hovering microseconds and altitude control
-       munominal = 1614.855 + T%TOW%KPZDRIVE*(delz) + T%TOW%KIZDRIVE*T%TOW%ZINTEGRAL +T%TOW%KDZDRIVE*zdot  ! Nominal microsecond pulse for hover
+       munominal = 1706.95 + T%TOW%KPZDRIVE*(delz) + T%TOW%KIZDRIVE*T%TOW%ZINTEGRAL +T%TOW%KDZDRIVE*zdot  ! Nominal microsecond pulse for hover
 
-       T%TOW%MS_ROLL = T%TOW%KPPHI*(T%TOW%PHICOMMAND-phi) + T%TOW%KIPHI*T%TOW%PHIINTEGRAL - T%TOW%KDPHI*p
+       !PID for drone motor response
+       T%TOW%MS_ROLL = T%TOW%KPPHI*(T%TOW%PHICOMMAND-phi) + T%TOW%KIPHI*T%TOW%PHIINTEGRAL - T%TOW%KDPHI*p 
        T%TOW%MS_PITCH = T%TOW%KPTHETA*(T%TOW%THETACOMMAND - theta) + T%TOW%KITHETA*T%TOW%THETAINTEGRAL- T%TOW%KDTHETA*q
        T%TOW%MS_YAW = T%TOW%KPPSI*(T%TOW%PSICOMMAND-psi) + T%TOW%KIPSI*T%TOW%PSIINTEGRAL - T%TOW%KDPSI*r
        
@@ -1607,23 +1610,24 @@ SUBROUTINE CONTROL(T,iflag)
              T%TOW%MUVEC(j,1) = 1100.00D0
           end if
        end do
+    end if !Quad control off / on
+ 
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Control for plane!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-       !!WE NEED TO ADD CONTROLS FOR AILERON, RUDDER, ELEVATOR,FLAPS
-       !T%TOW%FLAPS = 0.0D0
-       !T%TOW%AILERON = 0.0D0
-       !T%TOW%ELEVATOR = 0.0D0
-       !T%TOW%RUDDER = 0.0D0
+    !! Controller for TOW
+    if (T%TOW%CONTROLOFFON .eq. 2 .OR. T%TOW%CONTROLOFFON .eq.3) then
+       !Plane control
 
-       !!ADD CONTROL - PID
-       KP_a = 40.0D0
-       KI_a = 50.0D0
-       KD_a = 20.0D0
-       KP_e = 40.0D0
-       KI_e = 10.0D0
-       KD_e = 25.0D0
-       KP_r = 15.0D0
-       KI_r = 50.0D0
-       KD_r = 60.0D0
+       !!ADD CONTROL - PID for plane control surfaces
+       KP_a = 150.0D0
+       KI_a = 200.0D0
+       KD_a = 250.0D0
+       KP_e = 150.0D0
+       KI_e = 80.0D0
+       KD_e = 120.0D0
+       KP_r = 120.0D0
+       KI_r = 250.0D0
+       KD_r = 280.0D0
        PHICOMMAND = 0.00D0
        THETACOMMAND = 0.00D0
        PSICOMMAND = 0.00D0
@@ -1633,11 +1637,15 @@ SUBROUTINE CONTROL(T,iflag)
        control_rudder = -KP_r*(PSI-PSICOMMAND) +KD_r*r + KI_r*(PSIINTEGRAL)                   !KPPSI*(PSI-PSICOMMAND) + KDPSI*r
 
        !!WE NEED TO ADD CONTROLS FOR AILERON, RUDDER, ELEVATOR,FLAPS
-       T%TOW%FLAPS = 0.0D0
-       T%TOW%AILERON = control_aileron
-       T%TOW%ELEVATOR = control_elevator
-       T%TOW%RUDDER = control_rudder
+       T%TOW%FLAPS = 0.0D0                !control_aileron
+       T%TOW%AILERON = control_aileron    !0.0D0
+       T%TOW%ELEVATOR = control_elevator  !0.0D0
+       T%TOW%RUDDER = control_rudder      !0.0D0
 
+       !write(*,*) 'uaero = ',uaero
+       !write(*,*) 'vaero = ',vaero
+       !PAUSE
+       
         !write(*,*) 'control_aileron = ',control_aileron
         !write(*,*) 'control_elevator = ',control_elevator
         !write(*,*) 'control_rudder = ',control_rudder
@@ -1662,9 +1670,8 @@ SUBROUTINE CONTROL(T,iflag)
         !write(*,*) 'KDPSI = ',KDPSI
         !write(*,*) 'KD_r = ',KD_r
         !write(*,*) 'r = ',r
-       
 
-    end if !Quad control off / on
+    end if !Plane control off / on
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     !!!!!!!!!!!!!!DRIVER CONTROLLER!!!!!!!!!!!!!!!!!!!!!!!!
@@ -3201,7 +3208,7 @@ SUBROUTINE TOWED(T,iflag)
  real*8 C_Ftether_I(3,1),C_Ftether_B(3,1),alfahat,alfadot,MACH,C_Mtether_B(3,1),rCF_B(3,1),S_rCF_B(3,3)
  real*8 vF_I(3,1),vC_I(3,1),rC_I(3,1),rF_I(3,1),S_wt_B(3,3),phat,rhat,qhat,uhat
  real*8 xcgcp, ycgcp, zcgcp,TVEC(4),TDOTVEC(4),TDBLDOTVEC(4),Gammavec(3,1),zetaF
- real*8 thrust,sumomega,sigmaF,omegar,omegaF,C3F(4),C2F(4),C1F(4),bquad,forcevec(4,1)
+ real*8 thrust,sumomega,sigmaF,omegar,omegaF,C3F(4),C2F(4),C1F(4),bquad,forcevec(4,1),DELTHRUST
  integer idx
  type(TOSIMSTRUCTURE) T
  REAL:: y(6), cntrl(0:10)
@@ -3491,15 +3498,22 @@ SUBROUTINE TOWED(T,iflag)
         !write(*,*) 'CD = ',T%TOW%C_D
         !PAUSE
 
-        T%TOW%FXAEROAC = -q_inf_S*(calfa*(T%TOW%C_D) - salfa*T%TOW%C_L)
+        !Add thrust to the plane for when quad motors are off and no tether
+        !T%TOW%DELTHRUST = 20.0D0   !lbf
+
+        T%TOW%FXAEROAC = -q_inf_S*(calfa*(T%TOW%C_D) - salfa*T%TOW%C_L) !+ T%TOW%DELTHRUST
         T%TOW%FYAEROAC = q_inf_S*C_Y
         T%TOW%FZAEROAC = -q_inf_S*(salfa*(T%TOW%C_D) + calfa*T%TOW%C_L)
         T%TOW%MXAEROAC = q_inf_S*T%TOW%B*T%TOW%Cll
         T%TOW%MYAEROAC = q_inf_S*T%TOW%C_BAR*T%TOW%Cm
         T%TOW%MZAEROAC = q_inf_S*T%TOW%B*T%TOW%Cn
 
+        !write(*,*) 'DELTHRUST = ',T%TOW%DELTHRUST
+        !PAUSE
+
         !write(*,*) 'uvw and aoa = ',uaero,vaero,waero,alfa,T%TOW%FXAEROAC,calfa,salfa
         !write(*,*) 'FX = ',T%TOW%FXAEROAC,T%TOW%FXAEROQUAD
+        !write(*,*) 'FY = ',T%TOW%FYAEROAC,T%TOW%FYAEROQUAD
         !PAUSE
     end if
 

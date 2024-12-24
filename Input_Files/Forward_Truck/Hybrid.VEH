@@ -4,7 +4,7 @@
 3	!Weight (lbf) OR 1.282 (kg)  2.82635
 32.2	!Gravity (ft/s^2)  
 0.0		!Stationline center of mass(m)
-0.0		!buttline center of mass(m)
+0.0		!buttline center of mass(m) 
 0.0		!waterline center of mass(m)
 -0.1     !Stationline of Tether Attachment Point on Towed in Towed Reference Frame(ft)
 0.0 	!Buttline of Tether Attachment Point on Towed in Towed Reference Frame(ft)
@@ -21,8 +21,8 @@
 0.01094		!dxD - Lateral drag factor (max speed u = 52 ft/s) We are assuming wmax = 8.2 ft/s or 2.5 m/s
 0.01094		!dyD - Longitudinal drag factor (max speed v = 52 ft/s)
 0.375		!Rnew (ft) this is the rotor radius. Rotors used are 9.5"x4.5"
-0.0335291245362469	!C_T 0.1
-0.00434128525353347	!CTau 0.222 0.02725
+0.0335291245362469	  !C_T 0.1
+0.00434128525353347	  !CTau 0.222 0.02725
 0.7283465	! lphi12 (ft) , roll length of front two rotors
 0.6758530 	! lphi34 (ft) , roll length of back two rotors
 0.4461942	! ltheta12 (ft) , Since the pitching moment differs by less than 1 cm
@@ -74,7 +74,7 @@
 0.0000		!Reference Cm,delta-f                      
 1100		! PWM_min (microseconds)
 1900		! PWM_max (microseconds)
-1 			!Copter Control  
+3 			!Copter Control  (0 0ff, 1 quad, 2 plane, 3 hybrid)
 0.005		!kpx (quadcopter)
 0.0125	    !kix (quadcopter) - used for forward velocity
 0.015      	!kdx  (quadcopter)
