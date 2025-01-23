@@ -1,5 +1,5 @@
 0.0	 	!Initial Time(sec)                        
-30.0	 	!Final Time(sec)  
+50.0	 	!Final Time(sec)  
 0.0001		!Timestep(sec) (0.000005 for tether beads >2)                      
 1000		!Output skip (10000)                        
 1		!Control system on(1) or off(0)                        
@@ -32,13 +32,13 @@
 0.0		!P_TOW(rad/s)         roll rate to change                       
 0.00		!Q_TOW(rad/s)                        
 0.0		!R_TOW(rad/s)   
-0.75		!T1    (lbf)
+0.0 !0.75		!T1    (lbf)
 0.0				!T1dot (lbf/s)
-0.75		!T2    (lbf)
+0.0 !0.75		!T2    (lbf)
 0.0				!T2dot (lbf/s)
-0.75		!T3    (lbf)
+0.0 !0.75		!T3    (lbf)
 0.0				!T3dot (lbf/s)
-0.75		!T4    (lbf)
+0.0 !0.75		!T4    (lbf)
 0.0				!T4dot (lbf/s)                    
 
 ! This file simulates the towed system with the redesigned aircraft as 

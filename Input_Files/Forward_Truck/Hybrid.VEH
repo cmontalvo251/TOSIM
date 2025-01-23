@@ -1,6 +1,6 @@
-1		!Turn module off(0) or on(1)                                 
+1		!Turn Dynamic module off(0) or on(1)                                 
 1		!Gravity on(1) or off(0)
-3		!Aerodynamics 0(off),1(quad only),2(airplane only),3(both)
+2		!Aerodynamics 0(off),1(quad only),2(airplane only),3(both)
 3	!Weight (lbf) OR 1.282 (kg)  2.82635
 32.2	!Gravity (ft/s^2)  
 0.0		!Stationline center of mass(m)
@@ -20,63 +20,63 @@
 0.01		!Als - Lisa Schibelius created these and should be
 0.01094		!dxD - Lateral drag factor (max speed u = 52 ft/s) We are assuming wmax = 8.2 ft/s or 2.5 m/s
 0.01094		!dyD - Longitudinal drag factor (max speed v = 52 ft/s)
-0.375		!Rnew (ft) this is the rotor radius. Rotors used are 9.5"x4.5"
+0.3958		!Rnew (ft) this is the rotor radius. Rotors used are 9.5"x4.5"
 0.0335291245362469	  !C_T 0.1
 0.00434128525353347	  !CTau 0.222 0.02725
 0.7283465	! lphi12 (ft) , roll length of front two rotors
 0.6758530 	! lphi34 (ft) , roll length of back two rotors
 0.4461942	! ltheta12 (ft) , Since the pitching moment differs by less than 1 cm
 0.4265020	! ltheta34 (ft) , we are assuming these two distances are the same for symmetry.
-1250		!OMEGAMAX (rad/s) ; 950kV *12.6V = 11970 RPM based on battery specs
+1250		!OMEGAMAX (rad/s) ; 950kV *12.6V (full 3cell) = 11970 RPM based battery specs (14.8V gives 14,060 RPM and 1472 rad/s)
 0.00006491284467800415	!Ir OR 8.801e-5 (kg*m^2)
-0.498		!Reference area (ft^2) [wing area]                    
-0.995		!Lateral reference length (ft) [wing span]                try maybe 2.5                 
-0.5	        !Longitudinal reference length (ft) [wing chord]          try maybe 0.75                   
-0.0135		!Zero Lift Drag (CD0)                     
-0.0000		!Reference CL,M          (Not used)            
-0.0000		!Reference CD,M          (Not used)
-0.0000		!Reference Cm,M          (Not used)
-4.1875		!Reference CL,alpha                       
-0.0175		!Reference CD,alpha                      
-0.0000		!Reference Cl,alpha		 (Not used)
--2.753		!Reference Cm,alpha                      
-0.0000		!Reference Cn,alpha      (Not used)                  
+3.65625		            !Reference area (ft^2) [wing area]               was 0.498               
+4.875		            !Lateral reference length (ft) [wing span]                was 0.995                 
+0.75	                !Longitudinal reference length (ft) [wing chord]          was 0.5                   
+0.3441029736813229		!Zero Lift Drag (CD0)                     
+0.0000		            !Reference CL,M          (Not used)            
+0.0000		            !Reference CD,M          (Not used)
+0.0000		            !Reference Cm,M          (Not used)
+5.185317204810547		!Reference CL,alpha                       
+1.0080305157535787		!Reference CD,alpha                      
+0.0000		            !Reference Cl,alpha		 (Not used)
+-2.1859941783855077		!Reference Cm,alpha                      
+0.0000		            !Reference Cn,alpha      (Not used)                  
 0.0000		!Reference CL,alphahat   (Not used)                   
 0.0000		!Reference CD,alphahat                      
 0.0000		!Reference Cm,alphahat	 (Not used)
 0.0000		!Reference CL,uhat		 (Not used)
 0.0000		!Reference CD,uhat		 (Not used)
-0.0000		!Reference Cm,uhat		 (Not used)
--1.0911		!Reference CY,beta                      
--0.20258	!Reference Cl,beta                      
-0.0000		!Reference Cm,beta		 (Not used)
-1.1307		!Reference Cn,beta
-18.594		!Reference CL,qbar                      
-0.0000		!Reference CD,qbar		 (Not used)
--43.747		!Reference Cm,qbar                      
-0.0071253	!Reference CY,pbar                      
--0.3874		!Reference Cl,pbar                      
-0.2187		!Reference Cn,pbar                      
-0.48319		!Reference CY,rbar                      
-0.4492		!Reference Cl,rbar                      
--2.8512		!Reference Cn,rbar
--2.8579		!Reference CL,delta-e                      
-0.0000		!Reference CD,delta-e                      
--7.5376		!Reference Cm,delta-e                      
-0.0000		!Reference CY,delta-a                      
--0.1580	    !Reference Cl,delta-a                      
--2.8579    	!Reference Cn,delta-a                      
-0.6694	    !Reference CY,delta-r                      
-0.0965     	!Reference Cl,delta-r                      
--0.7993    	!Reference Cn,delta-r                      
+0.0000		                !Reference Cm,uhat		 (Not used)
+-0.24095762862664397		!Reference CY,beta                      
+-0.01633611041536569	    !Reference Cl,beta                      
+0.0000		                !Reference Cm,beta		 (Not used)
+0.27846397495417952		    !Reference Cn,beta
+5.9369349224934975		    !Reference CL,qbar      was 18.594                
+0.0000		                !Reference CD,qbar		 (Not used)
+-24.450947269394277    		!Reference Cm,qbar     was -43.747                
+-0.027733042384004744    	!Reference CY,pbar        was 0.007125              
+-0.50160400189302223		!Reference Cl,pbar         was -0.3874          
+-0.78826431744966985		!Reference Cn,pbar      was 0.2187                
+0.17663419386614151  		!Reference CY,rbar      was 0.48319                
+0.09800094300447591 		!Reference Cl,rbar    was 0.4492                  
+-0.33411253656820367 		!Reference Cn,rbar   was -2.8512
+0.41181051485504044 		!Reference CL,delta-e     was -2.8579	                 
+0.0000		                !Reference CD,delta-e                      
+-1.1530526838451003 		!Reference Cm,delta-e    was -7.5376                  
+0.0000		                !Reference CY,delta-a                      
+0.28052396489578457 	    !Reference Cl,delta-a     was -0.1580                
+0.061169396698422564    	!Reference Cn,delta-a    was -2.8579                  
+0.0688450367504697  	    !Reference CY,delta-r    was 0.6694                  
+0.004667460118675911     	!Reference Cl,delta-r     was 0.0965                 
+-0.014305373822254552    	!Reference Cn,delta-r     was -0.7993   May need to run a sysID flight on rudder to actually get this one            
 0.0000		!Reference CL,delta-f                      
 0.0000		!Reference CD,delta-f                      
 0.0000		!Reference Cm,delta-f                      
-1100		! PWM_min (microseconds)
-1900		! PWM_max (microseconds)
-3 			!Copter Control  (0 0ff, 1 quad, 2 plane, 3 hybrid)
-0.005		!kpx (quadcopter)
-0.0125	    !kix (quadcopter) - used for forward velocity
+1100		!PWM_min (microseconds)
+1900		!PWM_max (microseconds)
+0 			!Copter Control  (0 0ff, 1 quad, 2 plane, 3 hybrid)      0.0          ! DELTHRUST (plane thrust in PWM signal I think)
+1.0		   !kpxDRIVE (same as below) (quadcopter)         was 0.005
+0.0125	    !kix (quadcopter) - used for forward velocity    was 0.0125
 0.015      	!kdx  (quadcopter)
 0.002141   	!kpy (quadcopter)
 0.000321		!kiy (quadcopter)	Off if no WRF
@@ -85,7 +85,7 @@
 2.033801011			!kiz (quadcopter) 	! You can turn this on if you want
 75.5    			!kdz  (quadcopter)
 100.42 		!kpphi Proportional Gain (quadcopter)
-0				!kiphi (quadcopter)
+0.0				!kiphi (quadcopter)
 35.420   	 	!kdphi Damping Gain (quadcopter)
 35.42 		!kptheta (quadcopter)
 0.0				!kitheta (quadcopter)
@@ -95,10 +95,10 @@
 170   			!kdpsi (quadcopter)
 0.0			!XINTEGRAL , integral term for x in PID controller
 0.0			!YINTEGRAL , integral term for y in PID controller
-0.0			!ZINTEGRAL , integral term for z in PID controller
-0.0			!PHIINTEGRAL , integral term for phi in PID controller
-0.0			!THETAINTEGRAL , integral term for theta in PID controller
-0.0			!PSIINTEGRAL , integral term for psi in PID controller
-0.0			!UCOMMAND x setpoint, quad (ft)
+0.0			!ZINTEGRAL , integral term for z in PID controller         for altitude of both quad and plane??
+0.0			!PHIINTEGRAL , integral term for phi in PID controller     try 5.0
+0.0			!THETAINTEGRAL , integral term for theta in PID controller    try 5.0
+0.0			!PSIINTEGRAL , integral term for psi in PID controller     try 5.0
+20.0			!UCOMMAND x setpoint, quad (ft)   (used with delthrust)
 0.0			!YCOMMAND y setpoint, quad (ft)
 -30.0		!ZCOMMAND z setpoint, quad (ft)  
