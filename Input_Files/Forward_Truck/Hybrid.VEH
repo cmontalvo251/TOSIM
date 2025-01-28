@@ -29,9 +29,9 @@
 0.4265020	! ltheta34 (ft) , we are assuming these two distances are the same for symmetry.
 1250		!OMEGAMAX (rad/s) ; 950kV *12.6V (full 3cell) = 11970 RPM based battery specs (14.8V gives 14,060 RPM and 1472 rad/s)
 0.00006491284467800415	!Ir OR 8.801e-5 (kg*m^2)
-3.65625		            !Reference area (ft^2) [wing area]               was 0.498               
-4.875		            !Lateral reference length (ft) [wing span]                was 0.995                 
-0.75	                !Longitudinal reference length (ft) [wing chord]          was 0.5                   
+3.65625		            !Reference area (ft^2) [wing area]                         
+4.875		            !Lateral reference length (ft) [wing span]                            
+0.75	                !Longitudinal reference length (ft) [wing chord]                         
 0.3441029736813229		!Zero Lift Drag (CD0)                     
 0.0000		            !Reference CL,M          (Not used)            
 0.0000		            !Reference CD,M          (Not used)
@@ -60,8 +60,8 @@
 0.17663419386614151  		!Reference CY,rbar      was 0.48319                
 0.09800094300447591 		!Reference Cl,rbar    was 0.4492                  
 -0.33411253656820367 		!Reference Cn,rbar   was -2.8512
-0.41181051485504044 		!Reference CL,delta-e     was -2.8579	                 
-0.0000		                !Reference CD,delta-e                      
+0.41181051485504044 		!Reference CL,delta-e     was -2.8579   	   elevator for lift - be what?                
+0.0000		                !Reference CD,delta-e                 should this be a number? used for elevator                  
 -1.1530526838451003 		!Reference Cm,delta-e    was -7.5376                  
 0.0000		                !Reference CY,delta-a                      
 0.28052396489578457 	    !Reference Cl,delta-a     was -0.1580                
@@ -74,8 +74,8 @@
 0.0000		!Reference Cm,delta-f                      
 1100		!PWM_min (microseconds)
 1900		!PWM_max (microseconds)
-0 			!Copter Control  (0 0ff, 1 quad, 2 plane, 3 hybrid)      0.0          ! DELTHRUST (plane thrust in PWM signal I think)
-1.0		   !kpxDRIVE (same as below) (quadcopter)         was 0.005
+2 			!Copter Control  (0 0ff, 1 quad, 2 plane, 3 hybrid)      0.0          ! DELTHRUST (plane thrust in PWM signal I think)
+2.0		   !kpxDRIVE (same as below) (quadcopter)         was 0.005
 0.0125	    !kix (quadcopter) - used for forward velocity    was 0.0125
 0.015      	!kdx  (quadcopter)
 0.002141   	!kpy (quadcopter)
@@ -99,6 +99,6 @@
 0.0			!PHIINTEGRAL , integral term for phi in PID controller     try 5.0
 0.0			!THETAINTEGRAL , integral term for theta in PID controller    try 5.0
 0.0			!PSIINTEGRAL , integral term for psi in PID controller     try 5.0
-20.0			!UCOMMAND x setpoint, quad (ft)   (used with delthrust)
+30.0			!UCOMMAND x setpoint, quad (ft)   (used with delthrust)      ft/s????
 0.0			!YCOMMAND y setpoint, quad (ft)
 -30.0		!ZCOMMAND z setpoint, quad (ft)  

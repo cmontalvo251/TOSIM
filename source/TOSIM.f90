@@ -1358,12 +1358,12 @@ SUBROUTINE CONTROL(T,iflag)
  real*8 xwaypoint(nwp,1),ywaypoint(nwp,1),zwaypoint(nwp,1),Dwaypoint, blend_factor
  real*8 delmu(4),munominal,MAXANGLE,z,udriver,u_plane, z_command
  real*8 KDPHI, KDPSI, KDTHETA, KPPHI, KPPSI, KPTHETA,PSICOMMAND, THETAINTEGRAL, PHIINTEGRAL,PSIINTEGRAL
- real*8 KP_a,KD_a,KP_e,KD_e,KP_r,KD_r,KI_a,KI_e,KI_r
- real*8 control_aileron,control_elevator,control_rudder,control_flaps,control_altitude, ub
+ real*8 KP_a,KD_a,KP_e,KD_e,KP_r,KD_r,KI_a,KI_e,KI_r,KP_p,KD_p,KI_p
+ real*8 control_aileron,control_elevator,control_rudder,control_flaps,control_altitude, ub, ub_2
  real*8 k_phi, k_p      ! Gains for roll control (aileron)
  real*8 k_theta, k_q     ! Gains for pitch control (elevator)
  real*8 k_psi, k_r      ! Gains for yaw control (rudder)
- real*8 error_phi, error_theta, error_psi,altitude_error, elaphsed_time, c_q
+ real*8 error_phi, error_theta, error_psi,altitude_error, c_q, current_time, KP_thrust, KI_thrust, altitude_dot, pitch_command
 
 
  type(TOSIMSTRUCTURE) T
@@ -1619,15 +1619,15 @@ SUBROUTINE CONTROL(T,iflag)
        !Plane control
 
        !!ADD CONTROL - PID for plane control surfaces
-       KP_a = 17.0D0
-       KI_a = 2.0D0
-       KD_a = 10.0D0
-       KP_e = 19.0D0
-       KI_e = 3.0D0
-       KD_e = 13.0D0
-       KP_r = 18.0D0
-       KI_r = 3.0D0
-       KD_r = 15.0D0
+       KP_a = 10.0D0
+       KI_a = 0.0D0
+       KD_a = 2.0D0
+       KP_e = 10.0D0  
+       KI_e = 1.0D0
+       KD_e = 1.0D0
+       KP_r = 1.0D0
+       KI_r = 0.0D0
+       KD_r = 1.0D0
        PHICOMMAND = 0.00D0
        T%TOW%PHICOMMAND = 0.0D0
        THETACOMMAND = 0.00D0
@@ -1643,7 +1643,7 @@ SUBROUTINE CONTROL(T,iflag)
        q1 = T%TOW%STATE(5)
        q2 = T%TOW%STATE(6)
        q3 = T%TOW%STATE(7)
-       ub = T%TOW%STATE(8)
+       ub = T%TOW%STATE(8)   !T%DRIVER%STATE(7) for speed of truck
        phi   = atan2(2.*(q0*q1 + q2*q3),1.-2.*(q1**2 + q2**2));
        theta = asin (2.*(q0*q2 - q3*q1));
        psi   = atan2(2.*(q0*q3 + q1*q2),1.-2.*(q2**2 + q3**2));
@@ -1652,62 +1652,64 @@ SUBROUTINE CONTROL(T,iflag)
        q = T%TOW%STATE(12)
        r = T%TOW%STATE(13)
        T%TOW%XINTEGRAL = 0.0
+       KP_thrust = 120.0D0    !30 TRIAL or 120 FASTCASST
+       KI_thrust = 8.0D0    !50 TRIAL or 8 FASTCASST
+       KP_p = 10.0D0
+       KI_p = 0.0D0
+       KD_p = 2.0D0
+
 
        !!Throttle Controller
-       !u_t = [T%TOW%MS_MIN,T%TOW%MS_MAX]
-       !del_t = (u_t - T%TOW%MS_MIN) / (T%TOW%MS_MAX - T%TOW%MS_MIN)
-       !T%TOW%DELTHRUST = del_t + T%TOW%C_T
 
-       !write(*,*) 'T%TOW%DELTHRUST 1',T%TOW%DELTHRUST
-       !PAUSE
-
-       elaphsed_time = (T%SIM%FINALTIME - T%SIM%INITIALTIME)
-       T%TOW%XINTEGRAL = (elaphsed_time) * (T%TOW%UCOMMAND-ub)  !UCOMMAND is in input file (20.0)
-       T%TOW%DELTHRUST = T%TOW%KPXDRIVE*(T%TOW%UCOMMAND-ub) + T%TOW%MS_MIN !+ T%TOW%KIXDRIVE*T%TOW%XINTEGRAL
-
+       !current_time = T%SIM%INITIALTIME + T%SIM%DELTATIME *((T%SIM%FINALTIME - T%SIM%INITIALTIME)/ T%SIM%DELTATIME)
+       !elaphsed_time = (current_time - T%SIM%INITIALTIME)
+       T%TOW%XINTEGRAL = T%TOW%XINTEGRAL + (T%SIM%DELTATIME) * (T%TOW%UCOMMAND-ub)     !UCOMMAND is in input file (20.0)
+       T%TOW%DELTHRUST = (KP_thrust*(T%TOW%UCOMMAND-ub) + KI_thrust*T%TOW%XINTEGRAL) + T%TOW%MS_MIN    
+  
        !write(*,*) 'T%TOW%DELTHRUST',T%TOW%DELTHRUST
        !write(*,*) 'T%TOW%KPXDRIVE',T%TOW%KPXDRIVE
-       !write(*,*) 'ub',ub
+       !write(*,*) 'T%TOW%STATEDOT(1)',T%TOW%STATEDOT(1)
        !PAUSE
 
        !Saturation controller
-       if (T%TOW%DELTHRUST .gt. 1900.00D0) then
-          T%TOW%DELTHRUST = 1900.00D0
+       if (T%TOW%DELTHRUST .gt. T%TOW%MS_MAX) then
+          T%TOW%DELTHRUST = T%TOW%MS_MAX
        end if
-       if (T%TOW%DELTHRUST .lt. 1100.00D0) then
-          T%TOW%DELTHRUST = 1100.00D0
+       if (T%TOW%DELTHRUST .lt. T%TOW%MS_MIN) then
+          T%TOW%DELTHRUST = T%TOW%MS_MIN
        end if
        else
        T%TOW%DELTHRUST = T%TOW%MS_MIN
        end if
        !RETURN
 
-       !write(*,*) 'T%TOW%DELTHRUST',T%TOW%DELTHRUST
-       !write(*,*) 'T%SIM%DELTATIME',T%SIM%DELTATIME
-       !PAUSE
-
-       altitude_error = (T%TOW%ZCOMMAND - z)*-1.0D0   
-       !T%TOW%ZINTEGRAL = altitude_error * T%SIM%DELTATIME
-       !altitude_dot = (z - z_dot?)/elaphsed_time
+       altitude_error = (T%TOW%ZCOMMAND - z)  
+       T%TOW%ZINTEGRAL = (altitude_error * T%SIM%DELTATIME) + T%TOW%ZINTEGRAL
        !
        !altitude control with elevator for pitch
-       !control_elevator = KP_e*(z_command - z) + KD_e*(0.0D0 - altitude_dot)
+       pitch_command = KP_p*altitude_error + KI_p*T%TOW%ZINTEGRAL + KD_p*(zdot)       !damp outer loop 
 
-       !control_altitude = KP_e * altitude_error + KI_e * T%TOW%ZINTEGRAL + KD_e * (-zdot)   !using PID from elevator can make own later
+       control_aileron = KP_a*(T%TOW%PHICOMMAND-phi) + KI_a*T%TOW%PHIINTEGRAL - KD_a*p          
+       !control_elevator = KP_e*(T%TOW%THETACOMMAND - theta) + KI_e*T%TOW%THETAINTEGRAL- KD_e*q   
 
-       control_aileron = KP_a*(T%TOW%PHICOMMAND-phi) + KI_a*T%TOW%PHIINTEGRAL - KD_a*p !-KP_a *(T%TOW%PHI - PHICOMMAND) + KD_a*p !+ KI_a*(T%TOW%PHIINTEGRAL)                !KPPHI*(PHI-PHICOMMAND) + KDPHI*p           
-       control_elevator = KP_e*(T%TOW%THETACOMMAND - theta) + KI_e*T%TOW%THETAINTEGRAL- KD_e*q !KP_e*(T%TOW%THETA - THETACOMMAND) + KD_e*q !+ KI_e*(T%TOW%THETAINTEGRAL)            !KPTHETA*(THETA-THETACOMMAND) + KDTHETA*q          
-       control_rudder = KP_r*(T%TOW%PSICOMMAND-psi) + KI_r*T%TOW%PSIINTEGRAL - KD_r*r !-KP_r*(T%TOW%PSI - PSICOMMAND) + KD_r*r !+ KI_r*(T%TOW%PSIINTEGRAL)                   !KPPSI*(PSI-PSICOMMAND) + KDPSI*r
+       control_elevator = KP_e*(theta - pitch_command) - KD_e*(q) !+ KI_e*(q*T%SIM%DELTATIME**2)   !damp inner loop  (theta - pitch_command)/T%SIM%DELTATIME
+  
+       control_rudder = KP_r*(T%TOW%PSICOMMAND-psi) + KI_r*T%TOW%PSIINTEGRAL - KD_r*r  
        !control_flaps = KP_a*(zdot - z_command) + KD_a*(wb)    !uses PID from aileron
 
-       !write(*,*) 'phi = ', phi
-       !write(*,*) 'T%TOW%PHI = ', T%TOW%PHI
+       !write(*,*) 'control_aileron = ', control_aileron
+       !write(*,*) 'control_elevator = ', control_elevator
+       !write(*,*) 'theta = ', theta
+       !write(*,*) 'pitch_command = ', pitch_command
+       !write(*,*) 'q = ', q
+       !write(*,*) 'pitch_command = ', pitch_command
+       !write(*,*) 'control_rudder = ', control_rudder
        !PAUSE
 
        !!WE NEED TO ADD CONTROLS FOR AILERON, RUDDER, ELEVATOR,FLAPS
        T%TOW%FLAPS = 0.0D0 !control_flaps  !0.0D0           
        T%TOW%AILERON = 0.0D0 ! control_aileron 
-       T%TOW%ELEVATOR =  control_elevator 
+       T%TOW%ELEVATOR =  -30.0D0 !for incrase altitude  control_elevator
        T%TOW%RUDDER = 0.0D0 ! control_rudder 
 
        MAXANGLE = 30.0*PI/180.0
@@ -1726,9 +1728,9 @@ SUBROUTINE CONTROL(T,iflag)
           T%TOW%FLAPS = sign(MAXANGLE,T%TOW%FLAPS)
        end if
 
-       !T%TOW%FXAEROAC = T%TOW%DELTHRUST
-       !write(*,*) 'T%TOW%UCOMMAND = ', T%TOW%UCOMMAND
+       !write(*,*) 'T%TOW%ELEVATOR = ', T%TOW%ELEVATOR
        !PAUSE
+
 
     end if !Plane control off / on
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!throttle controller!!!!!!!!!!!!!!!!!!!!
@@ -1742,6 +1744,7 @@ SUBROUTINE CONTROL(T,iflag)
        udriver = T%DRIVER%STATE(7)
        T%DRIVER%MUTHROTTLE = T%DRIVER%KPXDRIVE*(T%DRIVER%UCOMMAND-udriver) + T%DRIVER%KIXDRIVE*T%DRIVER%UINTEGRAL + T%DRIVER%MS_MIN
        !write(*,*) 'MUTHROTTLE,Velocity = ',T%DRIVER%MUTHROTTLE,T%DRIVER%STATE(7)
+       !write(*,*) 'T%DRIVER%STATE(7)',T%DRIVER%STATE(7)
        !PAUSE
        !Saturation controller
        if (T%DRIVER%MUTHROTTLE .gt. 1900.00D0) then
@@ -2181,6 +2184,7 @@ SUBROUTINE DRIVER(T,iflag)
     rCF_B(1,1) = T%DRIVER%SLREEL
     rCF_B(2,1) = T%DRIVER%BLREEL 
     rCF_B(3,1) = T%DRIVER%WLREEL
+
 
     !- This is where we're going to hi-jack the model and compute the derivatives using Lisa Schibelius' quadcopter MODEL
     if (T%DRIVER%MODNO .eq. 3) then
@@ -3502,6 +3506,29 @@ SUBROUTINE TOWED(T,iflag)
 
    if (T%TOW%AEROFLAG .ge. 2) then
 
+        vATM_I(1,1) = T%ATM%VXWIND
+        vATM_I(2,1) = T%ATM%VYWIND
+        vATM_I(3,1) = T%ATM%VZWIND
+
+        T%TOW%VXWIND = T%ATM%VXWIND
+        T%TOW%VYWIND = T%ATM%VYWIND
+        T%TOW%VZWIND = T%ATM%VZWIND
+
+        vATM_A = matmul(T%TOW%TAI,vATM_I)
+
+        !Add in atmospheric winds
+        ub = T%TOW%STATE(8)
+        vb = T%TOW%STATE(9)
+        wb = T%TOW%STATE(10)
+
+        uaero = ub - vATM_A(1,1)
+        vaero = vb - vATM_A(2,1)
+        waero = wb - vATM_A(3,1)
+
+        !write(*,*) 'T%TOW%TAI',T%TOW%TAI
+        !write(*,*) 'vATM_I',vATM_I
+        !PAUSE
+
         V_A = sqrt(uaero**2 + vaero**2 + waero**2)
 
         if (V_A .eq. 0) then
@@ -3517,7 +3544,7 @@ SUBROUTINE TOWED(T,iflag)
         q_inf = 0.5*T%ATM%DEN*(V_A**2)
         q_inf_S = 0.5*T%ATM%DEN*(V_A**2)*T%TOW%SAREA  
 
-        !write(*,*) 'V_A',V_A   This seems wrong and can be from the uaero issues
+        !write(*,*) 'V_A',V_A   !This seems wrong and can be from the uaero issues
         !PAUSE
 
         !Mach number
@@ -3604,26 +3631,29 @@ SUBROUTINE TOWED(T,iflag)
             T%TOW%DELTHRUST = 1100.00D0
         end if
         omega = spin_slope * (T%TOW%DELTHRUST - T%TOW%MS_MIN)  ! omega jumps after 0.2 sec too, check delthrust
-        Thrust_AC = 0.5*T%ATM%DEN*Prop_area*T%TOW%C_T*(omega*T%TOW%RNEW)**2    ! works for like 0.2 sec then becomes zero think it is delthrust
+        Thrust_AC = 0.5*T%ATM%DEN*Prop_area*T%TOW%C_T*(omega*T%TOW%RNEW)**2  
         !write(*,*) 'T%TOW%DELTHRUST = ',T%TOW%DELTHRUST
         !write(*,*) 'T%ATM%DEN = ',T%ATM%DEN
         !write(*,*) 'omega = ',omega
-        !write(*,*) 'Prop_area = ',Prop_area
+        !write(*,*) 'T%ATM%DEN = ',T%ATM%DEN
         !write(*,*) 'Thrust_AC = ',Thrust_AC
         !PAUSE
 
 
-        T%TOW%FXAEROAC = -q_inf_S*(calfa*(T%TOW%C_D) - salfa*T%TOW%C_L) + Thrust_AC
+        T%TOW%FXAEROAC = -q_inf_S*(calfa*(T%TOW%C_D) - salfa*T%TOW%C_L) + Thrust_AC 
         T%TOW%FYAEROAC = q_inf_S*C_Y
         T%TOW%FZAEROAC = -q_inf_S*(salfa*(T%TOW%C_D) + calfa*T%TOW%C_L) 
+        !T%TOW%MXAEROAC = q_inf_S*T%TOW%B*Cl
         T%TOW%MYAEROAC = q_inf_S*T%TOW%C_BAR*T%TOW%Cm
         T%TOW%MZAEROAC = q_inf_S*T%TOW%B*T%TOW%Cn
 
         !write(*,*) 'FXAEROAC = ',T%TOW%FXAEROAC
         !write(*,*) 'FYAEROAC = ',T%TOW%FYAEROAC
-        !write(*,*) 'FZAEROAC = ',T%TOW%FZAEROAC
+        !write(*,*) 'T%TOW%MXAEROAC = ',T%TOW%MXAEROAC
+        !write(*,*) 'T%TOW%MYAEROAC = ',T%TOW%MYAEROAC
+        !write(*,*) 'T%TOW%MZAEROAC = ',T%TOW%MZAEROAC
         !PAUSE
-        !write(*,*) 'uaero = ',uaero
+        !write(*,*) 'uaero = ',uaero       
         !write(*,*) 'vaero = ',vaero
         !write(*,*) 'waero = ',waero
         !PAUSE

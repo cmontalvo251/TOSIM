@@ -28,7 +28,7 @@
 0.0		!XINTEGRAL , integral term for x in PID controller
 0.0		!THETAINTEGRAL , integral term for theta in PID controller
 0.0		!PSIINTEGRAL , integral term for psi in PID controller
-10.0		!UCOMMAND velocity setpoint, truck (ft/s)
+25.0		!UCOMMAND velocity setpoint, truck (ft/s)
 0.0		!YCOMMAND y setpoint, truck (ft)
 0.0		!ZCOMMAND z setpoint, truck (ft)
 
