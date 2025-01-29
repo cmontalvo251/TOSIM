@@ -32,8 +32,9 @@
 3.65625		            !Reference area (ft^2) [wing area]                         
 4.875		            !Lateral reference length (ft) [wing span]                            
 0.75	                !Longitudinal reference length (ft) [wing chord]                         
-0.3441029736813229		!Zero Lift Drag (CD0)                     
-0.0000		            !Reference CL,M          (Not used)            
+0.3441029736813229		!Zero Lift Drag (CD0)             
+0.3441029736813229      !Reference CL,0     
+0.0000		            !Reference CL,M          (Not used)        could be used in CL       
 0.0000		            !Reference CD,M          (Not used)
 0.0000		            !Reference Cm,M          (Not used)
 5.185317204810547		!Reference CL,alpha                       
@@ -59,8 +60,8 @@
 -0.78826431744966985		!Reference Cn,pbar      was 0.2187                
 0.17663419386614151  		!Reference CY,rbar      was 0.48319                
 0.09800094300447591 		!Reference Cl,rbar    was 0.4492                  
--0.33411253656820367 		!Reference Cn,rbar   was -2.8512
-0.41181051485504044 		!Reference CL,delta-e     was -2.8579   	   elevator for lift - be what?                
+-0.33411253656820367 		!Reference Cn,rbar     was -2.8512
+0.41181051485504044 		!Reference CL,delta-e     was -2.8579   	   elevator for lift - be what?           
 0.0000		                !Reference CD,delta-e                 should this be a number? used for elevator                  
 -1.1530526838451003 		!Reference Cm,delta-e    was -7.5376                  
 0.0000		                !Reference CY,delta-a                      
@@ -99,6 +100,6 @@
 0.0			!PHIINTEGRAL , integral term for phi in PID controller     try 5.0
 0.0			!THETAINTEGRAL , integral term for theta in PID controller    try 5.0
 0.0			!PSIINTEGRAL , integral term for psi in PID controller     try 5.0
-30.0			!UCOMMAND x setpoint, quad (ft)   (used with delthrust)      ft/s????
+30.0		!UCOMMAND x setpoint, quad (ft)   (used with delthrust)      ft/s????
 0.0			!YCOMMAND y setpoint, quad (ft)
 -30.0		!ZCOMMAND z setpoint, quad (ft)  
