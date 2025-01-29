@@ -64,7 +64,7 @@
 0.41181051485504044 		!Reference CL,delta-e     was -2.8579   	   elevator for lift - be what?           
 0.0000		                !Reference CD,delta-e                 should this be a number? used for elevator                  
 -1.1530526838451003 		!Reference Cm,delta-e    was -7.5376                  
-0.0000		                !Reference CY,delta-a                      
+0.0000		                !Reference CY,delta-a       used for C_Y      was 0.0000                 
 0.28052396489578457 	    !Reference Cl,delta-a     was -0.1580                
 0.061169396698422564    	!Reference Cn,delta-a    was -2.8579                  
 0.0688450367504697  	    !Reference CY,delta-r    was 0.6694                  
@@ -100,6 +100,6 @@
 0.0			!PHIINTEGRAL , integral term for phi in PID controller     try 5.0
 0.0			!THETAINTEGRAL , integral term for theta in PID controller    try 5.0
 0.0			!PSIINTEGRAL , integral term for psi in PID controller     try 5.0
-30.0		!UCOMMAND x setpoint, quad (ft)   (used with delthrust)      ft/s????
+20.0		!UCOMMAND x setpoint, quad (ft)   (used with delthrust)      ft/s????
 0.0			!YCOMMAND y setpoint, quad (ft)
 -30.0		!ZCOMMAND z setpoint, quad (ft)  
