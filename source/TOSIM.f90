@@ -1624,7 +1624,11 @@ SUBROUTINE CONTROL(T,iflag)
        KD_a = 2.0D0
        KP_e = 1.0D0  
        KI_e = 1.0D0
+<<<<<<< HEAD
        KD_e = 0.010D0
+=======
+       KD_e = 0.1D0
+>>>>>>> 843975c458e2e589ad7077df0c2b2c237e5f3130
        KP_r = 1.0D0
        KI_r = 0.0D0
        KD_r = 1.0D0
@@ -1642,9 +1646,17 @@ SUBROUTINE CONTROL(T,iflag)
        q1 = T%TOW%STATE(5)
        q2 = T%TOW%STATE(6)
        q3 = T%TOW%STATE(7)
+<<<<<<< HEAD
        ub = T%TOW%STATE(8)                                         !T%DRIVER%STATE(7) for speed of truck
        phi   = atan2(2.*(q0*q1 + q2*q3),1.-2.*(q1**2 + q2**2));
        theta = asin (2.*(q0*q2 - q3*q1));                          !radians
+=======
+       ub = T%TOW%STATE(8)   !T%DRIVER%STATE(7) for speed of truck
+       !write(*,*) 'ub = ',ub
+       !PAUSE
+       phi   = atan2(2.*(q0*q1 + q2*q3),1.-2.*(q1**2 + q2**2));
+       theta = asin (2.*(q0*q2 - q3*q1)); !this is in radians
+>>>>>>> 843975c458e2e589ad7077df0c2b2c237e5f3130
        psi   = atan2(2.*(q0*q3 + q1*q2),1.-2.*(q2**2 + q3**2));
        wb = T%TOW%STATE(10)
        p = T%TOW%STATE(11)
@@ -1654,9 +1666,15 @@ SUBROUTINE CONTROL(T,iflag)
        T%TOW%PHIINTEGRAL = 0.0
        KP_thrust = 120.0D0    !30 TRIAL or 120 FASTCASST
        KI_thrust = 0.0D0    !50 TRIAL or 8 FASTCASST
+<<<<<<< HEAD
        KP_p = 0.70D0
        KI_p = 0.0D0
        KD_p = 0.020D0   !or 0.0020D0
+=======
+       KP_p = 0.07D0
+       KI_p = 0.0D0
+       KD_p = 0.002D0
+>>>>>>> 843975c458e2e589ad7077df0c2b2c237e5f3130
        Kr = 1.0D0
        KP_roll = 0.40D0
        KD_roll = 0.250D0
@@ -1668,6 +1686,8 @@ SUBROUTINE CONTROL(T,iflag)
        !elaphsed_time = (current_time - T%SIM%INITIALTIME)
        T%TOW%XINTEGRAL = T%TOW%XINTEGRAL + (T%SIM%DELTATIME) * (T%TOW%UCOMMAND-ub)     !UCOMMAND is in input file (20.0)
        T%TOW%DELTHRUST = (KP_thrust*(T%TOW%UCOMMAND-ub) + KI_thrust*T%TOW%XINTEGRAL) + T%TOW%MS_MIN    
+       !write(*,*) T%TOW%UCOMMAND,ub,T%TOW%MS_MIN,T%TOW%DELTHRUST
+       !PAUSE
 
        !Saturation controller
        if (T%TOW%DELTHRUST .gt. T%TOW%MS_MAX) then
@@ -1685,11 +1705,24 @@ SUBROUTINE CONTROL(T,iflag)
        T%TOW%ZINTEGRAL = (altitude_error * T%SIM%DELTATIME) + T%TOW%ZINTEGRAL   !wind-up issuse? 
        !
        !altitude control with elevator for pitch
+<<<<<<< HEAD
        pitch_command = KP_p*altitude_error + KI_p*T%TOW%ZINTEGRAL + KD_p*(-zdot)       !outer loop for elevator      radians (needs to be)
 
        !ADD SAT FILTER FOR Pitch_c
 
        control_elevator = KP_e*(pitch_command - theta) - KD_e*(q)                      !+ KI_e*(q*T%SIM%DELTATIME**2)      !inner loop 
+=======
+       !pitch command is also in radians since theta is in radians
+       pitch_command = KP_p*altitude_error + KI_p*T%TOW%ZINTEGRAL + KD_p*(-zdot)       !outer loop for elevator   
+
+       if (pitch_command .gt. 30.0D0*PI/180.0) then
+            pitch_command = 30.0D0*PI/180.0
+        else if (pitch_command .lt. -30.0D0*PI/180.0) then
+            pitch_command = -30.0D0*PI/180.0
+        end if
+
+       control_elevator = KP_e*(pitch_command - theta) - KD_e*(q)   !+ KI_e*(q*T%SIM%DELTATIME**2)      !inner loop 
+>>>>>>> 843975c458e2e589ad7077df0c2b2c237e5f3130
 
        roll_command = KP_roll*(T%TOW%PSICOMMAND - psi) - KD_roll*(r)                         !outer loop for aileron
        T%TOW%PHIINTEGRAL = T%TOW%PHIINTEGRAL + (roll_command - phi)*T%SIM%DELTATIME          !do i need to anti-wind up
