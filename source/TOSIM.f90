@@ -861,7 +861,7 @@ SUBROUTINE SIMULATION(T,iflag)
     ! T%SIM%TIME,T%TOW%VXWIND,T%TOW%VYWIND,T%TOW%VZWIND,T%THR%NBEADS*1.0D0,T%TOW%FXCONT,T%TOW%FYCONT,T%TOW%FZCONT,T%TOW%MXCONT,T%TOW%MYCONT,T%TOW%MZCONT
       ! T%SIM%STATE(T%SIM%NOSTATES-7:T%SIM%NOSTATES),T%SIM%STATEDOT(T%SIM%NOSTATES-7:T%SIM%NOSTATES)
       !Control OUT File
-    write(91,fmt='(1000F30.10)') T%SIM%TIME,T%TOW%AILERON,T%TOW%ELEVATOR,T%TOW%RUDDER,T%TOW%FLAPS,T%TOW%OMEGAVEC(1:4,1), T%DRIVER%FYGRAV, T%DRIVER%FYAERO, T%DRIVER%FYCONT
+    write(91,fmt='(1000F30.10)') T%SIM%TIME,T%TOW%DELTHRUST,T%TOW%AILERON,T%TOW%ELEVATOR,T%TOW%RUDDER,T%TOW%FLAPS,T%TOW%OMEGAVEC(1:4,1), T%DRIVER%FYGRAV, T%DRIVER%FYAERO, T%DRIVER%FYCONT
     !write(91,fmt='(1000F30.10)') T%SIM%TIME,T%TOW%AILERON,T%TOW%ELEVATOR,T%TOW%RUDDER,T%TOW%FLAPS,T%TOW%OMEGAVEC(1:4,1), T%DRIVER%FYGRAV, T%DRIVER%FYAERO, T%DRIVER%FYCONT, T%TOW%FXAEROAC, T%TOW%FYAEROAC, T%TOW%FZAEROAC
       !Force Vector File
     write(83,fmt='(1000F30.10)') T%SIM%TIME,T%THR%FXGRAV(1:T%THR%NBEADS),T%THR%FYGRAV(1:T%THR%NBEADS),T%THR%FZGRAV(1:T%THR%NBEADS),T%THR%FXELAS(1:T%THR%NBEADS),T%THR%FYELAS(1:T%THR%NBEADS),T%THR%FZELAS(1:T%THR%NBEADS),T%THR%FXAERO(1:T%THR%NBEADS),T%THR%FYAERO(1:T%THR%NBEADS),T%THR%FZAERO(1:T%THR%NBEADS)
@@ -1622,9 +1622,9 @@ SUBROUTINE CONTROL(T,iflag)
        KP_a = 10.0D0
        KI_a = 0.0D0
        KD_a = 2.0D0
-       KP_e = 10.0D0  
+       KP_e = 1.0D0  
        KI_e = 1.0D0
-       KD_e = 1.0D0
+       KD_e = 0.1D0
        KP_r = 1.0D0
        KI_r = 0.0D0
        KD_r = 1.0D0
@@ -1646,8 +1646,10 @@ SUBROUTINE CONTROL(T,iflag)
        q2 = T%TOW%STATE(6)
        q3 = T%TOW%STATE(7)
        ub = T%TOW%STATE(8)   !T%DRIVER%STATE(7) for speed of truck
+       !write(*,*) 'ub = ',ub
+       !PAUSE
        phi   = atan2(2.*(q0*q1 + q2*q3),1.-2.*(q1**2 + q2**2));
-       theta = asin (2.*(q0*q2 - q3*q1));
+       theta = asin (2.*(q0*q2 - q3*q1)); !this is in radians
        psi   = atan2(2.*(q0*q3 + q1*q2),1.-2.*(q2**2 + q3**2));
        wb = T%TOW%STATE(10)
        p = T%TOW%STATE(11)
@@ -1656,10 +1658,10 @@ SUBROUTINE CONTROL(T,iflag)
        T%TOW%XINTEGRAL = 0.0
        T%TOW%PHIINTEGRAL = 0.0
        KP_thrust = 120.0D0    !30 TRIAL or 120 FASTCASST
-       KI_thrust = 8.0D0    !50 TRIAL or 8 FASTCASST
-       KP_p = 10.0D0
+       KI_thrust = 0.0D0    !50 TRIAL or 8 FASTCASST
+       KP_p = 0.07D0
        KI_p = 0.0D0
-       KD_p = 2.0D0
+       KD_p = 0.002D0
        Kr = 1.0D0
        KP_roll = 0.40D0
        KD_roll = 0.250D0
@@ -1671,6 +1673,8 @@ SUBROUTINE CONTROL(T,iflag)
        !elaphsed_time = (current_time - T%SIM%INITIALTIME)
        T%TOW%XINTEGRAL = T%TOW%XINTEGRAL + (T%SIM%DELTATIME) * (T%TOW%UCOMMAND-ub)     !UCOMMAND is in input file (20.0)
        T%TOW%DELTHRUST = (KP_thrust*(T%TOW%UCOMMAND-ub) + KI_thrust*T%TOW%XINTEGRAL) + T%TOW%MS_MIN    
+       !write(*,*) T%TOW%UCOMMAND,ub,T%TOW%MS_MIN,T%TOW%DELTHRUST
+       !PAUSE
 
        !Saturation controller
        if (T%TOW%DELTHRUST .gt. T%TOW%MS_MAX) then
@@ -1688,7 +1692,15 @@ SUBROUTINE CONTROL(T,iflag)
        T%TOW%ZINTEGRAL = (altitude_error * T%SIM%DELTATIME) + T%TOW%ZINTEGRAL   !wind-up issuse? 
        !
        !altitude control with elevator for pitch
+       !pitch command is also in radians since theta is in radians
        pitch_command = KP_p*altitude_error + KI_p*T%TOW%ZINTEGRAL + KD_p*(-zdot)       !outer loop for elevator   
+
+       if (pitch_command .gt. 30.0D0*PI/180.0) then
+            pitch_command = 30.0D0*PI/180.0
+        else if (pitch_command .lt. -30.0D0*PI/180.0) then
+            pitch_command = -30.0D0*PI/180.0
+        end if
+
        control_elevator = KP_e*(pitch_command - theta) - KD_e*(q)   !+ KI_e*(q*T%SIM%DELTATIME**2)      !inner loop 
 
        roll_command = KP_roll*(T%TOW%PSICOMMAND - psi) - KD_roll*(r)                         !outer loop for aileron

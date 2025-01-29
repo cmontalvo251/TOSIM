@@ -26,7 +26,7 @@
 0.0		!Phi_TOW(rad)                        
 0.0		!Theta_TOW(rad)	
 0.0		!Psi_TOW(rad)                        
-0.0		!U_TOW(ft/s)                        
+15.0		!U_TOW(ft/s)                        
 0.0		!V_TOW(ft/s)                        
 0.0		!W_TOW(ft/s)                        
 0.0		!P_TOW(rad/s)         roll rate to change                       

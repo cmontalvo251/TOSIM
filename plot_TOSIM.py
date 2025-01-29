@@ -97,4 +97,16 @@ for n in range(0,NBEADS+1): #There is 1 more tension state than beads
     plti.plot(time,tether_state[:,6*NBEADS+n],'k-',linewidth=2)
     pp.savefig()
 
+control_data = np.loadtxt('Output_Files/Controls.OUT')
+[r,c] = np.shape(control_data)
+print('Rows,Cols = ',r,c)
+
+time_control = control_data[:,0]
+ylabelControl = ['Throttle','Aileron','Elevator','Rudder','Flaps','Mu1','Mu2','Mu3','Mu4']
+for n in range(0,9):
+    print('Plotting Control STates = ',ylabelControl[n])
+    plti = P.plottool(fontSize,'Time(sec)',ylabelControl[n],'Control')
+    plti.plot(time_control,control_data[:,n+1],'k-',linewidth=2)
+    pp.savefig()
+
 pp.close()
