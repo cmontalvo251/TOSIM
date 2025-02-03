@@ -5,7 +5,7 @@
 32.2	!Gravity (ft/s^2)  
 0.0		!Stationline center of mass(m)
 0.0		!buttline center of mass(m) 
-0.0		!waterline center of mass(m)
+0.0		!waterline center of mass(m) 
 -0.1     !Stationline of Tether Attachment Point on Towed in Towed Reference Frame(ft)
 0.0 	!Buttline of Tether Attachment Point on Towed in Towed Reference Frame(ft)
 -0.15     !Waterline of Tether Attachment Point on Towed in Towed Reference Frame(ft)
@@ -100,6 +100,6 @@
 0.0			!PHIINTEGRAL , integral term for phi in PID controller     try 5.0
 0.0			!THETAINTEGRAL , integral term for theta in PID controller    try 5.0
 0.0			!PSIINTEGRAL , integral term for psi in PID controller     try 5.0
-20.0		!UCOMMAND x setpoint, quad (ft)   (used with delthrust)      ft/s????
+30.0		!UCOMMAND x setpoint, quad (ft)   (used with delthrust)      ft/s????
 0.0			!YCOMMAND y setpoint, quad (ft)
 -30.0		!ZCOMMAND z setpoint, quad (ft)  

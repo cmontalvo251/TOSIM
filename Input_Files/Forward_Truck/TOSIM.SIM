@@ -9,7 +9,7 @@
 0		!Use a restart point on(1) or off(0)                        
 'RESTART_FILES/Steady_60knots_2lbf_side.RESTART' !Restart point filename 
 0.0		!X_driver(ft)
-0.0		!Y_driver(ft)
+0.0		!Y_driver(ft) 
 0.0		!Z_driver(ft)
 0.0		!phi_driver(rad)
 0.0		!theta_driver(rad)
@@ -26,11 +26,7 @@
 0.0		!Phi_TOW(rad)                        
 0.0		!Theta_TOW(rad)	
 0.0		!Psi_TOW(rad)                        
-<<<<<<< HEAD
-15.0		!U_TOW(ft/s)  initial velocity                      
-=======
-15.0		!U_TOW(ft/s)                        
->>>>>>> 843975c458e2e589ad7077df0c2b2c237e5f3130
+15.0	!U_TOW(ft/s)  initial velocity                                        
 0.0		!V_TOW(ft/s)                        
 0.0		!W_TOW(ft/s)                        
 0.0		!P_TOW(rad/s)         roll rate to change                       
