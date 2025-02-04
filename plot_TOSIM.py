@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/python3
+
 import sys
 sys.path.append('Supplemental_Files')
 import plotting as P
@@ -44,16 +45,6 @@ fontSize = 10
 time = state_data[:,0]
 #The rest is state and statedot
 #The number of states is 12 + 21 + 7*NBEADS + 1
-#Ok so the first 1:12 is the towed system state but in python you add one at the end
-driver_state = state_data[:,1:13] #0 is time and then 1:12 is driver but you add 1 at the end for Python
-ylabel = ['x (ft)','y (ft)','z (ft)','Roll Angle (deg)','Pitch Angle (deg)','Yaw Angle (deg)','u (ft/s)','v (ft/s)','w (ft/s)','p (rad/s)','q (rad/s)','r (rad/s)']
-for idx in range(0,12):
-    print('Plotting Driver State = ',ylabel[idx])
-    plti = P.plottool(fontSize,'Time(sec)',ylabel[idx],'Driver')
-    #print('Plot created...')
-    plti.plot(time,driver_state[:,idx],'k-',linewidth=2)
-    plt.gcf().subplots_adjust(left=0.18)
-    pp.savefig()
 
 #The next 13:33 is the copter states
 towed_state = state_data[:,13:34] #again remember you add one
@@ -107,6 +98,17 @@ for n in range(0,9):
     print('Plotting Control STates = ',ylabelControl[n])
     plti = P.plottool(fontSize,'Time(sec)',ylabelControl[n],'Control')
     plti.plot(time_control,control_data[:,n+1],'k-',linewidth=2)
+    pp.savefig()
+
+#Ok so the first 1:12 is the towed system state but in python you add one at the end
+driver_state = state_data[:,1:13] #0 is time and then 1:12 is driver but you add 1 at the end for Python
+ylabel = ['x (ft)','y (ft)','z (ft)','Roll Angle (deg)','Pitch Angle (deg)','Yaw Angle (deg)','u (ft/s)','v (ft/s)','w (ft/s)','p (rad/s)','q (rad/s)','r (rad/s)']
+for idx in range(0,12):
+    print('Plotting Driver State = ',ylabel[idx])
+    plti = P.plottool(fontSize,'Time(sec)',ylabel[idx],'Driver')
+    #print('Plot created...')
+    plti.plot(time,driver_state[:,idx],'k-',linewidth=2)
+    plt.gcf().subplots_adjust(left=0.18)
     pp.savefig()
 
 pp.close()

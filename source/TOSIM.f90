@@ -1600,17 +1600,16 @@ SUBROUTINE CONTROL(T,iflag)
        T%TOW%MUVEC(4,1) = munominal + T%TOW%MS_ROLL - T%TOW%MS_PITCH - T%TOW%MS_YAW
 
        !write(*,*) 'muvec = ',T%TOW%MUVEC
-       
-       ! Now we saturate the microseconds so that it doesn't go over 1900 or under 1100
+    end if !Quad control off / on
+    ! Now we saturate the microseconds so that it doesn't go over 1900 or under 1100
        do j = 1,4
           if (T%TOW%MUVEC(j,1) .gt. 1900.00D0) then
-             T%TOW%MUVEC(j,1) = 1900.00D0
+             T%TOW%MUVEC(j,1) = T%TOW%MS_MAX
           end if
           if (T%TOW%MUVEC(j,1) .lt. 1100.00D0) then
-             T%TOW%MUVEC(j,1) = 1100.00D0
+             T%TOW%MUVEC(j,1) = T%TOW%MS_MIN
           end if
        end do
-    end if !Quad control off / on
  
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Control for plane!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -3428,6 +3427,17 @@ SUBROUTINE TOWED(T,iflag)
   
   V_A = sqrt(uaero**2 + vaero**2 + waero**2)
 
+  !Compute Thrust of quadcopter motors using a 2nd order function
+  sigmaF = 0.000437554764978899 !0.000437554764978899
+  omegaF = 45.42   !18.65
+  zetaF  = 0.942     !0.8533
+  !!! Second order filter
+  do idx = 1,4
+    !T%TOW%MUVEC(idx,1)
+    TDBLDOTVEC(idx) = -2*zetaF*TDOTVEC(idx)*omegaF + omegaF*omegaF*((T%TOW%MUVEC(idx,1)-T%TOW%MS_MIN)*2.375*sigmaF - TVEC(idx))
+    T%TOW%THRUSTVEC(idx,1) = TVEC(idx)
+  end do
+
   if (T%TOW%AEROFLAG .gt. 0) then !If AEROFLAG is greater than 0 it is either a 1 or a 2 - CM 8/16/2015
     !Compute Atmopsheric density and winds
 
@@ -3437,26 +3447,11 @@ SUBROUTINE TOWED(T,iflag)
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Quadcopter Aerodynamic Model written by Lisa Schibelius - 12/2016!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     !Recompute KT
+    !write(*,*) 'MUvec = ',T%TOW%MUVEC
     if ((T%TOW%AEROFLAG .eq. 1) .or. (T%TOW%AEROFLAG .eq. 3)) then
         T%TOW%KT = T%TOW%C_T*((T%ATM%DEN*qPI*(T%TOW%RNEW**4)/4))
         !write(*,*) 'T%TOW%KT = ',T%TOW%KT
         !PAUSE
-        
-        !Compute Thrust using a 2nd order function
-        sigmaF = 0.000437554764978899 !0.000437554764978899
-        omegaF = 45.42   !18.65
-        zetaF  = 0.942     !0.8533
-
-        !write(*,*) 'MUvec = ',T%TOW%MUVEC
-
-        !!! Second order filter
-        do idx = 1,4
-           C1F(idx) = -2*zetaF*TDOTVEC(idx)
-           C2F(idx) = -(omegaF)*TVEC(idx)
-           C3F(idx) = T%TOW%MUVEC(idx,1)*sigmaF*omegaF   ! replaced sigma with force
-           TDBLDOTVEC(idx) = omegaF*(C1F(idx) + C2F(idx) + C3F(idx))
-           T%TOW%THRUSTVEC(idx,1) = TVEC(idx)
-        end do
 
         T%TOW%OMEGAVEC = sqrt(T%TOW%THRUSTVEC/T%TOW%KT)
         sumomega = sum(T%TOW%OMEGAVEC)
