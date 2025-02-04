@@ -61,8 +61,8 @@
 0.17663419386614151  		!Reference CY,rbar      was 0.48319                
 0.09800094300447591 		!Reference Cl,rbar    was 0.4492                  
 -0.33411253656820367 		!Reference Cn,rbar     was -2.8512
-0.41181051485504044 		!Reference CL,delta-e     was -2.8579   	   elevator for lift - be what?           
-0.0000		                !Reference CD,delta-e                 should this be a number? used for elevator                  
+0.41181051485504044 		!Reference CL,delta-e     was -2.8579  elevator for lift - be what
+0.0000		                !Reference CD,delta-e should this be a number? used for elevator     
 -1.1530526838451003 		!Reference Cm,delta-e    was -7.5376                  
 0.0000		                !Reference CY,delta-a       used for C_Y      was 0.0000                 
 0.28052396489578457 	    !Reference Cl,delta-a     was -0.1580                

@@ -1620,7 +1620,6 @@ SUBROUTINE CONTROL(T,iflag)
        T%TOW%PHICOMMAND = 0.0D0
        T%TOW%THETACOMMAND = 0.0D0
        T%TOW%PSICOMMAND = 0.0D0
-       z_command = -30.0D0   !from old TOSIM Flaps control  desired altitude
        xcg = T%TOW%STATE(1)
        ycg = T%TOW%STATE(2)
        z = T%TOW%STATE(3)
@@ -1642,12 +1641,12 @@ SUBROUTINE CONTROL(T,iflag)
        T%TOW%XINTEGRAL = 0.0
        T%TOW%PHIINTEGRAL = 0.0 
        !!ADD CONTROL - PID for plane control surfaces
-       KP_a = 10.0D0
+       KP_a = 1.0D0
        KI_a = 0.0D0
-       KD_a = 2.0D0
-       KP_e = 50.0D0   !1
+       KD_a = 0.1D0
+       KP_e = 5.0D0   !1
        KI_e = 3.0D0   !1
-       KD_e = 0.10D0   !  KD_e = 0.01D0
+       KD_e = 1.00D0   !  KD_e = 0.01D0
        KP_r = 1.0D0
        KI_r = 0.0D0
        KD_r = 1.0D0
@@ -1656,11 +1655,11 @@ SUBROUTINE CONTROL(T,iflag)
        KD_thrust = 0.0!.010D0
        KP_p = 0.70D0
        KI_p = 0.0D0
-       KD_p = 0.020D0   !or 0.0020D0
+       KD_p = 0.20D0   !or 0.0020D0
        Kr = 1.0D0
        KP_roll = 0.40D0
        KD_roll = 0.250D0
-
+       z_command = -50.0D0   !from old TOSIM Flaps control  desired altitude
 
        !!Throttle Controller
 
@@ -1689,8 +1688,6 @@ SUBROUTINE CONTROL(T,iflag)
        !pitch command is also in radians since theta is in radians
        pitch_command = -KP_p*altitude_error - KI_p*T%TOW%ZINTEGRAL + KD_p*(zdot)       !outer loop for elevator   
 
-
-
        if (abs(pitch_command) .gt. 30.0D0*PI/180.0) then
           T%TOW%ZINTEGRAL = 0.0D0
        end if
@@ -1708,7 +1705,8 @@ SUBROUTINE CONTROL(T,iflag)
 
        control_elevator = -KP_e*(pitch_command - theta) + KD_e*(q) !- KI_e*(elevator_integral) + KD_e*(q)   !+ KI_e*(elevator_integral)      !inner loop 
 
-       roll_command = KP_roll*(T%TOW%PSICOMMAND - psi) - KD_roll*(r)                         !outer loop for aileron
+       !roll_command = KP_roll*(T%TOW%PSICOMMAND - psi) - KD_roll*(r)                         !outer loop for aileron
+       roll_command = 0.0*PI/180.0
 
        if (roll_command .gt. 30.0D0*PI/180.0) then
             roll_command = 30.0D0*PI/180.0
@@ -1719,9 +1717,9 @@ SUBROUTINE CONTROL(T,iflag)
 
        T%TOW%PHIINTEGRAL = T%TOW%PHIINTEGRAL + (roll_command - phi)*T%SIM%DELTATIME          !do i need to anti-wind up
 
-       control_aileron = KP_a*(roll_command - phi) + KI_a*T%TOW%PHIINTEGRAL - KD_a*p         !inner loop 
+       control_aileron = KP_a*(roll_command - phi) + KI_a*T%TOW%PHIINTEGRAL + KD_a*(0-p)         !inner loop 
   
-       control_rudder = Kr*control_aileron - KD_r*r                  ! KP_r*(T%TOW%PSICOMMAND-psi) + KI_r*T%TOW%PSIINTEGRAL - KD_r*r 
+       control_rudder = Kr*r                   ! KP_r*(T%TOW%PSICOMMAND-psi) + KI_r*T%TOW%PSIINTEGRAL - KD_r*r 
        !control_flaps = KP_a*(zdot - z_command) + KD_a*(wb)           !uses PID from aileron
 
        !write(*,*) 'control_aileron = ', control_aileron
@@ -3617,6 +3615,7 @@ SUBROUTINE TOWED(T,iflag)
 
         !!Roll,pitch and yaw coefficients
         T%TOW%Cll = T%TOW%C_roll_ALPHA*alfa + T%TOW%C_L_BETA*beta + T%TOW%C_L_P*phat + T%TOW%C_L_R*rhat + T%TOW%C_L_DR*T%TOW%RUDDER + T%TOW%C_L_DA*T%TOW%AILERON
+        !write(*,*) T%TOW%C_L_DA,T%TOW%AILERON,T%TOW%Cll
         T%TOW%Cm = T%TOW%C_M_BETA*beta + T%TOW%C_M_M*MACH + T%TOW%C_M_ALPHAHAT*alfahat + T%TOW%C_M_0 + T%TOW%C_M_ALPHA*alfa + T%TOW%C_M_UHAT*uhat + T%TOW%C_M_Q*qhat + T%TOW%C_M_DE*T%TOW%ELEVATOR + T%TOW%C_M_DF*T%TOW%FLAPS
         T%TOW%Cn = T%TOW%C_N_ALPHA*alfa + T%TOW%C_N_BETA*beta + T%TOW%C_N_P*phat + T%TOW%C_N_R*rhat + T%TOW%C_N_DR*T%TOW%RUDDER + T%TOW%C_N_DA*T%TOW%AILERON
 
@@ -3653,7 +3652,7 @@ SUBROUTINE TOWED(T,iflag)
         T%TOW%FXAEROAC = -q_inf_S*(calfa*(T%TOW%C_D) - salfa*T%TOW%C_L) + Thrust_AC 
         T%TOW%FYAEROAC = q_inf_S*C_Y 
         T%TOW%FZAEROAC = -q_inf_S*(salfa*(T%TOW%C_D) + calfa*T%TOW%C_L)                  !getting a force here
-        !T%TOW%MXAEROAC = q_inf_S*T%TOW%B*Cl                               !Do I add this? was not here before - Zach
+        T%TOW%MXAEROAC = q_inf_S*T%TOW%B*T%TOW%Cll                             !Do I add this? was not here before - Zach
         T%TOW%MYAEROAC = q_inf_S*T%TOW%C_BAR*T%TOW%Cm                      !getting a moment 
         T%TOW%MZAEROAC = q_inf_S*T%TOW%B*T%TOW%Cn
 
