@@ -93,7 +93,7 @@ control_data = np.loadtxt('Output_Files/Controls.OUT')
 print('Rows,Cols = ',r,c)
 
 time_control = control_data[:,0]
-ylabelControl = ['Throttle','Aileron','Elevator','Rudder','Flaps','Mu1','Mu2','Mu3','Mu4']
+ylabelControl = ['Throttle','Aileron','Elevator (rad)','Rudder','Flaps','Mu1','Mu2','Mu3','Mu4']
 for n in range(0,9):
     print('Plotting Control STates = ',ylabelControl[n])
     plti = P.plottool(fontSize,'Time(sec)',ylabelControl[n],'Control')

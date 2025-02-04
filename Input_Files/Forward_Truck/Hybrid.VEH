@@ -96,10 +96,10 @@
 170   			!kdpsi (quadcopter)
 0.0			!XINTEGRAL , integral term for x in PID controller
 0.0			!YINTEGRAL , integral term for y in PID controller
-0.0			!ZINTEGRAL , integral term for z in PID controller         for altitude of both quad and plane??
+0.0			!ZINTEGRAL , integral term for z in PID controller for altitude of both quad and plane??
 0.0			!PHIINTEGRAL , integral term for phi in PID controller     try 5.0
 0.0			!THETAINTEGRAL , integral term for theta in PID controller    try 5.0
 0.0			!PSIINTEGRAL , integral term for psi in PID controller     try 5.0
-30.0		!UCOMMAND x setpoint, quad (ft)   (used with delthrust)      ft/s????
-0.0			!YCOMMAND y setpoint, quad (ft)
--30.0		!ZCOMMAND z setpoint, quad (ft)  
+40.0		!UCOMMAND x setpoint, hybrid (ft/s)   (used with delthrust)      ft/s????
+0.0			!YCOMMAND y setpoint, hybrid (ft)
+-30.0		!ZCOMMAND z setpoint, hybrid (ft)  

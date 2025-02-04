@@ -1601,32 +1601,22 @@ SUBROUTINE CONTROL(T,iflag)
 
        !write(*,*) 'muvec = ',T%TOW%MUVEC
     end if !Quad control off / on
+    
     ! Now we saturate the microseconds so that it doesn't go over 1900 or under 1100
-       do j = 1,4
-          if (T%TOW%MUVEC(j,1) .gt. 1900.00D0) then
-             T%TOW%MUVEC(j,1) = T%TOW%MS_MAX
-          end if
-          if (T%TOW%MUVEC(j,1) .lt. 1100.00D0) then
-             T%TOW%MUVEC(j,1) = T%TOW%MS_MIN
-          end if
-       end do
+    do j = 1,4
+        if (T%TOW%MUVEC(j,1) .gt. 1900.00D0) then
+            T%TOW%MUVEC(j,1) = T%TOW%MS_MAX
+        end if
+        if (T%TOW%MUVEC(j,1) .lt. 1100.00D0) then
+            T%TOW%MUVEC(j,1) = T%TOW%MS_MIN
+        end if
+    end do
  
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Control for plane!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     !! Controller for TOW
     if (T%TOW%CONTROLOFFON .eq. 2 .OR. T%TOW%CONTROLOFFON .eq.3) then
        !Plane control
-
-       !!ADD CONTROL - PID for plane control surfaces
-       KP_a = 10.0D0
-       KI_a = 0.0D0
-       KD_a = 2.0D0
-       KP_e = 5.0D0   !1
-       KI_e = 3.0D0   !1
-       KD_e = 0.10D0   !  KD_e = 0.01D0
-       KP_r = 1.0D0
-       KI_r = 0.0D0
-       KD_r = 1.0D0
        T%TOW%PHICOMMAND = 0.0D0
        T%TOW%THETACOMMAND = 0.0D0
        T%TOW%PSICOMMAND = 0.0D0
@@ -1651,11 +1641,21 @@ SUBROUTINE CONTROL(T,iflag)
        r = T%TOW%STATE(13)
        T%TOW%XINTEGRAL = 0.0
        T%TOW%PHIINTEGRAL = 0.0 
+       !!ADD CONTROL - PID for plane control surfaces
+       KP_a = 10.0D0
+       KI_a = 0.0D0
+       KD_a = 2.0D0
+       KP_e = 50.0D0   !1
+       KI_e = 3.0D0   !1
+       KD_e = 0.10D0   !  KD_e = 0.01D0
+       KP_r = 1.0D0
+       KI_r = 0.0D0
+       KD_r = 1.0D0
        KP_thrust = 180.0D0 !152.0D0    !30 TRIAL or 120 FASTCASST  
-       KI_thrust = 50.0D0 !50.0D0    !50 TRIAL or 8 FASTCASST     
-       KD_thrust = 0!.010D0
+       KI_thrust = 0.0D0 !50.0D0    !50 TRIAL or 8 FASTCASST     
+       KD_thrust = 0.0!.010D0
        KP_p = 0.70D0
-       KI_p = 5.0D0
+       KI_p = 0.0D0
        KD_p = 0.020D0   !or 0.0020D0
        Kr = 1.0D0
        KP_roll = 0.40D0
@@ -1679,26 +1679,30 @@ SUBROUTINE CONTROL(T,iflag)
        if (T%TOW%DELTHRUST .lt. T%TOW%MS_MIN) then
           T%TOW%DELTHRUST = T%TOW%MS_MIN
        end if
-       else
-       T%TOW%DELTHRUST = T%TOW%MS_MIN
-       end if
        !RETURN
 
        altitude_error = (z_command - z)  
        T%TOW%ZINTEGRAL = (altitude_error * T%SIM%DELTATIME) + T%TOW%ZINTEGRAL   !wind-up issuse? sat filter when pitch_c is max
-       if (pitch_command .gt. 30.0D0*PI/180.0) then
-          T%TOW%ZINTEGRAL = 0.0D0
-       end if
+      
        !
        !altitude control with elevator for pitch
        !pitch command is also in radians since theta is in radians
        pitch_command = -KP_p*altitude_error - KI_p*T%TOW%ZINTEGRAL + KD_p*(zdot)       !outer loop for elevator   
 
+
+
+       if (abs(pitch_command) .gt. 30.0D0*PI/180.0) then
+          T%TOW%ZINTEGRAL = 0.0D0
+       end if
+
        if (pitch_command .gt. 30.0D0*PI/180.0) then
             pitch_command = 30.0D0*PI/180.0
-        else if (pitch_command .lt. -30.0D0*PI/180.0) then
+       else if (pitch_command .lt. -30.0D0*PI/180.0) then
             pitch_command = -30.0D0*PI/180.0
-        end if
+       end if
+
+       !pitch_command = 5.0D0*PI/180.0
+       !write(*,*) z,pitch_command
 
        elevator_integral =(pitch_command - theta)*T%SIM%DELTATIME + elevator_integral
 
@@ -1708,9 +1712,9 @@ SUBROUTINE CONTROL(T,iflag)
 
        if (roll_command .gt. 30.0D0*PI/180.0) then
             roll_command = 30.0D0*PI/180.0
-        else if (roll_command .lt. -30.0D0*PI/180.0) then
+       else if (roll_command .lt. -30.0D0*PI/180.0) then
             roll_command = -30.0D0*PI/180.0
-        end if
+       end if
 
 
        T%TOW%PHIINTEGRAL = T%TOW%PHIINTEGRAL + (roll_command - phi)*T%SIM%DELTATIME          !do i need to anti-wind up
@@ -1771,11 +1775,11 @@ SUBROUTINE CONTROL(T,iflag)
        if (T%DRIVER%MUTHROTTLE .lt. 1100.00D0) then
           T%DRIVER%MUTHROTTLE = 1100.00D0
        end if
-       else
-       T%DRIVER%MUTHROTTLE = T%DRIVER%MS_MIN
-       end if
-       RETURN
 
+    end if
+end if
+
+RETURN
 END SUBROUTINE CONTROL
 
 
