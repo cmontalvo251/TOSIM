@@ -1,9 +1,11 @@
-#!/usr/bin/python
+#!/usr/bin/python3
+
+import sys
+sys.path.append('Supplemental_Files')
 import plotting as P
 import mio as M
 from pdf import *
 import os
-import sys
 import matplotlib.pyplot as plt
 import sixdof as SIX
 from mpl_toolkits.mplot3d import Axes3D
@@ -47,7 +49,7 @@ camera = Camera(fig)
 ax = fig.add_subplot(111,projection='3d')
 totalplottingpts = 100 ##this restricts us to a certain number of points
 ##So no we need the skip parameter
-skip = int(np.float(len(time))/np.float(totalplottingpts))
+skip = int(float(len(time))/float(totalplottingpts))
 
 def figparams(x,y,z):
     fx = 20
@@ -68,7 +70,7 @@ def draw_cube(x,y,z,phi,theta,psi,l,w,h,axin,color):
 def draw_line(x1,y1,z1,x2,y2,z2):
     plt.plot([x1,x2],[y1,y2],[z1,z2])
 def decimal(x,n):
-    return np.float(str(x)[:str(x).find('.')+(n+1)])
+    return float(str(x)[:str(x).find('.')+(n+1)])
 def getfilename(i,L):
     numdx = '0'*L
     istr = str(i)
