@@ -1,8 +1,8 @@
-1		!Turn dynamics on(1) or off0)                    
-1 		!Gravity on(1) or off(0)                
-1 		!Aerodynamics on(1) or off(0)  
-1 		!Elastic forces on(1) or off(0)                                                         
-10 		!Number of beads(May not exceed 100 unless you edit the source code)                 
+1		!Turn dynamics on(1) or off0)                  
+1 		    !Gravity on(1) or off(0)                
+1 		    !Aerodynamics on(1) or off(0)  
+1 		    !Elastic forces on(1) or off(0)                                                         
+10 		    !Number of beads(May not exceed 100 unless you edit the source code)                 
 2.32123E-06 	!Mass per unit length (slugs/ft)     2.32123E-06                    
 40.0 		!Unstretched total length of tether (ft)                  
 40.5 		!Maximum length(ft)                
@@ -13,7 +13,7 @@
 1360006.4564270363 	!(Cv) Damping Modulus of Tether line (lbf-s/ft^2)
 34298.0		!(Gp) Torsional Modulus of Stiffness (lbf/(ft^2-rad))(34298) shear modulus                
 3341.0		!(Gd) Torsional Modulus of Damping (lbf-s/(ft^2-rad))(3341)                
--1 		! Non-linearity of Tether (-1=off,0=linear, 1 = non-linear)                
+-1 		    ! Non-linearity of Tether (-1=off,0=linear, 1 = non-linear)                
 0.3 		!Tether material Poisson's Ratio(nd) (0=No change)(0.3)                
 0.00459 	!Axial Drag(nd) (1.0)(0.00459)                 
 1.0 		!Normal Drag(nd) (1.0)                

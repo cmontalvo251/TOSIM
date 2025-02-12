@@ -27,7 +27,7 @@
 0.6758530 	! lphi34 (ft) , roll length of back two rotors
 0.4461942	! ltheta12 (ft) , Since the pitching moment differs by less than 1 cm
 0.4265020	! ltheta34 (ft) , we are assuming these two distances are the same for symmetry.
-1250		!OMEGAMAX (rad/s) ; 950kV *12.6V (full 3cell) = 11970 RPM based battery specs (14.8V gives 14,060 RPM and 1472 rad/s)
+1250		!OMEGAMAX (rad/s) ; 950kV *12.6V (full 3cell) = 11970 RPM based battery specs (14.8V gives 14,060 RPM and 1472 rad/s   using 1250)
 0.00006491284467800415	!Ir OR 8.801e-5 (kg*m^2)
 3.65625		            !Reference area (ft^2) [wing area]                         
 4.875		            !Lateral reference length (ft) [wing span]                            
@@ -100,6 +100,6 @@
 0.0			!PHIINTEGRAL , integral term for phi in PID controller     try 5.0
 0.0			!THETAINTEGRAL , integral term for theta in PID controller    try 5.0
 0.0			!PSIINTEGRAL , integral term for psi in PID controller     try 5.0
-39.0		!UCOMMAND x setpoint, hybrid (ft/s)   (used with delthrust)      ft/s????  
+40.0		!UCOMMAND x setpoint, hybrid (ft/s)   (used with delthrust)      ft/s????  
 0.0			!YCOMMAND y setpoint, hybrid (ft)
 -35.0		!ZCOMMAND z setpoint, hybrid (ft)  

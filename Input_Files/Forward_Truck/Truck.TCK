@@ -23,7 +23,7 @@
 1900		! PWM_max (microseconds)
 1			!Controller on (1) off (0)
 1.0		!kpx (truck)
-0.0		!kix (truck) - used for forward velocity
+0.01		!kix (truck) - used for forward velocity
 0.0      	!kdx  (truck)
 0.0		!XINTEGRAL , integral term for x in PID controller
 0.0		!THETAINTEGRAL , integral term for theta in PID controller

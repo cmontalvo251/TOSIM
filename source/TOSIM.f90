@@ -386,6 +386,8 @@ type ATMOSPHERESTRUCTURE
   real*8 :: RUDDER = 0                             ! Adding a rudder parameter just in case we use the manta (rad)
   real*8 :: FLAPS = 0                              ! Adding flaps parameter in case we use an airplane later (rad)
   real*8 :: DELTHRUST = 0                          ! Adding incase we use an airplane later (pwm)
+  real*8 :: SIGMA_P = 0                            !for blend control
+  real*8 :: SIGMA_Q = 0                            !for blend control
   real*8 :: TURNRADIUS = 0
   real*8 :: V_T = 0                                ! Velocity (ft/s)
   real*8 :: KT = 0                                 ! Quadcopter Aero Parameter
@@ -793,7 +795,7 @@ SUBROUTINE SIMULATION(T,iflag)
  real*4 tictotal,ticuser,ticsystem,toctotal,tocuser,tocsystem,elapsed(2)
  real*4 etime,aoa,unominal,wnominal,ALFAMAX
  real*8 krkactuator(NOACTUATORS,4),nomactuator(NOACTUATORS)
- real*8 control_aileron, control_elevator, control_rudder
+ real*8 control_aileron, control_elevator, control_rudder,sigma_p, sigma_q
  !real*8 aileron_index, elevator_index,rudder_index
  real*8 zint
  type(TOSIMSTRUCTURE) T
@@ -862,8 +864,9 @@ SUBROUTINE SIMULATION(T,iflag)
       ! T%SIM%STATE(T%SIM%NOSTATES-7:T%SIM%NOSTATES),T%SIM%STATEDOT(T%SIM%NOSTATES-7:T%SIM%NOSTATES)
       !Control OUT File
     !write(*,*) 'During write routine = ',T%TOW%OMEGAVEC      
-    write(91,fmt='(1000F30.10)') T%SIM%TIME,T%TOW%DELTHRUST,T%TOW%AILERON,T%TOW%ELEVATOR,T%TOW%RUDDER,T%TOW%FLAPS,T%TOW%OMEGAVEC(1:4,1), T%DRIVER%FYGRAV, T%DRIVER%FYAERO, T%DRIVER%FYCONT
+    write(91,fmt='(1000F30.10)') T%SIM%TIME,T%TOW%DELTHRUST,T%TOW%AILERON,T%TOW%ELEVATOR,T%TOW%RUDDER,T%TOW%FLAPS,T%TOW%OMEGAVEC(1:4,1),T%TOW%sigma_p, T%TOW%sigma_q
     !write(91,fmt='(1000F30.10)') T%SIM%TIME,T%TOW%DELTHRUST, BLEND?    ,T%TOW%AILERON,T%TOW%ELEVATOR,T%TOW%RUDDER,T%TOW%FLAPS,T%TOW%OMEGAVEC(1:4,1), T%DRIVER%FYGRAV, T%DRIVER%FYAERO, T%DRIVER%FYCONT, T%TOW%FXAEROAC, T%TOW%FYAEROAC, T%TOW%FZAEROAC
+    !write(*,*) "sigma_p, sigma_q",T%TOW%sigma_p, T%TOW%sigma_q
       !Force Vector File
     write(83,fmt='(1000F30.10)') T%SIM%TIME,T%THR%FXGRAV(1:T%THR%NBEADS),T%THR%FYGRAV(1:T%THR%NBEADS),T%THR%FZGRAV(1:T%THR%NBEADS),T%THR%FXELAS(1:T%THR%NBEADS),T%THR%FYELAS(1:T%THR%NBEADS),T%THR%FZELAS(1:T%THR%NBEADS),T%THR%FXAERO(1:T%THR%NBEADS),T%THR%FYAERO(1:T%THR%NBEADS),T%THR%FZAERO(1:T%THR%NBEADS)
    end if 
@@ -1353,18 +1356,18 @@ SUBROUTINE CONTROL(T,iflag)
  integer , parameter :: nwp = 1
  real*8 readreal,phicommand,deltheta,delpsi,dely,delydot,rAS_I(3,1),vAS_I(3,1),thetacommand, xcommand, ycommand, zcommand
  real*8 rAS_A(3,1),vAS_A(3,1),lencommand,rGS_I(3,1),vGS_I(3,1),psicp,rGS_P(3,1),vGS_P(3,1),tension,len
- real*8 angles(2,1),delphi,delphidot,ldotnom,ldot,n1,q0,q1,q2,q3,pb,qb,rb,vb,xcg,ycg,zcg,vaero,wb,uaero
+ real*8 angles(2,1),delphi,delphidot,ldotnom,ldot,n1,q0,q1,q2,q3,pb,qb,rb,vb,xcg,ycg,zcg,vaero,wb,uaero,waero
  real*8 delx,delz,phi,theta,psi,p,q,r,xdot,ydot,zdot,omegaNot,addpitch,addroll,addyaw
- real*8 domegaLeft,omegaRight,domegaFront,omegaBack,domegaDiag,omegaOpp,omegaDiag,omegaFront, k_blend
- real*8 xwaypoint(nwp,1),ywaypoint(nwp,1),zwaypoint(nwp,1),Dwaypoint, sigma_p, sigma_q
+ real*8 domegaLeft,omegaRight,domegaFront,omegaBack,domegaDiag,omegaOpp,omegaDiag,omegaFront, k_blend, baseThrottle
+ real*8 xwaypoint(nwp,1),ywaypoint(nwp,1),zwaypoint(nwp,1),Dwaypoint, sigma_p, sigma_q, dmu, u_bar
  real*8 delmu(4),munominal,MAXANGLE,z,udriver,u_plane, z_command,roll_command 
- real*8 KDPHI, KDPSI, KDTHETA, KPPHI, KPPSI, KPTHETA,PSICOMMAND, THETAINTEGRAL, PHIINTEGRAL,PSIINTEGRAL
+ real*8 KDPHI, KDPSI, KDTHETA, KPPHI, KPPSI, KPTHETA,PSICOMMAND, THETAINTEGRAL, PHIINTEGRAL,PSIINTEGRAL, lambda,timeSinceStart,rampFactor
  real*8 KP_a,KD_a,KP_e,KD_e,KP_r,KD_r,KI_a,KI_e,KI_r,KP_p,KD_p,KI_p,Kr
  real*8 control_aileron,control_elevator,control_rudder,control_flaps,control_altitude, ub, ub_2, KP_roll,KD_roll,KD_thrust
- real*8 k_phi, k_p      ! Gains for roll control (aileron)
+ real*8 k_phi, k_p, vATM_I(3,1),vATM_A(3,1)       ! Gains for roll control (aileron)
  real*8 k_theta, k_q,elevator_integral     ! Gains for pitch control (elevator)
  real*8 k_psi, k_r      ! Gains for yaw control (rudder)
- real*8 error_phi, error_theta, error_psi,altitude_error, c_q, current_time, KP_thrust, KI_thrust, altitude_dot, pitch_command
+ real*8 error_phi, error_theta, error_psi,altitude_error, c_q, current_time, KP_thrust, KI_thrust, altitude_dot, pitch_command,V_A,V_A_H
 
 
  type(TOSIMSTRUCTURE) T
@@ -1605,10 +1608,10 @@ SUBROUTINE CONTROL(T,iflag)
     
     ! Now we saturate the microseconds so that it doesn't go over 1900 or under 1100
     do j = 1,4
-        if (T%TOW%MUVEC(j,1) .gt. 1900.00D0) then
+        if (T%TOW%MUVEC(j,1) .gt. T%TOW%MS_MAX) then
             T%TOW%MUVEC(j,1) = T%TOW%MS_MAX
         end if
-        if (T%TOW%MUVEC(j,1) .lt. 1100.00D0) then
+        if (T%TOW%MUVEC(j,1) .lt. T%TOW%MS_MIN) then
             T%TOW%MUVEC(j,1) = T%TOW%MS_MIN
         end if
     end do
@@ -1631,7 +1634,7 @@ SUBROUTINE CONTROL(T,iflag)
        q1 = T%TOW%STATE(5)
        q2 = T%TOW%STATE(6)
        q3 = T%TOW%STATE(7)
-       ub = T%TOW%STATE(8)                                         !T%DRIVER%STATE(7) for speed of truck
+       ub = T%TOW%STATE(8)                                      
        phi   = atan2(2.*(q0*q1 + q2*q3),1.-2.*(q1**2 + q2**2));
        theta = asin (2.*(q0*q2 - q3*q1));                          !radians
        psi   = atan2(2.*(q0*q3 + q1*q2),1.-2.*(q2**2 + q3**2));
@@ -1662,9 +1665,6 @@ SUBROUTINE CONTROL(T,iflag)
        KD_roll = 0.250D0
 
        !!Throttle Controller
-
-       !current_time = T%SIM%INITIALTIME + T%SIM%DELTATIME *((T%SIM%FINALTIME - T%SIM%INITIALTIME)/ T%SIM%DELTATIME)
-       !elaphsed_time = (current_time - T%SIM%INITIALTIME)
        T%TOW%XINTEGRAL = T%TOW%XINTEGRAL + (T%SIM%DELTATIME) * (T%TOW%UCOMMAND-ub)         !UCOMMAND is in input file 
        T%TOW%DELTHRUST = (KP_thrust*(T%TOW%UCOMMAND-ub) + KI_thrust*T%TOW%XINTEGRAL - KD_thrust*((T%TOW%UCOMMAND-ub)/T%SIM%DELTATIME)) + T%TOW%MS_MIN 
        !write(*,*) 'T%TOW%DELTHRUST',T%TOW%DELTHRUST
@@ -1749,23 +1749,112 @@ SUBROUTINE CONTROL(T,iflag)
           T%TOW%FLAPS = sign(MAXANGLE,T%TOW%FLAPS)
        end if
 
-       !write(*,*) 'T%TOW%ELEVATOR = ', T%TOW%ELEVATOR
+       !write(*,*) "T%TOW%ELEVATOR 1",T%TOW%ELEVATOR
+       !write(*,*) "T%TOW%AILERON 1",T%TOW%AILERON
+       !write(*,*) "T%TOW%RUDDER 1",T%TOW%RUDDER
        !PAUSE
 
 
     end if !Plane control off / on
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!throttle controller!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Blend controller !!!!!!!!!!!!!!!!!!!!!!!!!!
+    if (T%TOW%CONTROLOFFON .eq. 3) then    !chagne to 3 after bugs are worked on - zach
+
+        ub = T%TOW%STATE(8)
+        !vATM_I(1,1) = T%DRIVER%VXWIND      
+        !vATM_I(2,1) = T%DRIVER%VYWIND
+        !vATM_I(3,1) = T%DRIVER%VZWIND
+        !vATM_A = matmul(T%DRIVER%TCI,vATM_I)
+        vATM_I(1,1) = T%ATM%VXWIND
+        vATM_I(2,1) = T%ATM%VYWIND
+        vATM_I(3,1) = T%ATM%VZWIND
+        T%TOW%VXWIND = T%ATM%VXWIND
+        T%TOW%VYWIND = T%ATM%VYWIND
+        T%TOW%VZWIND = T%ATM%VZWIND
+        vATM_A = matmul(T%TOW%TAI,vATM_I)
+        uaero = ub - vATM_A(1,1)
+        vaero = vb - vATM_A(2,1)
+        waero = wb - vATM_A(3,1)
+        V_A_H = sqrt(uaero**2 + vaero**2 + waero**2)
+
+        if (V_A_H .eq. 0) then
+            V_A_H = uaero
+        end if
+
+        !write(*,*)"V_A_H 1",V_A_H
+
+        if (V_A_H .gt. 40.0D0) then    
+            V_A_H = 40.0D0
+        end if
+        if (V_A_H .lt. 0.0D0) then
+                V_A_H = 0.0D0
+        end if
+
+        !write(*,*)"V_A_H 2",V_A_H
+
+        T%TOW%sigma_p = (V_A_H/40.10D0)**2       !((T%SIM%TIME) / 20.0D0)   !V_max = 52  -  from input file
+        T%TOW%sigma_q = 1 - T%TOW%sigma_p  
+
+
+        !T%TOW%sigma_q = 0.50D0        !for testing
+        !T%TOW%sigma_p = 0.50D0
+
+        do i = 1,4
+            dmu = T%TOW%MUVEC(i,1) - T%TOW%MS_MIN    
+            dmu = dmu*T%TOW%sigma_q
+            T%TOW%MUVEC(i,1) = T%TOW%MS_MIN + dmu
+        end do
+
+        T%TOW%ELEVATOR = T%TOW%sigma_p * control_elevator
+        T%TOW%AILERON = T%TOW%sigma_p * control_aileron
+        T%TOW%RUDDER = T%TOW%sigma_p * control_rudder
+
+        MAXANGLE = 30.0*PI/180.0
+        if (abs(T%TOW%RUDDER) .gt. MAXANGLE) then
+          T%TOW%RUDDER = sign(MAXANGLE,T%TOW%RUDDER);
+        end if
+        if (abs(T%TOW%ELEVATOR) .gt. MAXANGLE) then
+          T%TOW%ELEVATOR = sign(MAXANGLE,T%TOW%ELEVATOR);
+        end if
+        if (abs(T%TOW%AILERON) .gt. MAXANGLE) then
+          T%TOW%AILERON = sign(MAXANGLE,T%TOW%AILERON)
+        end if
+
+       do j = 1,4
+        if (T%TOW%MUVEC(j,1) .gt. T%TOW%MS_MAX) then
+            T%TOW%MUVEC(j,1) = T%TOW%MS_MAX
+        end if
+        if (T%TOW%MUVEC(j,1) .lt. T%TOW%MS_MIN) then
+            T%TOW%MUVEC(j,1) = T%TOW%MS_MIN
+        end if
+       end do
+
+       T%TOW%DELTHRUST  = T%TOW%MS_MIN
+
+       !write(*,*) "T%TOW%ELEVATOR 2",T%TOW%ELEVATOR
+       !write(*,*) "T%TOW%AILERON 2",T%TOW%AILERON
+       !write(*,*) "T%TOW%RUDDER 2",T%TOW%RUDDER
+       !write(*,*) "sigma_p", sigma_p
+       !write(*,*) "sigma_q", sigma_q
+       !write(*,*) 'muvec = ',T%TOW%MUVEC
+       !write(*,*) "V_A",V_A
+       !write(*,*) "T%SIM%TIME",T%SIM%TIME
+       !PAUSE
+
+
+    end if ! blend controller off / on
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     !!!!!!!!!!!!!!DRIVER CONTROLLER!!!!!!!!!!!!!!!!!!!!!!!!
     if (T%DRIVER%CONTROLOFFON .gt. 0) then
-       !!For now let's just do a speed controller
-       udriver = T%DRIVER%STATE(7)
-       T%DRIVER%MUTHROTTLE = T%DRIVER%KPXDRIVE*(T%DRIVER%UCOMMAND-udriver) + T%DRIVER%KIXDRIVE*T%DRIVER%UINTEGRAL + T%DRIVER%MS_MIN
-       !write(*,*) 'MUTHROTTLE,Velocity = ',T%DRIVER%MUTHROTTLE,T%DRIVER%STATE(7)
-       !write(*,*) 'T%DRIVER%STATE(7)',T%DRIVER%STATE(7)
-       !PAUSE
+
+       if (T%SIM%TIME .gt. 0.0D0) then
+        udriver = T%DRIVER%STATE(7)
+        lambda = 0.035D0                      ! Adjust this value for faster/slower ramp-up
+        rampFactor = 1.0D0 - exp(-lambda) 
+        T%DRIVER%MUTHROTTLE = (T%DRIVER%KPXDRIVE*(T%DRIVER%UCOMMAND-udriver) + T%DRIVER%KIXDRIVE*T%DRIVER%UINTEGRAL)*rampFactor + T%DRIVER%MS_MIN
+       end if
+       
        !Saturation controller
        if (T%DRIVER%MUTHROTTLE .gt. T%DRIVER%MS_MAX) then
           T%DRIVER%MUTHROTTLE = T%DRIVER%MS_MAX
@@ -1773,6 +1862,10 @@ SUBROUTINE CONTROL(T,iflag)
        if (T%DRIVER%MUTHROTTLE .lt. T%DRIVER%MS_MIN) then
           T%DRIVER%MUTHROTTLE = T%DRIVER%MS_MIN
        end if
+
+       !write(*,*) "T%DRIVER%MUTHROTTLE",T%DRIVER%MUTHROTTLE
+       !write(*,*) "T%SIM%TIME",T%SIM%TIME
+       !PAUSE
 
     end if
 end if

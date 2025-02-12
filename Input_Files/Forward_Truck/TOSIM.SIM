@@ -26,7 +26,7 @@
 0.0		!Phi_TOW(rad)        0.1                
 0.00		!Theta_TOW(rad)	  -0.05
 0.0		!Psi_TOW(rad)      0.75                  
-30.0	   !U_TOW(ft/s)  initial velocity      30                                  
+0.0	   !U_TOW(ft/s)  initial velocity          30                                  
 0.0		!V_TOW(ft/s)                        
 0.0		!W_TOW(ft/s)                        
 0.0		!P_TOW(rad/s)      1.0      roll rate to change                       
