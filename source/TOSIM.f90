@@ -1848,7 +1848,13 @@ SUBROUTINE CONTROL(T,iflag)
     !!!!!!!!!!!!!!DRIVER CONTROLLER!!!!!!!!!!!!!!!!!!!!!!!!
     if (T%DRIVER%CONTROLOFFON .gt. 0) then
 
-       if (T%SIM%TIME .gt. 0.0D0) then
+        if (T%SIM%TIME .lt. 1.0D0) then
+        udriver = T%DRIVER%STATE(7)
+        rampFactor = 0.0D0 
+        T%DRIVER%MUTHROTTLE = (T%DRIVER%KPXDRIVE*(T%DRIVER%UCOMMAND-udriver) + T%DRIVER%KIXDRIVE*T%DRIVER%UINTEGRAL)*rampFactor + T%DRIVER%MS_MIN
+       end if
+
+       if (T%SIM%TIME .gt. 1.0D0) then
         udriver = T%DRIVER%STATE(7)
         lambda = 0.035D0                      ! Adjust this value for faster/slower ramp-up
         rampFactor = 1.0D0 - exp(-lambda) 
