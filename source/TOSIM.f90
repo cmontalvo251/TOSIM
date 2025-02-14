@@ -3676,6 +3676,10 @@ SUBROUTINE TOWED(T,iflag)
         !!Angle of attack and sideslip and alfahat/uhat/phat/qhat/rhat
         if (abs(uaero) .gt. 0) then
             alfa = atan2(waero,uaero)
+            if (uaero .lt. 0) then
+                alfa = atan2(waero,-uaero)
+            end if
+            !write(*,*) 'afla = ',alfa,T%SIM%TIME
         else
             alfa = 0
         end if
@@ -3686,6 +3690,9 @@ SUBROUTINE TOWED(T,iflag)
             alfadot = wbdot/V_A
             alfahat = alfadot * T%TOW%C_BAR / (2*V_A)
             uhat = uaero/V_A
+            if (uaero .lt. 0) then 
+                uhat = -uaero/V_A
+            end if
             phat = pb*T%TOW%B    /(2*V_A)
             qhat = qb*T%TOW%C_BAR/(2*V_A)
             rhat = rb*T%TOW%B    /(2*V_A)
@@ -3723,6 +3730,7 @@ SUBROUTINE TOWED(T,iflag)
         T%TOW%Cll = T%TOW%C_roll_ALPHA*alfa + T%TOW%C_L_BETA*beta + T%TOW%C_L_P*phat + T%TOW%C_L_R*rhat + T%TOW%C_L_DR*T%TOW%RUDDER + T%TOW%C_L_DA*T%TOW%AILERON
         !write(*,*) T%TOW%C_L_DA,T%TOW%AILERON,T%TOW%Cll
         T%TOW%Cm = T%TOW%C_M_BETA*beta + T%TOW%C_M_M*MACH + T%TOW%C_M_ALPHAHAT*alfahat + T%TOW%C_M_0 + T%TOW%C_M_ALPHA*alfa + T%TOW%C_M_UHAT*uhat + T%TOW%C_M_Q*qhat + T%TOW%C_M_DE*T%TOW%ELEVATOR + T%TOW%C_M_DF*T%TOW%FLAPS
+        T%TOW%Cm = sign(1.0,uaero)*T%TOW%Cm
         T%TOW%Cn = T%TOW%C_N_ALPHA*alfa + T%TOW%C_N_BETA*beta + T%TOW%C_N_P*phat + T%TOW%C_N_R*rhat + T%TOW%C_N_DR*T%TOW%RUDDER + T%TOW%C_N_DA*T%TOW%AILERON
 
         !write(*,*) "FXAERO BEFORE",T%TOW%FXAERO
