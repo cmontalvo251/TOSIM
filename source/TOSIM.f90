@@ -1848,17 +1848,17 @@ SUBROUTINE CONTROL(T,iflag)
     !!!!!!!!!!!!!!DRIVER CONTROLLER!!!!!!!!!!!!!!!!!!!!!!!!
     if (T%DRIVER%CONTROLOFFON .gt. 0) then
 
-        if (T%SIM%TIME .lt. 1.0D0) then
+        if (T%SIM%TIME .lt. 50.0D0) then
         udriver = T%DRIVER%STATE(7)
         rampFactor = 0.0D0 
         T%DRIVER%MUTHROTTLE = (T%DRIVER%KPXDRIVE*(T%DRIVER%UCOMMAND-udriver) + T%DRIVER%KIXDRIVE*T%DRIVER%UINTEGRAL)*rampFactor + T%DRIVER%MS_MIN
        end if
 
-       if (T%SIM%TIME .gt. 1.0D0) then
+       if (T%SIM%TIME .gt. 50.0D0) then
         udriver = T%DRIVER%STATE(7)
-        lambda = 0.035D0                      ! Adjust this value for faster/slower ramp-up
-        rampFactor = 1.0D0 - exp(-lambda) 
-        T%DRIVER%MUTHROTTLE = (T%DRIVER%KPXDRIVE*(T%DRIVER%UCOMMAND-udriver) + T%DRIVER%KIXDRIVE*T%DRIVER%UINTEGRAL)*rampFactor + T%DRIVER%MS_MIN
+        lambda = 0.1D0                      ! Adjust this value for faster/slower ramp-up 
+        rampFactor = 1.0D0 - exp(-lambda*(T%SIM%TIME-50)) 
+        T%DRIVER%MUTHROTTLE = (T%DRIVER%KPXDRIVE*(T%DRIVER%UCOMMAND*rampFactor-udriver) + T%DRIVER%KIXDRIVE*T%DRIVER%UINTEGRAL) + T%DRIVER%MS_MIN
        end if
        
        !Saturation controller
@@ -3743,7 +3743,6 @@ SUBROUTINE TOWED(T,iflag)
 
         !Add thrust to the plane for when quad motors are off and no tether
         !!THRUST MODEL
-
         Prop_area = PI*T%TOW%RNEW**2
         spin_slope = T%TOW%OMEGAMAX /(T%TOW%MS_MAX - T%TOW%MS_MIN)
             !Saturation controller
@@ -3978,7 +3977,8 @@ SUBROUTINE TOWED(T,iflag)
   read(unit=94,fmt=*,iostat=readflag) T%TOW%B 
   read(unit=94,fmt=*,iostat=readflag) T%TOW%C_BAR
   read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_0
-  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_0 
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_0    
+  read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_0
   read(unit=94,fmt=*,iostat=readflag) T%TOW%C_L_M 
   read(unit=94,fmt=*,iostat=readflag) T%TOW%C_D_M 
   read(unit=94,fmt=*,iostat=readflag) T%TOW%C_M_M 

@@ -33,7 +33,8 @@
 4.875		            !Lateral reference length (ft) [wing span]                            
 0.75	                !Longitudinal reference length (ft) [wing chord]                         
 0.3441029736813229		!Zero Lift Drag (CD0)             
-0.3441029736813229      !Reference CL,0     
+-0.07636788929236879    !Reference CL,0    
+0.3441029736813229      !Reference CM,0  
 0.0000		            !Reference CL,M          (Not used)        could be used in CL       
 0.0000		            !Reference CD,M          (Not used)
 0.0000		            !Reference Cm,M          (Not used)
@@ -100,6 +101,6 @@
 0.0			!PHIINTEGRAL , integral term for phi in PID controller     try 5.0
 0.0			!THETAINTEGRAL , integral term for theta in PID controller    try 5.0
 0.0			!PSIINTEGRAL , integral term for psi in PID controller     try 5.0
-0.0		!UCOMMAND x setpoint, hybrid (ft/s)   (used with delthrust)      ft/s????  
+40.0		!UCOMMAND x setpoint, hybrid (ft/s)   (used with delthrust)      ft/s????  
 0.0			!YCOMMAND y setpoint, hybrid (ft)
 -30.0		!ZCOMMAND z setpoint, hybrid (ft)  
