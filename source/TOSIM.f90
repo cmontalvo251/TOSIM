@@ -1681,14 +1681,14 @@ SUBROUTINE CONTROL(T,iflag)
        !RETURN
 
        altitude_error = (T%TOW%ZCOMMAND - z)  
-       T%TOW%ZINTEGRAL = (altitude_error * T%SIM%DELTATIME) + T%TOW%ZINTEGRAL   !wind-up issuse? sat filter when pitch_c is max
+       T%TOW%ZINTEGRAL = (altitude_error * T%SIM%DELTATIME) + T%TOW%ZINTEGRAL   
       
        !
        !altitude control with elevator for pitch
        !pitch command is also in radians since theta is in radians
        pitch_command = -KP_p*altitude_error - KI_p*T%TOW%ZINTEGRAL + KD_p*(zdot)       !outer loop for elevator   
 
-       if (abs(pitch_command) .gt. 30.0D0*PI/180.0) then
+       if (abs(pitch_command) .gt. 30.0D0*PI/180.0) then   !prevent wind up
           T%TOW%ZINTEGRAL = 0.0D0
        end if
 
@@ -1719,7 +1719,7 @@ SUBROUTINE CONTROL(T,iflag)
 
        control_aileron = KP_a*(roll_command - phi) + KI_a*T%TOW%PHIINTEGRAL + KD_a*(0-p)         !inner loop 
   
-       control_rudder = KP_r*(T%TOW%PSICOMMAND-psi) + Kr*r                   ! KP_r*(T%TOW%PSICOMMAND-psi) + KI_r*T%TOW%PSIINTEGRAL - KD_r*r 
+       control_rudder = KP_r*(T%TOW%PSICOMMAND-psi) + KD_r*r                   ! KP_r*(T%TOW%PSICOMMAND-psi) + KI_r*T%TOW%PSIINTEGRAL - KD_r*r 
        !control_flaps = KP_a*(zdot - z_command) + KD_a*(wb)           !uses PID from aileron
 
        !write(*,*) 'control_aileron = ', control_aileron

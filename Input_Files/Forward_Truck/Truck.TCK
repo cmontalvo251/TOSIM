@@ -2,7 +2,7 @@
 3		!Truck Module Type(0=Integration Model(Very simple, not 6DOF),1=Constant Speed,2=Table Lookup,3=Truck 6DOF Model)
 1		!Gravity on (1) of off (0)
 1		!Aerodynamics on(1) or off(0)
-2000		!Weight (lbf) OR 1.282 (kg)  
+4000		!Weight (lbf)  
 32.2		!Gravity (ft/s^2)
 0.0		!Stationline center of mass(m)
 0.0		!buttline center of mass(m)
@@ -16,9 +16,9 @@
 0.000		!Ixy
 0.000		!Ixz
 0.000		!Iyz (lb*ft^2) OR 2.428e-4 (kg*m^2)
-10.0			!Turn_Radius(ft) (The turn radius of a quad is super small so I just set it to 1)
-1.0	    !dxD - Longitudinal drag factor   (1.0 tether moved truck)
-1000.0	!C_T Thrust factor
+13.7			!Turn_Radius(ft) (The turn radius of a quad is super small so I just set it to 1)
+1.0	    !dxD - Longitudinal drag factor   
+2000.0	!C_T Thrust factor
 1100		! PWM_min (microseconds)
 1900		! PWM_max (microseconds)
 1			!Controller on (1) off (0)

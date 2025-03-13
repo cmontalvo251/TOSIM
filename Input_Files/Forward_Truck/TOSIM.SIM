@@ -26,13 +26,13 @@
 0.0		!Phi_TOW(rad)        0.1                
 0.00		!Theta_TOW(rad)	  -0.05
 0.0		!Psi_TOW(rad)      0.75                  
-0.0	   !U_TOW(ft/s)  initial velocity          30                                  
+0.0	   !U_TOW(ft/s)  initial velocity    30                                  
 0.0		!V_TOW(ft/s)                        
 0.0		!W_TOW(ft/s)                        
 0.0		!P_TOW(rad/s)      1.0      roll rate to change                       
 0.0		!Q_TOW(rad/s)     -1.0     pitch rate              
 0.0		!R_TOW(rad/s)           0.5  yaw rate
-0.75 !0.75		!T1    (lbf)
+0.75 !0.75		!T1    (lbf)   initial start of the quad motors
 0.0				!T1dot (lbf/s)
 0.75 !0.75		!T2    (lbf)
 0.0				!T2dot (lbf/s)
