@@ -1361,7 +1361,7 @@ SUBROUTINE CONTROL(T,iflag)
  real*8 domegaLeft,omegaRight,domegaFront,omegaBack,domegaDiag,omegaOpp,omegaDiag,omegaFront, k_blend, baseThrottle
  real*8 xwaypoint(nwp,1),ywaypoint(nwp,1),zwaypoint(nwp,1),Dwaypoint, sigma_p, sigma_q, dmu, u_bar
  real*8 delmu(4),munominal,MAXANGLE,z,udriver,u_plane, z_command,roll_command 
- real*8 KDPHI, KDPSI, KDTHETA, KPPHI, KPPSI, KPTHETA,PSICOMMAND, THETAINTEGRAL, PHIINTEGRAL,PSIINTEGRAL, lambda,timeSinceStart,rampFactor
+ real*8 KDPHI, KDPSI, KDTHETA, KPPHI, KPPSI, KPTHETA,PSICOMMAND, THETAINTEGRAL, PHIINTEGRAL,PSIINTEGRAL, lambda,timeSinceStart,rampFactor,brake_command
  real*8 KP_a,KD_a,KP_e,KD_e,KP_r,KD_r,KI_a,KI_e,KI_r,KP_p,KD_p,KI_p,Kr
  real*8 control_aileron,control_elevator,control_rudder,control_flaps,control_altitude, ub, ub_2, KP_roll,KD_roll,KD_thrust
  real*8 k_phi, k_p, vATM_I(3,1),vATM_A(3,1)       ! Gains for roll control (aileron)
@@ -1588,6 +1588,11 @@ SUBROUTINE CONTROL(T,iflag)
           T%TOW%PSICOMMAND = sign(30*qPI/180,T%TOW%PSICOMMAND)
        end if
 
+       !T%TOW%ZINTEGRAL = (T%TOW%ZINTEGRAL*T%TOW%SIGMA_Q) + T%TOW%ZINTEGRAL
+       !T%TOW%PHIINTEGRAL = (T%TOW%PHIINTEGRAL*T%TOW%SIGMA_Q) + T%TOW%PHIINTEGRAL
+       !T%TOW%THETAINTEGRAL = (T%TOW%THETAINTEGRAL*T%TOW%SIGMA_Q) + T%TOW%THETAINTEGRAL
+       !T%TOW%PSIINTEGRAL = (T%TOW%PSIINTEGRAL*T%TOW%SIGMA_Q) + T%TOW%PSIINTEGRAL
+
        ! Hovering microseconds and altitude control
        munominal = 1706.95 + T%TOW%KPZDRIVE*(delz) + T%TOW%KIZDRIVE*T%TOW%ZINTEGRAL + T%TOW%KDZDRIVE*zdot  ! Nominal microsecond pulse for hover    1706.95
 
@@ -1756,8 +1761,8 @@ SUBROUTINE CONTROL(T,iflag)
 
 
     end if !Plane control off / on
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Blend controller !!!!!!!!!!!!!!!!!!!!!!!!!!
-    if (T%TOW%CONTROLOFFON .eq. 3) then    !chagne to 3 after bugs are worked on - zach
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Blend controller !!!!!!!!!!!!!!!!!!!!!!!!!!  Zach Miller
+    if (T%TOW%CONTROLOFFON .eq. 3) then    
 
         ub = T%TOW%STATE(8)
         !vATM_I(1,1) = T%DRIVER%VXWIND      
@@ -1791,7 +1796,7 @@ SUBROUTINE CONTROL(T,iflag)
 
         !write(*,*)"V_A_H 2",V_A_H
 
-        T%TOW%sigma_p = (V_A_H/40.10D0)**2       !((T%SIM%TIME) / 20.0D0)   !V_max = 52  -  from input file
+        T%TOW%sigma_p = (V_A_H/40.05D0)**2     !this allows for a scalar to be made based off of the speed
         T%TOW%sigma_q = 1 - T%TOW%sigma_p  
 
 
@@ -1848,26 +1853,51 @@ SUBROUTINE CONTROL(T,iflag)
     !!!!!!!!!!!!!!DRIVER CONTROLLER!!!!!!!!!!!!!!!!!!!!!!!!
     if (T%DRIVER%CONTROLOFFON .gt. 0) then
 
+        !holding still
         if (T%SIM%TIME .lt. 50.0D0) then
         udriver = T%DRIVER%STATE(7)
         rampFactor = 0.0D0 
         T%DRIVER%MUTHROTTLE = (T%DRIVER%KPXDRIVE*(T%DRIVER%UCOMMAND-udriver) + T%DRIVER%KIXDRIVE*T%DRIVER%UINTEGRAL)*rampFactor + T%DRIVER%MS_MIN
        end if
 
-       if (T%SIM%TIME .gt. 50.0D0) then
+       !normal driving
+       if (T%SIM%TIME .gt. 50.0D0 .and. T%SIM%TIME .lt. 150.0D0) then
         udriver = T%DRIVER%STATE(7)
         lambda = 0.1D0                      ! Adjust this value for faster/slower ramp-up 
         rampFactor = 1.0D0 - exp(-lambda*(T%SIM%TIME-50)) 
         T%DRIVER%MUTHROTTLE = (T%DRIVER%KPXDRIVE*(T%DRIVER%UCOMMAND*rampFactor-udriver) + T%DRIVER%KIXDRIVE*T%DRIVER%UINTEGRAL) + T%DRIVER%MS_MIN
        end if
-       
-       !Saturation controller
+
        if (T%DRIVER%MUTHROTTLE .gt. T%DRIVER%MS_MAX) then
           T%DRIVER%MUTHROTTLE = T%DRIVER%MS_MAX
        end if
        if (T%DRIVER%MUTHROTTLE .lt. T%DRIVER%MS_MIN) then
           T%DRIVER%MUTHROTTLE = T%DRIVER%MS_MIN
        end if
+
+       !braking (slowing down)
+       if (T%SIM%TIME .gt. 150.0D0 .and. T%SIM%TIME .lt. 250.0D0) then
+        udriver = T%DRIVER%STATE(7)
+        lambda = 0.1D0                      ! Adjust this value for faster/slower ramp-up 
+        rampFactor = exp(-lambda*(T%SIM%TIME-150)) 
+
+        brake_command = T%DRIVER%UCOMMAND*rampFactor
+        if (brake_command .lt. 0.1) then
+          brake_command = 0.0
+        end if
+
+        T%DRIVER%MUTHROTTLE = ((T%DRIVER%KPXDRIVE)*(brake_command-udriver) ) + T%DRIVER%MS_MIN
+
+        if (T%DRIVER%MUTHROTTLE .gt. T%DRIVER%MS_MAX) then
+          T%DRIVER%MUTHROTTLE = T%DRIVER%MS_MAX
+        end if
+        if (T%DRIVER%MUTHROTTLE .lt. 50.0) then
+          T%DRIVER%MUTHROTTLE = 0.0
+        end if
+
+       end if
+       
+
 
        !write(*,*) "T%DRIVER%MUTHROTTLE",T%DRIVER%MUTHROTTLE
        !write(*,*) "T%SIM%TIME",T%SIM%TIME
@@ -2264,7 +2294,7 @@ SUBROUTINE DRIVER(T,iflag)
  real*8 xcgdot,ycgdot,zcgdot,phidot,thetadot,psidot,ubdot,vbdot,wbdot,c1,c2,c3,pbdot,qbdot,rbdot
  real*8 rReel_I(3,1),rCG_I(3,1),v_CG_I(3,1),S_wt_B(3,3),v_Reel_I(3,1),deti
  real*8 S,q_inf_S,q_inf,groundforce
- real*8 sigmaF,omegaF,zetaF,C1F(4),C2F(4),C3F(4),idx,W2Tpwm(4,1),W0,j
+ real*8 sigmaF,omegaF,zetaF,C1F(4),C2F(4),C3F(4),idx,W2Tpwm(4,1),W0,j,terrain_amplitude,terrain_frequency,zcg_terrain,zcg1
  character*256 xgridname,ygridname,zgridname
  character*1 letter
  character*10 number
@@ -2341,11 +2371,18 @@ SUBROUTINE DRIVER(T,iflag)
   
        T%DRIVER%FXGRAV = 0.0; T%DRIVER%FYGRAV = 0.0; T%DRIVER%FZGRAV = 0.0;
        T%DRIVER%MXGRAV = 0.0; T%DRIVER%MYGRAV = 0.0; T%DRIVER%MZGRAV = 0.0;
+
        if (T%DRIVER%GRAVOFFON .eq. 1) then
-          GROUNDFORCE = 0
-          if (zcg .gt. 0) then
-             groundforce = 10000*zcg + 1000*zcgdot
-          end if
+
+          terrain_amplitude =  0.0 !-0.5                                          ! Adjust the amplitude for bump height
+          terrain_frequency = 0.0 !0.75                                            ! Adjust the frequency to simulate different roughness
+          zcg_terrain = terrain_amplitude * sin(terrain_frequency * xcg)     ! Modify zcg to include the terrain effect
+          zcg1 = zcg + zcg_terrain
+
+          GROUNDFORCE = 10000*zcg1 + 1000*zcgdot  !0
+          !if (zcg .gt. 0) then
+          !   groundforce = 10000*zcg + 1000*zcgdot
+          !end if
           T%DRIVER%FXGRAV = T%DRIVER%TIC(3,1)*(T%DRIVER%WEIGHT - groundforce)
           T%DRIVER%FYGRAV = T%DRIVER%TIC(3,2)*(T%DRIVER%WEIGHT - groundforce)
           T%DRIVER%FZGRAV = T%DRIVER%TIC(3,3)*(T%DRIVER%WEIGHT - groundforce)

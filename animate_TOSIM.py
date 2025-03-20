@@ -47,9 +47,8 @@ NBEADS = 10
 fig = plt.figure('3-D')
 camera = Camera(fig)
 ax = fig.add_subplot(111,projection='3d')
-totalplottingpts = 100 ##this restricts us to a certain number of points  (lower number is smoother animation)
 ##So no we need the skip parameter
-skip = int(float(len(time))/float(totalplottingpts))
+skip = 100
 
 def figparams(x,y,z):
     fx = 20
