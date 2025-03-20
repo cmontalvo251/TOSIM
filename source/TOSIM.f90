@@ -1981,11 +1981,9 @@ SUBROUTINE ATMOSPHERE(T,iflag)
      freq = 1.0 / PERIOD
      !T%ATM%DEN = 0.002363*(1.00000000-0.0000225696709*T%ATM%ALT)**4.258
      T%ATM%VXWIND = 0.0 !T%ATM%WINDSPEED*cos(T%ATM%WINDDIR)
-     T%ATM%VYWIND = T%ATM%WINDSPEED*sin(T%ATM%WINDDIR)     !AMPLITUDE * sin(2.0*PI * T%SIM%TIME * freq) !T%ATM%WINDSPEED*sin(T%ATM%WINDDIR)  
+     T%ATM%VYWIND = 0.0     !AMPLITUDE * sin(2.0*PI * T%SIM%TIME * freq) !T%ATM%WINDSPEED*sin(T%ATM%WINDDIR)  
      T%ATM%VZWIND = 0.0
-
-     !write(*,*) "T%ATM%VYWIND",T%ATM%VYWIND
-
+     !write(*,*) "T%ATM%VYWIND1",T%ATM%VYWIND
   end if
 
   ! Table Look-Up Model 
@@ -2033,7 +2031,9 @@ SUBROUTINE ATMOSPHERE(T,iflag)
    T%ATM%VYWIND = T%ATM%VYWINDTAB(T%ATM%IP) + m*(T%ATM%VYWINDTAB(T%ATM%IP+1)-T%ATM%VYWINDTAB(T%ATM%IP))
    T%ATM%VZWIND = T%ATM%VZWINDTAB(T%ATM%IP) + m*(T%ATM%VZWINDTAB(T%ATM%IP+1)-T%ATM%VZWINDTAB(T%ATM%IP))
 
-  end if
+   end if
+
+   !write(*,*) "T%ATM%VYWIND2",T%ATM%VYWIND
 
   ! write(*,*) 'xi,YI,zi = ',T%ATM%XI,T%ATM%YI,T%ATM%ZI
 
@@ -2044,6 +2044,8 @@ SUBROUTINE ATMOSPHERE(T,iflag)
      !write(*,*) 'XI,yi,zi = ',T%ATM%XI,T%ATM%YI,T%ATM%ZI
      call TURBULENCE(T)
   end if
+
+  !write(*,*) "T%ATM%VYWIND3",T%ATM%VYWIND
 
   ! write(*,*) 'XI,YI,zi = ',T%ATM%XI,T%ATM%YI,T%ATM%ZI
 
@@ -2059,10 +2061,14 @@ SUBROUTINE ATMOSPHERE(T,iflag)
   end if
   ! PAUSE; STOP;
 
+  !write(*,*) "T%ATM%VYWIND4",T%ATM%VYWIND
+
   !!Add all winds
   T%ATM%VXWIND = T%ATM%VXWIND + T%ATM%VWAKE(1) + T%ATM%WINDGUST(1) + T%ATM%WRFX
   T%ATM%VYWIND = T%ATM%VYWIND + T%ATM%VWAKE(2) + T%ATM%WINDGUST(2) + T%ATM%WRFY
   T%ATM%VZWIND = T%ATM%VZWIND + T%ATM%VWAKE(3) + T%ATM%WINDGUST(3) + T%ATM%WRFZ
+
+  !write(*,*) "T%ATM%VYWIND5",T%ATM%VYWIND
 
   if (T%SIM%TIME .lt. T%ATM%TIMEON) then
      T%ATM%VXWIND = 0
@@ -2070,8 +2076,8 @@ SUBROUTINE ATMOSPHERE(T,iflag)
      T%ATM%VZWIND = 0
   else
      ramp = 0
-     if (T%SIM%TIME .lt. 10+T%ATM%TIMEON) then
-        ramp = (T%SIM%TIME-T%ATM%TIMEON)/10
+     if (T%SIM%TIME .lt. 1+T%ATM%TIMEON) then
+        ramp = (T%SIM%TIME-T%ATM%TIMEON)/1
      else
         ramp = 1
      end if
@@ -2079,6 +2085,8 @@ SUBROUTINE ATMOSPHERE(T,iflag)
      T%ATM%VYWIND = ramp*(T%ATM%VYWIND-0*10.5) !!!!REVISIT REVISIT REVISIT - HARDCODE GUST FIELD
      T%ATM%VZWIND = ramp*T%ATM%VZWIND
   end if
+
+  !write(*,*) "6",T%SIM%TIME,T%ATM%VXWIND,T%ATM%VYWIND,T%ATM%VZWIND
 
   RETURN
 
@@ -3551,7 +3559,7 @@ SUBROUTINE TOWED(T,iflag)
 
   call ATMOSPHERE(T,2) !T%ATM%DEN
 
-  ! write(*,*) T%ATM%VXWIND,T%ATM%VYWIND,T%ATM%VZWIND
+  !write(*,*) "7",T%SIM%TIME,T%ATM%VXWIND,T%ATM%VYWIND,T%ATM%VZWIND
 
   vATM_I(1,1) = T%ATM%VXWIND
   vATM_I(2,1) = T%ATM%VYWIND
@@ -3675,7 +3683,7 @@ SUBROUTINE TOWED(T,iflag)
         T%TOW%VYWIND = T%ATM%VYWIND
         T%TOW%VZWIND = T%ATM%VZWIND
 
-        write(*,*) "T%ATM%VYWIND",T%ATM%VYWIND
+        !write(*,*) "T%ATM%VYWIND",T%ATM%VYWIND
 
         vATM_A = matmul(T%TOW%TAI,vATM_I)
 
