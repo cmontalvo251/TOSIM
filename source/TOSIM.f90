@@ -1588,10 +1588,6 @@ SUBROUTINE CONTROL(T,iflag)
           T%TOW%PSICOMMAND = sign(30*qPI/180,T%TOW%PSICOMMAND)
        end if
 
-       !T%TOW%ZINTEGRAL = (T%TOW%ZINTEGRAL*T%TOW%SIGMA_Q) + T%TOW%ZINTEGRAL
-       !T%TOW%PHIINTEGRAL = (T%TOW%PHIINTEGRAL*T%TOW%SIGMA_Q) + T%TOW%PHIINTEGRAL
-       !T%TOW%THETAINTEGRAL = (T%TOW%THETAINTEGRAL*T%TOW%SIGMA_Q) + T%TOW%THETAINTEGRAL
-       !T%TOW%PSIINTEGRAL = (T%TOW%PSIINTEGRAL*T%TOW%SIGMA_Q) + T%TOW%PSIINTEGRAL
 
        ! Hovering microseconds and altitude control
        munominal = 1706.95 + T%TOW%KPZDRIVE*(delz) + T%TOW%KIZDRIVE*T%TOW%ZINTEGRAL + T%TOW%KDZDRIVE*zdot  ! Nominal microsecond pulse for hover    1706.95
@@ -1918,7 +1914,7 @@ SUBROUTINE ATMOSPHERE(T,iflag)
  implicit none
  integer i,iflag,ifind,openflag,readflag,ii,jj,ierr,now(3)
  real*8 m,readreal,wind,dirnominal,windnominal,winddir
- real*8 dim,dummy(40),rx,test(3),ramp,n1,freq
+ real*8 dim,dummy(40),rx,test(3),ramp,n1,freq,AMPLITUDE,PERIOD
  character*11 HeightFile
  character*14 ParametersFile
  character*1 letter
@@ -1980,10 +1976,16 @@ SUBROUTINE ATMOSPHERE(T,iflag)
   ! Equation Density and Constant Wind Model
 
   if (T%ATM%MODNO .eq. 2) then
-     T%ATM%DEN = 0.002363*(1.00000000-0.0000225696709*T%ATM%ALT)**4.258
-     T%ATM%VXWIND = T%ATM%WINDSPEED*cos(T%ATM%WINDDIR)
-     T%ATM%VYWIND = T%ATM%WINDSPEED*sin(T%ATM%WINDDIR)
+     PERIOD = 200.0   !100 good
+     AMPLITUDE = 7.33    !5pmh= 7.33   7mph= 10.26  10pmh = 14.66  15pmh= 22
+     freq = 1.0 / PERIOD
+     !T%ATM%DEN = 0.002363*(1.00000000-0.0000225696709*T%ATM%ALT)**4.258
+     T%ATM%VXWIND = 0.0 !T%ATM%WINDSPEED*cos(T%ATM%WINDDIR)
+     T%ATM%VYWIND = T%ATM%WINDSPEED*sin(T%ATM%WINDDIR)     !AMPLITUDE * sin(2.0*PI * T%SIM%TIME * freq) !T%ATM%WINDSPEED*sin(T%ATM%WINDDIR)  
      T%ATM%VZWIND = 0.0
+
+     !write(*,*) "T%ATM%VYWIND",T%ATM%VYWIND
+
   end if
 
   ! Table Look-Up Model 
@@ -3672,6 +3674,8 @@ SUBROUTINE TOWED(T,iflag)
         T%TOW%VXWIND = T%ATM%VXWIND
         T%TOW%VYWIND = T%ATM%VYWIND
         T%TOW%VZWIND = T%ATM%VZWIND
+
+        write(*,*) "T%ATM%VYWIND",T%ATM%VYWIND
 
         vATM_A = matmul(T%TOW%TAI,vATM_I)
 
