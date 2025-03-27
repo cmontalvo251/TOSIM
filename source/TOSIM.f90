@@ -864,7 +864,7 @@ SUBROUTINE SIMULATION(T,iflag)
       ! T%SIM%STATE(T%SIM%NOSTATES-7:T%SIM%NOSTATES),T%SIM%STATEDOT(T%SIM%NOSTATES-7:T%SIM%NOSTATES)
       !Control OUT File
     !write(*,*) 'During write routine = ',T%TOW%OMEGAVEC      
-    write(91,fmt='(1000F30.10)') T%SIM%TIME,T%TOW%DELTHRUST,T%TOW%AILERON,T%TOW%ELEVATOR,T%TOW%RUDDER,T%TOW%FLAPS,T%TOW%OMEGAVEC(1:4,1),T%TOW%sigma_p, T%TOW%sigma_q
+    write(91,fmt='(1000F30.10)') T%SIM%TIME,T%TOW%DELTHRUST,T%TOW%AILERON,T%TOW%ELEVATOR,T%TOW%RUDDER,T%TOW%FLAPS,T%TOW%MUVEC(1:4,1),T%TOW%sigma_p, T%TOW%sigma_q
     !write(91,fmt='(1000F30.10)') T%SIM%TIME,T%TOW%DELTHRUST, BLEND?    ,T%TOW%AILERON,T%TOW%ELEVATOR,T%TOW%RUDDER,T%TOW%FLAPS,T%TOW%OMEGAVEC(1:4,1), T%DRIVER%FYGRAV, T%DRIVER%FYAERO, T%DRIVER%FYCONT, T%TOW%FXAEROAC, T%TOW%FYAEROAC, T%TOW%FZAEROAC
     !write(*,*) "sigma_p, sigma_q",T%TOW%sigma_p, T%TOW%sigma_q
       !Force Vector File
@@ -1362,7 +1362,7 @@ SUBROUTINE CONTROL(T,iflag)
  real*8 xwaypoint(nwp,1),ywaypoint(nwp,1),zwaypoint(nwp,1),Dwaypoint, sigma_p, sigma_q, dmu, u_bar
  real*8 delmu(4),munominal,MAXANGLE,z,udriver,u_plane, z_command,roll_command 
  real*8 KDPHI, KDPSI, KDTHETA, KPPHI, KPPSI, KPTHETA,PSICOMMAND, THETAINTEGRAL, PHIINTEGRAL,PSIINTEGRAL, lambda,timeSinceStart,rampFactor,brake_command
- real*8 KP_a,KD_a,KP_e,KD_e,KP_r,KD_r,KI_a,KI_e,KI_r,KP_p,KD_p,KI_p,Kr
+ real*8 KP_a,KD_a,KP_e,KD_e,KP_r,KD_r,KI_a,KI_e,KI_r,KP_p,KD_p,KI_p,Kr,delta_y, KP_y,KD_y
  real*8 control_aileron,control_elevator,control_rudder,control_flaps,control_altitude, ub, ub_2, KP_roll,KD_roll,KD_thrust
  real*8 k_phi, k_p, vATM_I(3,1),vATM_A(3,1)       ! Gains for roll control (aileron)
  real*8 k_theta, k_q,elevator_integral     ! Gains for pitch control (elevator)
@@ -1513,6 +1513,15 @@ SUBROUTINE CONTROL(T,iflag)
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Controller for TOW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ycg = T%TOW%STATE(2)
+    ydot = T%TOW%STATEDOT(2)
+    KP_y = 0.050D0
+    KD_y = 0.10D0
+    delta_y = (ycg - 0.0D0)
+
+    T%TOW%PHICOMMAND = -KP_y*delta_y - KD_y*ydot   
+    T%TOW%THETACOMMAND = 0.0D0
+    T%TOW%PSICOMMAND = 0.0D0
 
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Quad control!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     if (T%TOW%CONTROLOFFON .eq. 1 .OR. T%TOW%CONTROLOFFON .eq.3) then
@@ -1561,7 +1570,7 @@ SUBROUTINE CONTROL(T,iflag)
        ! end if
 
        !!! Attitude Controller
-       T%TOW%PHICOMMAND = 0.0D0 !Steady and level
+       !T%TOW%PHICOMMAND = 0.0D0 !Steady and level
        !T%TOW%PHICOMMAND = 20.0*qPI/180.0
      
        ! REVISIT hardcoded xdotcommand = 40 ft/s
@@ -1570,10 +1579,10 @@ SUBROUTINE CONTROL(T,iflag)
        ! the quad needs to be to achieve this velocity
        ! T%TOW%THETACOMMAND = -24.5*qPI/180!T%TOW%KPXDRIVE*(T%TOW%STATE(7) - 40.0) + T%TOW%KIXDRIVE*T%TOW%XINTEGRAL + T%TOW%KDXDRIVE*(T%TOW%STATEDOT(7))
        ! T%TOW%THETACOMMAND = T%TOW%KPXDRIVE*delx + T%TOW%KIXDRIVE*T%TOW%XINTEGRAL - T%TOW%KDXDRIVE*xdot
-       T%TOW%THETACOMMAND = 0.0D0
+       !T%TOW%THETACOMMAND = 0.0D0
        !write(*,*) 'integral = ',T%TOW%YINTEGRAL,T%TOW%XINTEGRAL
        !T%TOW%THETACOMMAND = 0.0
-       T%TOW%PSICOMMAND = 0.0D0
+       !T%TOW%PSICOMMAND = 0.0D0
 
        !write(*,*) 'Xcontrol = ',delx,T%TOW%XINTEGRAL,xdot
        !write(*,*) 'ptpcom = ',T%TOW%PHICOMMAND,T%TOW%THETACOMMAND,T%TOW%PSICOMMAND
@@ -1622,9 +1631,9 @@ SUBROUTINE CONTROL(T,iflag)
     !! Controller for TOW
     if (T%TOW%CONTROLOFFON .eq. 2 .OR. T%TOW%CONTROLOFFON .eq.3) then
        !Plane control
-       T%TOW%PHICOMMAND = 0.0D0
-       T%TOW%THETACOMMAND = 0.0D0
-       T%TOW%PSICOMMAND = 0.0D0
+       !T%TOW%PHICOMMAND = 0.0D0
+       !T%TOW%THETACOMMAND = 0.0D0
+       !T%TOW%PSICOMMAND = 0.0D0
        xcg = T%TOW%STATE(1)
        ycg = T%TOW%STATE(2)
        z = T%TOW%STATE(3)
@@ -1718,7 +1727,7 @@ SUBROUTINE CONTROL(T,iflag)
 
        T%TOW%PHIINTEGRAL = T%TOW%PHIINTEGRAL + (roll_command - phi)*T%SIM%DELTATIME          !do i need to anti-wind up
 
-       control_aileron = KP_a*(roll_command - phi) + KI_a*T%TOW%PHIINTEGRAL + KD_a*(0-p)         !inner loop 
+       control_aileron = KP_a*(T%TOW%PHICOMMAND - phi) + KI_a*T%TOW%PHIINTEGRAL + KD_a*(0-p)         !inner loop 
   
        control_rudder = KP_r*(T%TOW%PSICOMMAND-psi) + KD_r*r                   ! KP_r*(T%TOW%PSICOMMAND-psi) + KI_r*T%TOW%PSIINTEGRAL - KD_r*r 
        !control_flaps = KP_a*(zdot - z_command) + KD_a*(wb)           !uses PID from aileron
@@ -2384,12 +2393,12 @@ SUBROUTINE DRIVER(T,iflag)
 
        if (T%DRIVER%GRAVOFFON .eq. 1) then
 
-          terrain_amplitude =  0.0 !-0.5                                          ! Adjust the amplitude for bump height
-          terrain_frequency = 0.0 !0.75                                            ! Adjust the frequency to simulate different roughness
+          terrain_amplitude =  0.0 !-0.3                                  ! Adjust the amplitude for bump height
+          terrain_frequency = 0.0 !0.2                         ! Adjust the frequency to simulate different roughness
           zcg_terrain = terrain_amplitude * sin(terrain_frequency * xcg)     ! Modify zcg to include the terrain effect
-          zcg1 = zcg + zcg_terrain
+          zcg1 = zcg + zcg_terrain 
 
-          GROUNDFORCE = 10000*zcg1 + 1000*zcgdot  !0
+          GROUNDFORCE = 10000*zcg1 + 1000*zcgdot  !0  
           !if (zcg .gt. 0) then
           !   groundforce = 10000*zcg + 1000*zcgdot
           !end if

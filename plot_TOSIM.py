@@ -74,7 +74,7 @@ for idx in range(0,3):
 #6*NBEADS + NBEADS + 1 = 7*NBEADS + 1 the states go x,y,z,xdot,ydot,zdot for each bead and then tension
 #is at the end
 tether_state = state_data[:,34:]
-ylabelTHR = ['X','Y','Z','XDOT','YDOT','ZDOT']
+ylabelTHR = ['X','Y','Z','XDOT (ft/s)','YDOT (ft/s)','ZDOT (ft/s)']
 NBEADS = 1
 for n in range(0,NBEADS):
     for idx in range(0,6): 
@@ -93,7 +93,7 @@ control_data = np.loadtxt('Output_Files/Controls.OUT')
 print('Rows,Cols = ',r,c)
 
 time_control = control_data[:,0]
-ylabelControl = ['Throttle','Aileron','Elevator (rad)','Rudder','Flaps','Omegavec1','Omegavec2','Omegavec3','Omegavec4', 'Sigma_P', 'Sigma_Q']
+ylabelControl = ['Throttle','Aileron','Elevator (rad)','Rudder','Flaps','PWM_quad_1','PWM_quad_2','PWM_quad_3','PWM_quad_4', 'σ_p', 'σ_q'] #Ω ω - idk if you want these
 for n in range(0,11):
     print('Plotting Control STates = ',ylabelControl[n])
     plti = P.plottool(fontSize,'Time(sec)',ylabelControl[n],'Control')
