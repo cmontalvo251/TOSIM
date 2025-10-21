@@ -1,6 +1,6 @@
 *.mat
 *.pdf
-Archive
+*.pyc
 Bundles
 Figures
 Frames

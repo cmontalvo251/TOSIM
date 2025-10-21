@@ -1,0 +1,76 @@
+1	              !Turn dynamics on(1) or off(0)                      
+1	              !Gravity on(1) or off(0)                      
+1	              !Aerodynamics on(1) or off(0) or Wings(2) or Wings Sim Tables(3)                     
+1		      !Run Alpha Sweeps? on (1) off (0)                      
+                      !Reference Area (ft^2) - Cross Sectional area of box
+                      !Lateral reference length (ft) - Length of box
+                      !Longitudinal reference length (ft) - Length of box, I used the same reference length for both long and lat 
+0.0000		      !Reference airspeed (ft/sec) - Not actually used for anything so just set to zero
+0.23630E-02    	      !Reference air density (slug/ft^3)                      
+0.3960                !Reference level flight lift (lbf) (8.0) - 180 grams to pounds
+0.0000        	      !Reference angle of attack (deg)
+        	      !Reference Ixx (slug-ft^2) - Use m/12*(a^2+b^2)
+		      !Reference Iyy (slug-ft^2)                      
+		      !Reference Izz (slug-ft^2)                      
+0.0000	    	      !Reference Ixy (slug-ft^2) 
+0.0000		      !Reference Ixz (slug-ft^2) 
+0.0000		      !Reference Iyz (slug-ft^2) 
+0.0000        	      !Not used
+0.0000        	      !Not used
+0.0000        	      !Not used
+    		      !Zero Lift Drag (CD0) - Use CX plot to get this
+0.0000        	      !Reference CL,M                      
+0.0000        	      !Reference CD,M                      
+0.0000        	      !Reference Cm,M                      
+		      !Reference CL,alpha - Use the Cz and Cx vs. Alpha plot to get this
+    		      !Reference CD,alpha - Use the Cz and Cx vs. Alpha plot to get this
+0.0000		      !Reference Cl,alpha                      
+		      !Reference Cm,alpha - Use the Cm vs Alpha plot - Note we need to shift this by wherever the cg is
+0.0000		      !Reference Cn,alpha                      
+0.0000		      !Reference CL,alphahat                      
+0.0000        	      !Reference CD,alphahat                      
+0.0000		      !Reference Cm,alphahat                      
+0.0000        	      !Reference CL,uhat                      
+0.0000        	      !Reference CD,uhat                      
+0.0000        	      !Reference Cm,uhat                      
+       		      !Reference CY,beta - This is the same as CL,alpha
+0.0000		      !Reference Cl,beta
+0.0000		      !Reference Cm,beta                      
+		      !Reference Cn,beta - this is the same as Cm,alpha
+0.0000        	      !Reference CL,qbar                      
+0.0000		      !Reference CD,qbar
+		      !Reference Cm,qbar - this is explained in the paper
+0.0000    	      !Reference CY,pbar                      
+-3.000        	      !Reference Cl,pbar - This was taken from a rocket so the dynamic pressure needs to be fixed.
+0.0000		      !Reference Cn,pbar                      
+0.0000		      !Reference CY,rbar                      
+0.0000		      !Reference Cl,rbar                      
+		      !Reference Cn,rbar - This is -3*length of box/width of box
+0.0000		      !Reference CL,delta-e                      
+0.0000		      !Reference CD,delta-e                      
+0.0000		      !Reference Cm,delta-e                      
+0.0000		      !Reference CY,delta-a                      
+0.0000		      !Reference Cl,delta-a                      
+0.0000		      !Reference Cn,delta-a                      
+0.0000		      !Reference CY,delta-r                      
+0.0000		      !Reference Cl,delta-r                      
+0.0000		      !Reference Cn,delta-r                      
+0.0000        	      !Reference CL,delta-f                      
+0.0000        	      !Reference CD,delta-f                      
+0.0000        	      !Reference Cm,delta-f                      
+0.0000        	      !Reference elevator trim deflection (deg)                      
+0.0000 		      !NOT SET ----- Reference CD3, change in CD with CS^2                      
+0.0000        	      !NOT USED
+0.0000        	      !NOT USED
+0.0000		      !NOT USED
+0.0000		      !NOT USED
+0.0000		      !NOT USED
+0.0000		      !NOT USED
+0.0000		      !NOT USED
+0.0000		      !NOT USED
+0.0000		      !T0: Full-throttle static thrust at STP (lbf)                      
+0.0000		      !T': Coefficient of V for thrust at STP (lbf-sec/ft)                      
+0.0000        	      !T'': Coefficient of V^2 for thrust at STP (lbf-sec^2/ft^2)                      
+1.0000        	      !a: density exponent T=throttle[(T0+T'V+T''V^2)(rho/rho0)^a]                      
+0.0000        	      !NOT USED
+0.0000        	      !NOT USED

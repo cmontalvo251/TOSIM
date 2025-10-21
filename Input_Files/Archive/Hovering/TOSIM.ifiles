@@ -1,0 +1,13 @@
+'ATM'		'Input_Files/Hovering/TOSIM.ATM'						!Atmosphere input file  
+'THR'   	'Input_Files/Hovering/TOSIM.THR'						!Tether input file                   
+'TCOM'  	'Input_Files/Hovering/PayOutIn.TCOM'						!Tether Command Length File  
+'DRIVER'  	'Input_Files/Hovering/Quad.COPTER'						!Driver input file (needs to be swap with truck)                  
+'TOW'   	'Input_Files/Hovering/LAURA_Big.coef'						!Towed Main Input file    (swap with quad copter)           
+'CS'    	'Input_Files/Hovering/LAURA.CS'							!Control system input file 
+'SIM'   	'Input_Files/Hovering/TOSIM.SIM'					!Simulation input file  
+'LOG'   	'Output_Files/TOSIM.LOG'							!Log out file                  
+'SOUT'  	'Output_Files/State.OUT'							!State output file                   
+'MOUT'  	'Output_Files/Misc.OUT'								!Miscellaneous output file                   
+'COUT'  	'Output_Files/Controls.OUT'							!Control output file                  
+'FOUT'  	'Output_Files/Forces.OUT'							!Force Output File                  
+'EOUT'  	'Output_Files/Errors.OUT'							!Error Output File                  

@@ -1,0 +1,77 @@
+1		!Turn dynamics on(1) or off0)                  
+1 		    !Gravity on(1) or off(0)                
+1 		    !Aerodynamics on(1) or off(0)  
+1 		    !Elastic forces on(1) or off(0)                                                         
+10 		    !Number of beads(May not exceed 100 unless you edit the source code)                 
+2.32123E-06 	!Mass per unit length (slugs/ft)     2.32123E-06                    
+40.0 		!Unstretched total length of tether (ft)                  
+40.5 		!Maximum length(ft)                
+1	    	!Minimum length(ft)                
+0.001247 	!Diameter of tether line (ft) 0.001247                
+71050387.53 !(Ke) Modulus of Tether line (lbf/ft^2) Same as Young's Modulus
+255831954650.00592 	!(Kv) Modulus of Tether line (lbf/ft^2) 2535046.362927 (Nemo 889000000.0)
+1360006.4564270363 	!(Cv) Damping Modulus of Tether line (lbf-s/ft^2)
+34298.0		!(Gp) Torsional Modulus of Stiffness (lbf/(ft^2-rad))(34298) shear modulus                
+3341.0		!(Gd) Torsional Modulus of Damping (lbf-s/(ft^2-rad))(3341)                
+-1 		    ! Non-linearity of Tether (-1=off,0=linear, 1 = non-linear)                
+0.3 		!Tether material Poisson's Ratio(nd) (0=No change)(0.3)                
+0.00459 	!Axial Drag(nd) (1.0)(0.00459)                 
+1.0 		!Normal Drag(nd) (1.0)                
+2.205 		!Rotational Inertia of Reel(slugs-ft^2)                 
+1.64 		!Radius of Reel(ft)                 
+5.0 		!Time Constant of Torque at Reel
+0			!Tether Line control off(0) on(1=Pay In/Out)(2=Tension)(3=Tension+Pay Out)
+0.0			!Kpreel proportional gain on reel controller(2.0)
+0.0 		!Kdreel derivative gain on reel controller(3.0)
+0.0 		!Kireel integral gain on reel controller(1.0)
+
+
+! This is based on a ultra high molecular weight polyethylene (UHMWPE) fiber made by Dyneema. This is based on the Dyneema SK38 tether material which has a Young's Modulus of 34 GPa with a percent elongation of 6.5%. It's material density is approximately 980 kg/m^3 which is converted to 1.90151 slugs/ft^3
+
+E = 34 * 10^9 N/m^2
+
+Diameter is for the Dyneema fiber
+
+AREA = PI*(D/2)^2
+EMASS = MASSPUL*LEN/(NBEADS)
+
+For 1 bead the tether is split into two sections but the simulation will actually run with 0 beads
+Tether length is 1.125 ft 
+
+ELEN = LEN/(NBEADS+1) = 1.125 ft
+  
+EKE = KE*AREA/ELEN  --- This is the standard stiffness equation
+
+EKV = KV*AREA/ELEN 
+ECV = CV*AREA/ELEN   
+
+SIGMA = EKV/ECV
+KU = EKV*EKE/ECV ! In order for this not to blow up ECV != 0 but EKV can be zero
+CU = EKE + EKV
+
+tensiondot = KU*(dl-ELEN) + CU*dldot(i) - SIGMA*tension
+
+!Using Simulate_no_beads the optimization routine kicked back the following
+('zeta_optimal = ', 0.55644444444444441)
+('wn_optimal = ', 58.140308096159686)
+('J_optimal = ', 1.9806525050453194)
+('Ke=', 71050387.53, 'Kv=', 255831954650.00592, 'Cv=', 1360006.4564270363)
+('Eke=', 77.1323772896124, 'Ekv=', 277731.44573590573, 'ECv=', 1.4764244750832112)
+('ku=', 14509436.154181913, 'cu = ', 277808.57811319531, 's = ', 188110.8383280173)
+
+
+if EKV = 0, 
+	CU = EKE
+	KU = 0
+	SIGMA = 0
+	tensiondot = CU*dldot
+
+if you look at tensiondot = CU*dldot it means that tension = CU*dl which is hooke's law
+
+tension = EKE*dl where EKE = KE*AREA/ELEN which again is the standard stiffness equation
+
+So all we need to do is convert 34*10^9 N/m^2 to lbf/ft^2
+
+1 N/m^2 * (1 lbf/4.448 N) * (1 m/3.28 ft)^2
+
+(34*10^9 / 4.448 ) / (3.28)^2 = 71050387.530546651 lbf/ft^2
