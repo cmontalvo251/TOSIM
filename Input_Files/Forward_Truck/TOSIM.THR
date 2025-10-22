@@ -2,7 +2,7 @@
 1 		    !Gravity on(1) or off(0)                
 1 		    !Aerodynamics on(1) or off(0)  
 1 		    !Elastic forces on(1) or off(0)                                                         
-10 		    !Number of beads(May not exceed 100 unless you edit the source code)                 
+1		    !Number of beads(May not exceed 100 unless you edit the source code)                 
 2.32123E-06 	!Mass per unit length (slugs/ft)     2.32123E-06                    
 40.0 		!Unstretched total length of tether (ft)                  
 40.5 		!Maximum length(ft)                

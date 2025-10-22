@@ -41,7 +41,7 @@ ylabelEULER = ['Roll Angle (deg)','Pitch Angle (deg)','Yaw Angle (deg)']
 #is at the end
 tether_state = state_data[:,34:]
 ylabelTHR = ['X','Y','Z','XDOT','YDOT','ZDOT']
-NBEADS = 10
+NBEADS = 1
 
 ##ANIMATION ROUTINE
 fig = plt.figure('3-D')
