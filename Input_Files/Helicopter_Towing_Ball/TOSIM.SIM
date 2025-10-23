@@ -1,0 +1,47 @@
+0.0	 	!Initial Time(sec)                        
+250.0	 	!Final Time(sec)  
+0.00001 		!Timestep(sec) (0.000005 for tether beads >2)   0.0001                    
+1000		!Output skip (10000)                        
+1		!Control system on(1) or off(0)                        
+0		!Model Actuators on(1) or off(0)                        
+1		!Debug ouputs on(1) or off(0)                        
+10		!Feedback Update Rate(Hz)
+0		!Use a restart point on(1) or off(0)                        
+'RESTART_FILES/Steady_60knots_2lbf_side.RESTART' !Restart point filename 
+0.0		!X_driver(ft)
+0.0		!Y_driver(ft) 
+0.0		!Z_driver(ft)
+0.0		!phi_driver(rad)
+0.0		!theta_driver(rad)
+0.0		!psi_driver(rad)
+0.0		!U_driver(ft/s)
+0.0		!V_driver(ft/s)
+0.0		!W_driver(ft/s)
+0.0		!P_driver(rad/s)
+0.0		!Q_driver(rad/s)
+0.0		!R_driver(rad/s)
+-10		!X_TOW(ft)
+0.0		!Y_TOW(ft)
+-30		!Z_TOW(ft)    (negative is up on the plot)   
+0.0		!Phi_TOW(rad)        0.1                
+0.00		!Theta_TOW(rad)	  -0.05
+0.0		!Psi_TOW(rad)      0.75                  
+0.0	   !U_TOW(ft/s)  initial velocity    30                                  
+0.0		!V_TOW(ft/s)                        
+0.0		!W_TOW(ft/s)                        
+0.0		!P_TOW(rad/s)      1.0      roll rate to change                       
+0.0		!Q_TOW(rad/s)     -1.0     pitch rate              
+0.0		!R_TOW(rad/s)           0.5  yaw rate
+0.75 !0.75		!T1    (lbf)   initial start of the quad motors
+0.0				!T1dot (lbf/s)
+0.75 !0.75		!T2    (lbf)
+0.0				!T2dot (lbf/s)
+0.75 !0.75		!T3    (lbf)
+0.0				!T3dot (lbf/s)
+0.75 !0.75		!T4    (lbf)
+0.0				!T4dot (lbf/s)                    
+
+! This file simulates the towed system with the redesigned aircraft as 
+! the payload with the autopilot activated. The initial conditions stated here
+! are based on flight data in order to attempt to replicate the same behavior
+! as much as possible.
