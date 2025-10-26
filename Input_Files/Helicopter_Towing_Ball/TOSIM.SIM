@@ -1,5 +1,5 @@
 0.0	 	!Initial Time(sec)                        
-250.0	 	!Final Time(sec)  
+25.0	 	!Final Time(sec)  
 0.00001 		!Timestep(sec) (0.000005 for tether beads >2)   0.0001                    
 1000		!Output skip (10000)                        
 1		!Control system on(1) or off(0)                        
@@ -10,7 +10,7 @@
 'RESTART_FILES/Steady_60knots_2lbf_side.RESTART' !Restart point filename 
 0.0		!X_driver(ft)
 0.0		!Y_driver(ft) 
-0.0		!Z_driver(ft)
+-100.0	!Z_driver(ft)
 0.0		!phi_driver(rad)
 0.0		!theta_driver(rad)
 0.0		!psi_driver(rad)
@@ -22,7 +22,7 @@
 0.0		!R_driver(rad/s)
 -10		!X_TOW(ft)
 0.0		!Y_TOW(ft)
--30		!Z_TOW(ft)    (negative is up on the plot)   
+-60		!Z_TOW(ft)    (negative is up on the plot)   
 0.0		!Phi_TOW(rad)        0.1                
 0.00		!Theta_TOW(rad)	  -0.05
 0.0		!Psi_TOW(rad)      0.75                  

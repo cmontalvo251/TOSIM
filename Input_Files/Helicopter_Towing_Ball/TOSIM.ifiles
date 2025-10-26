@@ -1,9 +1,8 @@
-'ATM'		'Input_Files/Helicopter_Towing_Ball/TOSIM.ATM'						!Atmosphere input file  
-'THR'   	'Input_Files/Helicopter_Towing_Ball/TOSIM.THR'						!Tether input file
-'TCOM'  	'Input_Files/Helicopter_Towing_Ball/PayOutIn.TCOM'		!Tether Command Length File
-'DRIVER'  	'Input_Files/Forward_Truck/Truck.TCK'			!Driver input file                 
-'TOW'   	'Input_Files/Forward_Truck/Hybrid.VEH'		!Towed Main Input file          
-'SIM'   	'Input_Files/Forward_Truck/TOSIM.SIM'					!Simulation input file  
+'ATM'		'Input_Files/Helicopter_Towing_Ball/TOSIM.ATM'	!Atmosphere input file (check)
+'THR'   	'Input_Files/Helicopter_Towing_Ball/TOSIM.THR'	!Tether input file (check)
+'DRIVER'  	'Input_Files/Helicopter_Towing_Ball/Helicopter.HELI'	!Driver input file (check)                 
+'TOW'   	'Input_Files/Helicopter_Towing_Ball/Ball.VEH'	!Towed Main Input file 
+'SIM'   	'Input_Files/Helicopter_Towing_Ball/TOSIM.SIM'					!Simulation input file  
 'SOUT'  	'Output_Files/State.OUT'							!State output file      
 'MOUT'  	'Output_Files/Misc.OUT'								!Miscellaneous output file 
 'COUT'  	'Output_Files/Controls.OUT'							!Control output file 

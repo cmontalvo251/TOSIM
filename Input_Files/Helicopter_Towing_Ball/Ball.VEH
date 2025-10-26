@@ -1,17 +1,17 @@
 1		!Turn Dynamic module off(0) or on(1)                                 
 1		!Gravity on(1) or off(0)
-3		!Aerodynamics 0(off),1(quad only),2(airplane only),3(both)
+4		!Aerodynamics 0(off),1(quad only),2(airplane only),3(both),4(ball)
 3	!Weight (lbf) OR 1.282 (kg)  2.82635
 32.2	!Gravity (ft/s^2)  
 0.0		!Stationline center of mass(m)
 0.0		!buttline center of mass(m) 
 0.0		!waterline center of mass(m) 
-0.3     !Stationline of Tether Attachment Point on Towed in Towed Reference Frame(ft)
+0.0     !Stationline of Tether Attachment Point on Towed in Towed Reference Frame(ft)
 0.0 	!Buttline of Tether Attachment Point on Towed in Towed Reference Frame(ft)
 0.0     !Waterline of Tether Attachment Point on Towed in Towed Reference Frame(ft)
-0.00367319330305115		!Ixx (slugs*ft^2)
-0.00367319330305115		!Iyy (slugs*ft^2)
-0.0064860248447205		!Izz (slugs*ft^2)
+0.0036		!Ixx (slugs*ft^2)
+0.0036		!Iyy (slugs*ft^2)
+0.0036		!Izz (slugs*ft^2)
 0.000		!Ixy
 0.000		!Ixz
 0.000		!Iyz (lb*ft^2) OR 2.428e-4 (kg*m^2)
@@ -32,7 +32,7 @@
 3.65625		            !Reference area (ft^2) [wing area]                         
 4.875		            !Lateral reference length (ft) [wing span]                            
 0.75	                !Longitudinal reference length (ft) [wing chord]                         
-0.3441029736813229		!Zero Lift Drag (CD0)             
+0.34            		!Zero Lift Drag (CD0)             
 -0.07636788929236879    !Reference CL,0    
 0.3441029736813229      !Reference CM,0  
 0.0000		            !Reference CL,M          (Not used)        could be used in CL       

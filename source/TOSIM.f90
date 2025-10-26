@@ -2561,7 +2561,8 @@ SUBROUTINE DRIVER(T,iflag)
        T%DRIVER%XREELDOT = v_Reel_I(1,1)
        T%DRIVER%YREELDOT = v_Reel_I(2,1)
        T%DRIVER%ZREELDOT = v_Reel_I(3,1)
-    end if !End MODNO
+    end if !End MODNO .eq. 3
+    
     ! Integration Model 
     if (T%DRIVER%MODNO .eq. 0) then
        !!!Compute Driver speed 
@@ -2609,9 +2610,9 @@ SUBROUTINE DRIVER(T,iflag)
        T%DRIVER%YREELDOT = T%DRIVER%YDOT
        T%DRIVER%ZREELDOT = T%DRIVER%ZDOT
        
-    end if
+    end if ! .eq. 0 
 
- ! Constant Model
+    ! Constant Model
 
     if (T%DRIVER%MODNO .eq. 1) then
 
@@ -2623,6 +2624,7 @@ SUBROUTINE DRIVER(T,iflag)
      ! end if
      T%DRIVER%XDOT = T%DRIVER%SPEED*cos(T%DRIVER%PSI)
      T%DRIVER%YDOT = T%DRIVER%SPEED*sin(T%DRIVER%PSI) !!!DO NOT FORGET TO FIX THIS TOO
+     T%DRIVER%ZDOT = 0.0
 
      !!Compute CG location -- This assumes that speed is constant
 
@@ -2630,9 +2632,7 @@ SUBROUTINE DRIVER(T,iflag)
      T%DRIVER%YCG = T%DRIVER%YCGINITIAL + T%DRIVER%SPEED*sin(T%DRIVER%PSI)*T%SIM%TIME
      T%DRIVER%ZCG = T%DRIVER%ZCGINITIAL
 
-     !Compute CG speed
-
-     T%DRIVER%ZDOT = 0.0
+     !Compute Reel locations
      T%DRIVER%XREEL = T%DRIVER%XCG + cos(T%DRIVER%PSI)*(T%DRIVER%SLREEL-T%DRIVER%SLCG) - sin(T%DRIVER%PSI)*(T%DRIVER%BLREEL-T%DRIVER%BLCG) 
      T%DRIVER%YREEL = T%DRIVER%YCG + sin(T%DRIVER%PSI)*(T%DRIVER%SLREEL-T%DRIVER%SLCG) + cos(T%DRIVER%PSI)*(T%DRIVER%BLREEL-T%DRIVER%BLCG) 
      T%DRIVER%ZREEL = T%DRIVER%ZCG + T%DRIVER%WLREEL - T%DRIVER%WLCG 
@@ -3580,7 +3580,6 @@ SUBROUTINE TOWED(T,iflag)
 
   vATM_A = matmul(T%TOW%TAI,vATM_I)
 
-
   !Add in atmospheric winds
 
   uaero = ub - vATM_A(1,1)
@@ -3600,9 +3599,55 @@ SUBROUTINE TOWED(T,iflag)
     !T%TOW%MUVEC(idx,1)
     TDBLDOTVEC(idx) = -2*zetaF*TDOTVEC(idx)*omegaF + omegaF*omegaF*((T%TOW%MUVEC(idx,1)-T%TOW%MS_MIN)*2.375*sigmaF - TVEC(idx))
     T%TOW%THRUSTVEC(idx,1) = TVEC(idx)
-  end do
+ end do
 
-  if (T%TOW%AEROFLAG .gt. 0) then !If AEROFLAG is greater than 0 it is either a 1 or a 2 - CM 8/16/2015
+ !This is for any of the aero models
+ if (T%TOW%AEROFLAG .gt. 0) then 
+
+    !Atmospheric winds
+    vATM_I(1,1) = T%ATM%VXWIND
+    vATM_I(2,1) = T%ATM%VYWIND
+    vATM_I(3,1) = T%ATM%VZWIND
+
+    T%TOW%VXWIND = T%ATM%VXWIND
+    T%TOW%VYWIND = T%ATM%VYWIND
+    T%TOW%VZWIND = T%ATM%VZWIND
+
+    !write(*,*) "T%ATM%VYWIND",T%ATM%VYWIND
+
+    vATM_A = matmul(T%TOW%TAI,vATM_I)
+
+    !Add in atmospheric winds
+    ub = T%TOW%STATE(8)
+    vb = T%TOW%STATE(9)
+    wb = T%TOW%STATE(10)
+
+    uaero = ub - vATM_A(1,1)
+    vaero = vb - vATM_A(2,1)
+    waero = wb - vATM_A(3,1)
+
+    !write(*,*) 'T%TOW%TAI',T%TOW%TAI
+    !write(*,*) 'vATM_I',vATM_I
+    !PAUSE
+
+    V_A = sqrt(uaero**2 + vaero**2 + waero**2)
+
+    if (V_A .eq. 0) then
+       V_A = uaero
+    end if
+
+    !write(*,*) 'uaero',uaero   !ran these as no tether and get weird numbers, ask Dr. C
+    !write(*,*) 'vaero',vaero
+    !write(*,*) 'waero',waero
+    !PAUSE
+
+    !!Dynamic pressure
+    q_inf = 0.5*T%ATM%DEN*(V_A**2)
+    q_inf_S = 0.5*T%ATM%DEN*(V_A**2)*T%TOW%SAREA  
+  end if
+
+  !!This is the quad aerodynamics, which is 1=quad or 3=airplane+quad
+  if (T%TOW%AEROFLAG .eq. 1) .or. (T%TOW%AEROFLAG .eq. 3) then 
     !Compute Atmopsheric density and winds
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TOWED AERODYNAMIC MODEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -3681,49 +3726,8 @@ SUBROUTINE TOWED(T,iflag)
        
    !!!!!!!!SINCE WE ARE SIMULATING A HYBRID VEHICLE FOR THE TOWED SYSTEM WE WILL INCLUDE A AIRCRAFT AERO MODEL AS WELL
    !!!!!This model was pulled from LAURA which was written and edited by Nghia Huynh, Alicia Ratcliffe, and Zach Miller
-
-   if (T%TOW%AEROFLAG .ge. 2) then
-
-        vATM_I(1,1) = T%ATM%VXWIND
-        vATM_I(2,1) = T%ATM%VYWIND
-        vATM_I(3,1) = T%ATM%VZWIND
-
-        T%TOW%VXWIND = T%ATM%VXWIND
-        T%TOW%VYWIND = T%ATM%VYWIND
-        T%TOW%VZWIND = T%ATM%VZWIND
-
-        !write(*,*) "T%ATM%VYWIND",T%ATM%VYWIND
-
-        vATM_A = matmul(T%TOW%TAI,vATM_I)
-
-        !Add in atmospheric winds
-        ub = T%TOW%STATE(8)
-        vb = T%TOW%STATE(9)
-        wb = T%TOW%STATE(10)
-
-        uaero = ub - vATM_A(1,1)
-        vaero = vb - vATM_A(2,1)
-        waero = wb - vATM_A(3,1)
-
-        !write(*,*) 'T%TOW%TAI',T%TOW%TAI
-        !write(*,*) 'vATM_I',vATM_I
-        !PAUSE
-
-        V_A = sqrt(uaero**2 + vaero**2 + waero**2)
-
-        if (V_A .eq. 0) then
-        V_A = uaero
-        end if
-
-        !write(*,*) 'uaero',uaero   !ran these as no tether and get weird numbers, ask Dr. C
-        !write(*,*) 'vaero',vaero
-        !write(*,*) 'waero',waero
-        !PAUSE
-
-        !!Dynamic pressure
-        q_inf = 0.5*T%ATM%DEN*(V_A**2)
-        q_inf_S = 0.5*T%ATM%DEN*(V_A**2)*T%TOW%SAREA  
-
+   !!!This is for 2 = airplane or 3 = both
+   if (T%TOW%AEROFLAG .eq. 2) or (T%TOW%AEROFLAG .eq. 3) then
         !write(*,*) 'V_A',V_A   !This seems wrong and can be from the uaero issues
         !PAUSE
 
@@ -3841,7 +3845,14 @@ SUBROUTINE TOWED(T,iflag)
         !write(*,*) 'FY = ',T%TOW%FYAEROAC,T%TOW%FYAEROQUAD
         !write(*,*) 'FZ = ',T%TOW%FZAEROAC,T%TOW%FZAEROQUAD
         !PAUSE
-    end if
+     end if
+
+     if (T%TOW%AEROFLAG .eq. 4) then
+        !!Put the dynamics of the ball in here and then
+        !!add it to the summation below
+        T%TOW%FXBALL = 0.0
+
+     end if
 
     T%TOW%FXAERO = T%TOW%FXAEROQUAD + T%TOW%FXAEROAC
     T%TOW%FYAERO = T%TOW%FYAEROQUAD + T%TOW%FYAEROAC
