@@ -39,3 +39,5 @@ Still the code has a quadcopter as the driver and an aircraft as the towed syste
 
 Version 8.0 - Mar 2024 - In this version, the driver is a truck and the towed system is a hybrid quadcopter / airplane. This code was heavily modified and edited by Zach Miller
 
+Version 9.0 - Oct 2025 - in this version the driver is a truck but you can really just make it any pulling vehicle. the towed system can be a quadcopter, airplane, hybrid or a ball 
+
