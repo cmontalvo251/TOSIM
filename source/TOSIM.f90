@@ -3697,7 +3697,7 @@ SUBROUTINE TOWED(T,iflag)
          !!!!!!!!SINCE WE ARE SIMULATING A HYBRID VEHICLE FOR THE TOWED SYSTEM WE WILL INCLUDE A AIRCRAFT AERO MODEL AS WELL
          !!!!!This model was pulled from LAURA which was written and edited by Nghia Huynh, Alicia Ratcliffe, and Zach Miller
          !!!This is for 2 = airplane or 3 = both
-         if (T%TOW%AEROFLAG .eq. 2) or (T%TOW%AEROFLAG .eq. 3) then
+         if ((T%TOW%AEROFLAG .eq. 2) .or. (T%TOW%AEROFLAG .eq. 3)) then
             !write(*,*) 'V_A',V_A   !This seems wrong and can be from the uaero issues
             !PAUSE
 
