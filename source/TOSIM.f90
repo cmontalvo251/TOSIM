@@ -440,6 +440,12 @@ type ATMOSPHERESTRUCTURE
   real*8 :: MXAEROAC = 0.0                           ! Units: 'N m', Desc: 'X Aerodynamic Moment About CG in Body Frame'
   real*8 :: MYAEROAC = 0.0                           ! Units: 'N m', Desc: 'Y Aerodynamic Moment About CG in Body Frame'
   real*8 :: MZAEROAC = 0.0                           ! Units: 'N m', Desc: 'Z Aerodynamic Moment About CG in Body Frame'
+  real*8 :: FXAEROBALL = 0.0                           ! Units: 'lbf', Desc: 'X Aerodynamic Force in Body Frame'
+  real*8 :: FYAEROBALL = 0.0                           ! Units: 'lbf', Desc: 'Y Aerodynamic Force in Body Frame'
+  real*8 :: FZAEROBALL = 0.0                           ! Units: 'lbf', Desc: 'Z Aerodynamic Force in Body Frame'
+  real*8 :: MXAEROBALL = 0.0                           ! Units: 'N m', Desc: 'X Aerodynamic Moment About CG in Body Frame'
+  real*8 :: MYAEROBALL = 0.0                           ! Units: 'N m', Desc: 'Y Aerodynamic Moment About CG in Body Frame'
+  real*8 :: MZAEROBALL = 0.0                           ! Units: 'N m', Desc: 'Z Aerodynamic Moment About CG in Body Frame'
   real*8 :: FXCONT = 0.0                           ! Units: 'lbf', Desc: 'X Contact Force in Body Frame'
   real*8 :: FYCONT = 0.0                           ! Units: 'lbf', Desc: 'Y Contact Force in Body Frame'
   real*8 :: FZCONT = 0.0                           ! Units: 'lbf', Desc: 'Z Contact Force in Body Frame'
@@ -3436,569 +3442,525 @@ END SUBROUTINE AIRWAKE
 !!!!!!!!!!!!!!!!!!!!!!!!!! SUBROUTINE TOWED !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SUBROUTINE TOWED(T,iflag)
-  use TOSIMDATATYPES
-  ! This will only work if you have the right WingsX module
-  !USE WingsXAero_Module, ONLY: WingsX_ForceMoment
-  !USE SimTable_Module,   ONLY: Read_SimTables, SimTable_ForceMoment 
-  !USE Table_Module,      ONLY: Coef_table1
- implicit none
- integer i,iflag,ifind,openflag,readflag
- INTEGER:: ierror
- CHARACTER*100::emsge
- real*8 m,readreal,deti,c1,c2,c3
- real*8 xcg,ycg,zcg,q0,q1,q2,q3,ub,vb,wb,pb,qb,rb
- real*8 xcgdot,ycgdot,zcgdot,q0dot,q1dot,q2dot,q3dot,ubdot,vbdot,wbdot,pbdot,qbdot,rbdot
- real*8 sphi,cphi,stheta,ctheta,spsi,cpsi,tphi(3,3),ttheta(3,3),tpsi(3,3),tib(3,3),vATM_A(3,1),vATM_I(3,1)
- real*8 rxlse,rylse,rzlse,xpt,ypt,zpt,upt,vpt,wpt,uptaero,vptaero,wptaero,C_roll,q_inf,q_inf_S,salfa,calfa
- real*8 sphilse,cphilse,sgamlse,cgamlse,ulse,vlse,wlse,cllse,cdlse,liftlse,draglse,sangle,cangle
- real*8 fxloc,fyloc,fzloc,ct,J,T_0,T_A,Q_A,V_A,omega,rps,alfa,beta,C_Y,C_n,C_m,uaero,vaero,waero,AR
- real*8 C_Ftether_I(3,1),C_Ftether_B(3,1),alfahat,alfadot,MACH,C_Mtether_B(3,1),rCF_B(3,1),S_rCF_B(3,3)
- real*8 vF_I(3,1),vC_I(3,1),rC_I(3,1),rF_I(3,1),S_wt_B(3,3),phat,rhat,qhat,uhat
- real*8 xcgcp, ycgcp, zcgcp,TVEC(4),TDOTVEC(4),TDBLDOTVEC(4),Gammavec(3,1),zetaF
- real*8 thrust,sumomega,sigmaF,omegar,omegaF,C3F(4),C2F(4),C1F(4),bquad,forcevec(4,1)
- real*8 PWM2F(4,1), DELTHRUST, Prop_area, spin_slope, Thrust_AC, c_q, del_t
- !real, dimension(2) :: u_t
- integer idx
- type(TOSIMSTRUCTURE) T
- REAL:: y(6), cntrl(0:10)
- REAL:: CXb,CYb,CZb,CL,CD,Cll,Cm,Cn
- REAL:: dummy, dummy2(2)
+   use TOSIMDATATYPES
+   ! This will only work if you have the right WingsX module
+   !USE WingsXAero_Module, ONLY: WingsX_ForceMoment
+   !USE SimTable_Module,   ONLY: Read_SimTables, SimTable_ForceMoment 
+   !USE Table_Module,      ONLY: Coef_table1
+   implicit none
+   integer i,iflag,ifind,openflag,readflag
+   INTEGER:: ierror
+   CHARACTER*100::emsge
+   real*8 m,readreal,deti,c1,c2,c3
+   real*8 xcg,ycg,zcg,q0,q1,q2,q3,ub,vb,wb,pb,qb,rb
+   real*8 xcgdot,ycgdot,zcgdot,q0dot,q1dot,q2dot,q3dot,ubdot,vbdot,wbdot,pbdot,qbdot,rbdot
+   real*8 sphi,cphi,stheta,ctheta,spsi,cpsi,tphi(3,3),ttheta(3,3),tpsi(3,3),tib(3,3),vATM_A(3,1),vATM_I(3,1)
+   real*8 rxlse,rylse,rzlse,xpt,ypt,zpt,upt,vpt,wpt,uptaero,vptaero,wptaero,C_roll,q_inf,q_inf_S,salfa,calfa
+   real*8 sphilse,cphilse,sgamlse,cgamlse,ulse,vlse,wlse,cllse,cdlse,liftlse,draglse,sangle,cangle
+   real*8 fxloc,fyloc,fzloc,ct,J,T_0,T_A,Q_A,V_A,omega,rps,alfa,beta,C_Y,C_n,C_m,uaero,vaero,waero,AR
+   real*8 C_Ftether_I(3,1),C_Ftether_B(3,1),alfahat,alfadot,MACH,C_Mtether_B(3,1),rCF_B(3,1),S_rCF_B(3,3)
+   real*8 vF_I(3,1),vC_I(3,1),rC_I(3,1),rF_I(3,1),S_wt_B(3,3),phat,rhat,qhat,uhat
+   real*8 xcgcp, ycgcp, zcgcp,TVEC(4),TDOTVEC(4),TDBLDOTVEC(4),Gammavec(3,1),zetaF
+   real*8 thrust,sumomega,sigmaF,omegar,omegaF,C3F(4),C2F(4),C1F(4),bquad,forcevec(4,1)
+   real*8 PWM2F(4,1), DELTHRUST, Prop_area, spin_slope, Thrust_AC, c_q, del_t
+   !real, dimension(2) :: u_t
+   integer idx
+   type(TOSIMSTRUCTURE) T
+   REAL:: y(6), cntrl(0:10)
+   REAL:: CXb,CYb,CZb,CL,CD,Cll,Cm,Cn
+   REAL:: dummy, dummy2(2)
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!! COMPUTE iflag = 3 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  
- if (iflag .eq. 2) then  
+   !!!!!!!!!!!!!!!!!!!!!!!!!!!!! COMPUTE iflag = 2 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   
+   if (iflag .eq. 2) then  
  
-  ! Unwrap State Vector
+      ! Unwrap State Vector
+   
+      xcg = T%TOW%STATE(1)
+      ycg = T%TOW%STATE(2)
+      zcg = T%TOW%STATE(3)
+      q0 = T%TOW%STATE(4) 
+      q1 = T%TOW%STATE(5)
+      q2 = T%TOW%STATE(6)
+      q3 = T%TOW%STATE(7)
+      ub = T%TOW%STATE(8)
+      vb = T%TOW%STATE(9)
+      wb = T%TOW%STATE(10)
+      pb = T%TOW%STATE(11) 
+      qb = T%TOW%STATE(12)
+      rb = T%TOW%STATE(13)
+      TVEC(1)    = T%TOW%STATE(14)
+      TDOTVEC(1) = T%TOW%STATE(15)
+      TVEC(2)    = T%TOW%STATE(16)
+      TDOTVEC(2) = T%TOW%STATE(17)
+      TVEC(3)    = T%TOW%STATE(18)
+      TDOTVEC(3) = T%TOW%STATE(19)
+      TVEC(4)    = T%TOW%STATE(20)
+      TDOTVEC(4) = T%TOW%STATE(21)
+
+      !Compute phi,theta,psi
+      !REVISIT - I've got a function for that -DK 8/18/2015 - It even checks for gimbal lock state
+      !USE Math_Module, ONLY: QuatEulTrans
+      !REAL quatVec(4)
+      !quatVec = {q0,q1,q2,q3)
+      !call QuatEulTrans(quatVec,T%TOW%PHI,T%TOW%THETA,T%TOW%PSI)
+      
+      T%TOW%PHI   = atan2(2.*(q0*q1 + q2*q3),1.-2.*(q1**2 + q2**2));
+      T%TOW%THETA = asin (2.*(q0*q2 - q3*q1));
+      T%TOW%PSI   = atan2(2.*(q0*q3 + q1*q2),1.-2.*(q2**2 + q3**2));
+      
+      ! Towed to Inertial Transformation Matrix
+      
+      T%TOW%TIA(1,1) = q0**2. + q1**2. - q2**2. - q3**2. 
+      T%TOW%TIA(2,1) = 2.0*(q1*q2+q0*q3)
+      T%TOW%TIA(3,1) = 2.0*(q1*q3-q0*q2)
+      T%TOW%TIA(1,2) = 2.0*(q1*q2-q0*q3)
+      T%TOW%TIA(2,2) = q0**2. - q1**2. + q2**2. - q3**2.
+      T%TOW%TIA(3,2) = 2.0*(q2*q3+q0*q1)
+      T%TOW%TIA(1,3) = 2.0*(q1*q3+q0*q2)
+      T%TOW%TIA(2,3) = 2.0*(q2*q3-q0*q1)
+      T%TOW%TIA(3,3) = q0**2. - q1**2. - q2**2. + q3**2.
+
+      ! Inertial to Towed Transformation Matrix
+      
+      T%TOW%TAI = transpose(T%TOW%TIA)
+
+      !Inertial Location of Tether Point
+
+      !First get location of CG
+      rC_I(1,1) = xcg 
+      rC_I(2,1) = ycg
+      rC_I(3,1) = zcg !!! REVISIT Nghia did -1 to make the connection point realistic
+
+      !Then get location of tether in body frame
+      rCF_B(1,1) = T%TOW%SLTETHER 
+      rCF_B(2,1) = T%TOW%BLTETHER
+      rCF_B(3,1) = T%TOW%WLTETHER
+
+      !Then compute inertial location of tether connection point
+      rF_I = rC_I + matmul(T%TOW%TIA,rCF_B)  !REVISIT DK 8/18/2015 - I've got a function for this too BodyToEarthTrans(quatVec,vb,vf)
+
+      T%THR%XTETHER = rF_I(1,1)
+      T%THR%YTETHER = rF_I(2,1)
+      T%THR%ZTETHER = rF_I(3,1) -(1/2) !Why is this 1/2 here???? 1/19/2024 - CJM
+      
+      ! Gravity Forces and Moments
+      
+      T%TOW%FXGRAV = 0.0; T%TOW%FYGRAV = 0.0; T%TOW%FZGRAV = 0.0;
+      T%TOW%MXGRAV = 0.0; T%TOW%MYGRAV = 0.0; T%TOW%MZGRAV = 0.0;
+      
+      if (T%TOW%GRAVOFFON .eq. 1) then
+         T%TOW%FXGRAV = T%TOW%TAI(1,3)*T%TOW%WEIGHT
+         T%TOW%FYGRAV = T%TOW%TAI(2,3)*T%TOW%WEIGHT
+         T%TOW%FZGRAV = T%TOW%TAI(3,3)*T%TOW%WEIGHT
+      end if
   
-  xcg = T%TOW%STATE(1)
-  ycg = T%TOW%STATE(2)
-  zcg = T%TOW%STATE(3)
-  q0 = T%TOW%STATE(4) 
-  q1 = T%TOW%STATE(5)
-  q2 = T%TOW%STATE(6)
-  q3 = T%TOW%STATE(7)
-  ub = T%TOW%STATE(8)
-  vb = T%TOW%STATE(9)
-  wb = T%TOW%STATE(10)
-  pb = T%TOW%STATE(11) 
-  qb = T%TOW%STATE(12)
-  rb = T%TOW%STATE(13)
-  TVEC(1)    = T%TOW%STATE(14)
-  TDOTVEC(1) = T%TOW%STATE(15)
-  TVEC(2)    = T%TOW%STATE(16)
-  TDOTVEC(2) = T%TOW%STATE(17)
-  TVEC(3)    = T%TOW%STATE(18)
-  TDOTVEC(3) = T%TOW%STATE(19)
-  TVEC(4)    = T%TOW%STATE(20)
-  TDOTVEC(4) = T%TOW%STATE(21)
+      ! Aerodynamic Forces and Moments
+      
+      T%TOW%FXAERO = 0.0; T%TOW%FYAERO = 0.0; T%TOW%FZAERO = 0.0;
+      T%TOW%MXAERO = 0.0; T%TOW%MYAERO = 0.0; T%TOW%MZAERO = 0.0;
+      T%TOW%FXAEROQUAD = 0.0; T%TOW%FYAEROQUAD = 0.0; T%TOW%FZAEROQUAD = 0.0;
+      T%TOW%MXAEROQUAD = 0.0; T%TOW%MYAEROQUAD = 0.0; T%TOW%MZAEROQUAD = 0.0;
+      T%TOW%FXAEROAC = 0.0; T%TOW%FYAEROAC = 0.0; T%TOW%FZAEROAC = 0.0;
+      T%TOW%MXAEROAC = 0.0; T%TOW%MYAEROAC = 0.0; T%TOW%MZAEROAC = 0.0;
+      T%TOW%FXAEROBALL = 0.0; T%TOW%FYAEROBALL = 0.0;T%TOW%FZAEROBALL = 0.0;
+      T%TOW%MXAEROBALL = 0.0; T%TOW%MYAEROBALL = 0.0;T%TOW%MZAEROBALL = 0.0;
+      
+      if (T%TOW%AEROFLAG .gt. 0) then 
 
-  !Compute phi,theta,psi
-  !REVISIT - I've got a function for that -DK 8/18/2015 - It even checks for gimbal lock state
-  !USE Math_Module, ONLY: QuatEulTrans
-  !REAL quatVec(4)
-  !quatVec = {q0,q1,q2,q3)
-  !call QuatEulTrans(quatVec,T%TOW%PHI,T%TOW%THETA,T%TOW%PSI)
-  
-  T%TOW%PHI   = atan2(2.*(q0*q1 + q2*q3),1.-2.*(q1**2 + q2**2));
-  T%TOW%THETA = asin (2.*(q0*q2 - q3*q1));
-  T%TOW%PSI   = atan2(2.*(q0*q3 + q1*q2),1.-2.*(q2**2 + q3**2));
-  
-  ! Towed to Inertial Transformation Matrix
-  
-  T%TOW%TIA(1,1) = q0**2. + q1**2. - q2**2. - q3**2. 
-  T%TOW%TIA(2,1) = 2.0*(q1*q2+q0*q3)
-  T%TOW%TIA(3,1) = 2.0*(q1*q3-q0*q2)
-  T%TOW%TIA(1,2) = 2.0*(q1*q2-q0*q3)
-  T%TOW%TIA(2,2) = q0**2. - q1**2. + q2**2. - q3**2.
-  T%TOW%TIA(3,2) = 2.0*(q2*q3+q0*q1)
-  T%TOW%TIA(1,3) = 2.0*(q1*q3+q0*q2)
-  T%TOW%TIA(2,3) = 2.0*(q2*q3-q0*q1)
-  T%TOW%TIA(3,3) = q0**2. - q1**2. - q2**2. + q3**2.
+         !This is for any of the aero models
+         !Compute Atmopsheric density and winds
+         T%ATM%XI = xcg
+         T%ATM%YI = ycg
+         T%ATM%ZI = zcg
+         ! write(*,*) T%SIM%TIME,T%ATM%XI,T%ATM%YI,T%ATM%ZI
+         call ATMOSPHERE(T,2) !T%ATM%DEN
+         !write(*,*) "7",T%SIM%TIME,T%ATM%VXWIND,T%ATM%VYWIND,T%ATM%VZWIND
 
-  ! Inertial to Towed Transformation Matrix
-  
-  T%TOW%TAI = transpose(T%TOW%TIA)
+         vATM_I(1,1) = T%ATM%VXWIND
+         vATM_I(2,1) = T%ATM%VYWIND
+         vATM_I(3,1) = T%ATM%VZWIND
 
-  !Inertial Location of Tether Point
+         T%TOW%VXWIND = T%ATM%VXWIND
+         T%TOW%VYWIND = T%ATM%VYWIND
+         T%TOW%VZWIND = T%ATM%VZWIND
 
-  !First get location of CG
-  rC_I(1,1) = xcg 
-  rC_I(2,1) = ycg
-  rC_I(3,1) = zcg !!! REVISIT Nghia did -1 to make the connection point realistic
+         vATM_A = matmul(T%TOW%TAI,vATM_I)
 
-  !Then get location of tether in body frame
-  rCF_B(1,1) = T%TOW%SLTETHER 
-  rCF_B(2,1) = T%TOW%BLTETHER
-  rCF_B(3,1) = T%TOW%WLTETHER
+         !Add in atmospheric winds
+         uaero = ub - vATM_A(1,1)
+         vaero = vb - vATM_A(2,1)
+         waero = wb - vATM_A(3,1)
+   
+         !Compute total velocity
+         V_A = sqrt(uaero**2 + vaero**2 + waero**2)
 
-  !Then compute inertial location of tether connection point
-  rF_I = rC_I + matmul(T%TOW%TIA,rCF_B)  !REVISIT DK 8/18/2015 - I've got a function for this too BodyToEarthTrans(quatVec,vb,vf)
+         if (V_A .eq. 0) then
+            V_A = uaero
+         end if
 
-  T%THR%XTETHER = rF_I(1,1)
-  T%THR%YTETHER = rF_I(2,1)
-  T%THR%ZTETHER = rF_I(3,1) -(1/2) !Why is this 1/2 here???? 1/19/2024 - CJM
-  
-  ! Gravity Forces and Moments
-  
-  T%TOW%FXGRAV = 0.0; T%TOW%FYGRAV = 0.0; T%TOW%FZGRAV = 0.0;
-  T%TOW%MXGRAV = 0.0; T%TOW%MYGRAV = 0.0; T%TOW%MZGRAV = 0.0;
-  
-  if (T%TOW%GRAVOFFON .eq. 1) then
-    T%TOW%FXGRAV = T%TOW%TAI(1,3)*T%TOW%WEIGHT
-    T%TOW%FYGRAV = T%TOW%TAI(2,3)*T%TOW%WEIGHT
-    T%TOW%FZGRAV = T%TOW%TAI(3,3)*T%TOW%WEIGHT
-  end if
-  
-  ! Aerodynamic Forces and Moments
-  
-  T%TOW%FXAERO = 0.0; T%TOW%FYAERO = 0.0; T%TOW%FZAERO = 0.0;
-  T%TOW%MXAERO = 0.0; T%TOW%MYAERO = 0.0; T%TOW%MZAERO = 0.0;
-  T%TOW%FXAEROQUAD = 0.0; T%TOW%FYAEROQUAD = 0.0; T%TOW%FZAEROQUAD = 0.0;
-  T%TOW%MXAEROQUAD = 0.0; T%TOW%MYAEROQUAD = 0.0; T%TOW%MZAEROQUAD = 0.0;
-  T%TOW%FXAEROAC = 0.0; T%TOW%FYAEROAC = 0.0; T%TOW%FZAEROAC = 0.0;
-  T%TOW%MXAEROAC = 0.0; T%TOW%MYAEROAC = 0.0; T%TOW%MZAEROAC = 0.0;
+         !write(*,*) 'uaero',uaero   !ran these as no tether and get weird numbers, ask Dr. C
+         !write(*,*) 'vaero',vaero
+         !write(*,*) 'waero',waero
+         !PAUSE
 
-  !Compute Atmopsheric density and winds
+         !!Dynamic pressure
+         q_inf = 0.5*T%ATM%DEN*(V_A**2)
+         q_inf_S = 0.5*T%ATM%DEN*(V_A**2)*T%TOW%SAREA  
 
-  T%ATM%XI = xcg
-  T%ATM%YI = ycg
-  T%ATM%ZI = zcg
+         !!This is the quad aerodynamics, which is 1=quad or 3=airplane+quad
+         if ((T%TOW%AEROFLAG .eq. 1) .or. (T%TOW%AEROFLAG .eq. 3)) then 
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TOWED AERODYNAMIC MODEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  ! write(*,*) T%SIM%TIME,T%ATM%XI,T%ATM%YI,T%ATM%ZI
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Quadcopter Aerodynamic Model written by Lisa Schibelius - 12/2016!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  call ATMOSPHERE(T,2) !T%ATM%DEN
+            !Compute Thrust of quadcopter motors using a 2nd order function
+            sigmaF = 0.000437554764978899 !0.000437554764978899
+            omegaF = 45.42   !18.65
+            zetaF  = 0.942     !0.8533
+            !!! Second order filter
+            do idx = 1,4
+               !T%TOW%MUVEC(idx,1)
+               TDBLDOTVEC(idx) = -2*zetaF*TDOTVEC(idx)*omegaF + omegaF*omegaF*((T%TOW%MUVEC(idx,1)-T%TOW%MS_MIN)*2.375*sigmaF - TVEC(idx))
+               T%TOW%THRUSTVEC(idx,1) = TVEC(idx)
+            end do
+            !write(*,*) 'MUvec = ',T%TOW%MUVEC
 
-  !write(*,*) "7",T%SIM%TIME,T%ATM%VXWIND,T%ATM%VYWIND,T%ATM%VZWIND
+            !Recompute KT
+            T%TOW%KT = T%TOW%C_T*((T%ATM%DEN*qPI*(T%TOW%RNEW**4)/4))
+            !write(*,*) 'T%TOW%KT = ',T%TOW%KT
+            !PAUSE
 
-  vATM_I(1,1) = T%ATM%VXWIND
-  vATM_I(2,1) = T%ATM%VYWIND
-  vATM_I(3,1) = T%ATM%VZWIND
+            T%TOW%OMEGAVEC = sqrt(T%TOW%THRUSTVEC/T%TOW%KT)
+            sumomega = sum(T%TOW%OMEGAVEC)
+            !write(*,*) 'T%TOW%OMEGAVEC = ',T%TOW%OMEGAVEC
+            !PAUSE
 
-  T%TOW%VXWIND = T%ATM%VXWIND
-  T%TOW%VYWIND = T%ATM%VYWIND
-  T%TOW%VZWIND = T%ATM%VZWIND
+            !!! Make sure angular velocities of rotor does not go beyond the limit
+            IF (sumomega .ge. T%TOW%OMEGAMAX*4) then
+               do j = 1,4
+                  if (T%TOW%OMEGAVEC(j,1) .gt. T%TOW%OMEGAMAX) then
+                     T%TOW%OMEGAVEC(j,1) = T%TOW%OMEGAMAX
+                  end if
+                  if (T%TOW%OMEGAVEC(j,1) .lt. 0.00D0) then
+                     T%TOW%OMEGAVEC(j,1) = 0.00D0
+                  end if
+               end do
+               sumomega = sum(T%TOW%OMEGAVEC)
+               T%TOW%THRUSTVEC = T%TOW%KT*T%TOW%OMEGAVEC**2
+               do j = 1,4
+                  TVEC(idx) = T%TOW%THRUSTVEC(idx,1)
+               end do
+            ENDIF
+            forcevec = T%TOW%THRUSTVEC
+            thrust = sum(T%TOW%THRUSTVEC)
 
-  vATM_A = matmul(T%TOW%TAI,vATM_I)
+            !write(*,*) 'Rotor Thrust = ',forcevec,thrust
 
-  !Add in atmospheric winds
+            !!! Adding constraint to run Monte Carlo
+            !!! This constraint actually messed up my altitude controller
+            ! if (thrust .gt. T%TOW%WEIGHT/cos(30.0*qPI/180)) then !You need to put in theta of the quad 
+            !   thrust = T%TOW%WEIGHT/cos(30.0*qPI/180) !!Not just a static 30 degrees. That's why this didn't work.
+            ! end if
+            ! I was thinking this would be better.
+            ! if (thrust .lt. T%TOW%WEIGHT/cos(theta)) then
+            ! Increase thrust by the difference/4
+            ! Make sense?
 
-  uaero = ub - vATM_A(1,1)
-  vaero = vb - vATM_A(2,1)
-  waero = wb - vATM_A(3,1)
-  
-  !Compute total velocity
-  
-  V_A = sqrt(uaero**2 + vaero**2 + waero**2)
+            !Aerodynamic Forces
+            if (sumomega .gt. 1e-2) then
+               T%TOW%FXAEROQUAD = -thrust*(((T%TOW%ALC/(sumomega*T%TOW%RNEW))+T%TOW%DXD)*uaero - ((T%TOW%ALS)/(sumomega*T%TOW%RNEW))*vaero)
+               T%TOW%FYAEROQUAD = -thrust*(((T%TOW%ALS)/(sumomega*T%TOW%RNEW))*uaero + (((T%TOW%ALC)/(sumomega*T%TOW%RNEW))+T%TOW%DYD)*vaero)
+               T%TOW%FZAEROQUAD = -thrust
+            end if
 
-  !Compute Thrust of quadcopter motors using a 2nd order function
-  sigmaF = 0.000437554764978899 !0.000437554764978899
-  omegaF = 45.42   !18.65
-  zetaF  = 0.942     !0.8533
-  !!! Second order filter
-  do idx = 1,4
-    !T%TOW%MUVEC(idx,1)
-    TDBLDOTVEC(idx) = -2*zetaF*TDOTVEC(idx)*omegaF + omegaF*omegaF*((T%TOW%MUVEC(idx,1)-T%TOW%MS_MIN)*2.375*sigmaF - TVEC(idx))
-    T%TOW%THRUSTVEC(idx,1) = TVEC(idx)
- end do
+            omegar = T%TOW%OMEGAVEC(1,1) - T%TOW%OMEGAVEC(2,1) + T%TOW%OMEGAVEC(3,1) - T%TOW%OMEGAVEC(4,1)
+            Gammavec(1,1) = T%TOW%IRR * omegar * qb
+            Gammavec(2,1) = -T%TOW%IRR * omegar * pb
+            Gammavec(3,1) = 0
+            
+            !!!!!!!!! Aerodynamics
+            bquad = T%TOW%C_TAU*((T%ATM%DEN*qPI*(T%TOW%RNEW**5)/4))
 
- !This is for any of the aero models
- if (T%TOW%AEROFLAG .gt. 0) then 
+            !!! According to dynamic equations, a positive roll will have rotors 1,4 > 2,3. This was previously 2,3>1,4
+            ! Since T3 = T1*Ltheta_front/Ltheta_back we're just going to do this for simplicity
+            T%TOW%MXAEROQUAD = Gammavec(1,1) + (T%TOW%LPHI12*(TVEC(1) - TVEC(2)) + T%TOW%LPHI34*(TVEC(4) - TVEC(3)))
+            T%TOW%MYAEROQUAD = Gammavec(2,1) + T%TOW%LTHETA12*(TVEC(1) +TVEC(2) - TVEC(3) -TVEC(4))
+            T%TOW%MZAEROQUAD = Gammavec(3,1) + bquad*(T%TOW%OMEGAVEC(1,1)**2 - T%TOW%OMEGAVEC(2,1)**2 + T%TOW%OMEGAVEC(3,1)**2 - T%TOW%OMEGAVEC(4,1)**2)
+            !T%TOW%MZAEROQUAD = Gammavec(3,1) + bquad*(TVEC(1)**2 - TVEC(2)**2 + TVEC(3)**2 - TVEC(4)**2)
 
-    !Atmospheric winds
-    vATM_I(1,1) = T%ATM%VXWIND
-    vATM_I(2,1) = T%ATM%VYWIND
-    vATM_I(3,1) = T%ATM%VZWIND
-
-    T%TOW%VXWIND = T%ATM%VXWIND
-    T%TOW%VYWIND = T%ATM%VYWIND
-    T%TOW%VZWIND = T%ATM%VZWIND
-
-    !write(*,*) "T%ATM%VYWIND",T%ATM%VYWIND
-
-    vATM_A = matmul(T%TOW%TAI,vATM_I)
-
-    !Add in atmospheric winds
-    ub = T%TOW%STATE(8)
-    vb = T%TOW%STATE(9)
-    wb = T%TOW%STATE(10)
-
-    uaero = ub - vATM_A(1,1)
-    vaero = vb - vATM_A(2,1)
-    waero = wb - vATM_A(3,1)
-
-    !write(*,*) 'T%TOW%TAI',T%TOW%TAI
-    !write(*,*) 'vATM_I',vATM_I
-    !PAUSE
-
-    V_A = sqrt(uaero**2 + vaero**2 + waero**2)
-
-    if (V_A .eq. 0) then
-       V_A = uaero
-    end if
-
-    !write(*,*) 'uaero',uaero   !ran these as no tether and get weird numbers, ask Dr. C
-    !write(*,*) 'vaero',vaero
-    !write(*,*) 'waero',waero
-    !PAUSE
-
-    !!Dynamic pressure
-    q_inf = 0.5*T%ATM%DEN*(V_A**2)
-    q_inf_S = 0.5*T%ATM%DEN*(V_A**2)*T%TOW%SAREA  
-  end if
-
-  !!This is the quad aerodynamics, which is 1=quad or 3=airplane+quad
-  if (T%TOW%AEROFLAG .eq. 1) .or. (T%TOW%AEROFLAG .eq. 3) then 
-    !Compute Atmopsheric density and winds
-
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TOWED AERODYNAMIC MODEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Quadcopter Aerodynamic Model written by Lisa Schibelius - 12/2016!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    !Recompute KT
-    !write(*,*) 'MUvec = ',T%TOW%MUVEC
-    if ((T%TOW%AEROFLAG .eq. 1) .or. (T%TOW%AEROFLAG .eq. 3)) then
-        T%TOW%KT = T%TOW%C_T*((T%ATM%DEN*qPI*(T%TOW%RNEW**4)/4))
-        !write(*,*) 'T%TOW%KT = ',T%TOW%KT
-        !PAUSE
-
-        T%TOW%OMEGAVEC = sqrt(T%TOW%THRUSTVEC/T%TOW%KT)
-        sumomega = sum(T%TOW%OMEGAVEC)
-        !write(*,*) 'T%TOW%OMEGAVEC = ',T%TOW%OMEGAVEC
-        !PAUSE
-
-        !!! Make sure angular velocities of rotor does not go beyond the limit
-        IF (sumomega .ge. T%TOW%OMEGAMAX*4) then
-           do j = 1,4
-              if (T%TOW%OMEGAVEC(j,1) .gt. T%TOW%OMEGAMAX) then
-                 T%TOW%OMEGAVEC(j,1) = T%TOW%OMEGAMAX
-              end if
-              if (T%TOW%OMEGAVEC(j,1) .lt. 0.00D0) then
-                 T%TOW%OMEGAVEC(j,1) = 0.00D0
-              end if
-           end do
-           sumomega = sum(T%TOW%OMEGAVEC)
-           T%TOW%THRUSTVEC = T%TOW%KT*T%TOW%OMEGAVEC**2
-           do j = 1,4
-              TVEC(idx) = T%TOW%THRUSTVEC(idx,1)
-           end do
-        ENDIF
-        forcevec = T%TOW%THRUSTVEC
-        thrust = sum(T%TOW%THRUSTVEC)
-
-        !write(*,*) 'Rotor Thrust = ',forcevec,thrust
-
-        !!! Adding constraint to run Monte Carlo
-        !!! This constraint actually messed up my altitude controller
-        ! if (thrust .gt. T%TOW%WEIGHT/cos(30.0*qPI/180)) then !You need to put in theta of the quad 
-        !   thrust = T%TOW%WEIGHT/cos(30.0*qPI/180) !!Not just a static 30 degrees. That's why this didn't work.
-        ! end if
-        ! I was thinking this would be better.
-        ! if (thrust .lt. T%TOW%WEIGHT/cos(theta)) then
-        ! Increase thrust by the difference/4
-        ! Make sense?
-
-        !Aerodynamic Forces
-        if (sumomega .gt. 1e-2) then
-           T%TOW%FXAEROQUAD = -thrust*(((T%TOW%ALC/(sumomega*T%TOW%RNEW))+T%TOW%DXD)*uaero - ((T%TOW%ALS)/(sumomega*T%TOW%RNEW))*vaero)
-           T%TOW%FYAEROQUAD = -thrust*(((T%TOW%ALS)/(sumomega*T%TOW%RNEW))*uaero + (((T%TOW%ALC)/(sumomega*T%TOW%RNEW))+T%TOW%DYD)*vaero)
-           T%TOW%FZAEROQUAD = -thrust
-        end if
-
-        omegar = T%TOW%OMEGAVEC(1,1) - T%TOW%OMEGAVEC(2,1) + T%TOW%OMEGAVEC(3,1) - T%TOW%OMEGAVEC(4,1)
-        Gammavec(1,1) = T%TOW%IRR * omegar * qb
-        Gammavec(2,1) = -T%TOW%IRR * omegar * pb
-        Gammavec(3,1) = 0
-        
-        !!!!!!!!! Aerodynamics
-        bquad = T%TOW%C_TAU*((T%ATM%DEN*qPI*(T%TOW%RNEW**5)/4))
-
-        !!! According to dynamic equations, a positive roll will have rotors 1,4 > 2,3. This was previously 2,3>1,4
-        ! Since T3 = T1*Ltheta_front/Ltheta_back we're just going to do this for simplicity
-        T%TOW%MXAEROQUAD = Gammavec(1,1) + (T%TOW%LPHI12*(TVEC(1) - TVEC(2)) + T%TOW%LPHI34*(TVEC(4) - TVEC(3)))
-        T%TOW%MYAEROQUAD = Gammavec(2,1) + T%TOW%LTHETA12*(TVEC(1) +TVEC(2) - TVEC(3) -TVEC(4))
-        T%TOW%MZAEROQUAD = Gammavec(3,1) + bquad*(T%TOW%OMEGAVEC(1,1)**2 - T%TOW%OMEGAVEC(2,1)**2 + T%TOW%OMEGAVEC(3,1)**2 - T%TOW%OMEGAVEC(4,1)**2)
-        !T%TOW%MZAEROQUAD = Gammavec(3,1) + bquad*(TVEC(1)**2 - TVEC(2)**2 + TVEC(3)**2 - TVEC(4)**2)
-
-       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!END OF QUADCOPTER AERODYNAMIC MODEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-   end if
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!END OF QUADCOPTER AERODYNAMIC MODEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+         end if
        
-   !!!!!!!!SINCE WE ARE SIMULATING A HYBRID VEHICLE FOR THE TOWED SYSTEM WE WILL INCLUDE A AIRCRAFT AERO MODEL AS WELL
-   !!!!!This model was pulled from LAURA which was written and edited by Nghia Huynh, Alicia Ratcliffe, and Zach Miller
-   !!!This is for 2 = airplane or 3 = both
-   if (T%TOW%AEROFLAG .eq. 2) or (T%TOW%AEROFLAG .eq. 3) then
-        !write(*,*) 'V_A',V_A   !This seems wrong and can be from the uaero issues
-        !PAUSE
+         !!!!!!!!SINCE WE ARE SIMULATING A HYBRID VEHICLE FOR THE TOWED SYSTEM WE WILL INCLUDE A AIRCRAFT AERO MODEL AS WELL
+         !!!!!This model was pulled from LAURA which was written and edited by Nghia Huynh, Alicia Ratcliffe, and Zach Miller
+         !!!This is for 2 = airplane or 3 = both
+         if (T%TOW%AEROFLAG .eq. 2) or (T%TOW%AEROFLAG .eq. 3) then
+            !write(*,*) 'V_A',V_A   !This seems wrong and can be from the uaero issues
+            !PAUSE
 
-        !Mach number
-        T%ATM%SOS = 1086.336; !HARDCODED REVISIT REVISIT
-        MACH = V_A/T%ATM%SOS
+            !Mach number
+            T%ATM%SOS = 1086.336; !HARDCODED REVISIT REVISIT
+            MACH = V_A/T%ATM%SOS
 
-        !!Angle of attack and sideslip and alfahat/uhat/phat/qhat/rhat
-        if (abs(uaero) .gt. 0) then
-            alfa = atan2(waero,uaero)
-            if (uaero .lt. 0) then
-                alfa = atan2(waero,-uaero)
+            !!Angle of attack and sideslip and alfahat/uhat/phat/qhat/rhat
+            if (abs(uaero) .gt. 0) then
+               alfa = atan2(waero,uaero)
+               if (uaero .lt. 0) then
+                  alfa = atan2(waero,-uaero)
+               end if
+               !write(*,*) 'afla = ',alfa,T%SIM%TIME
+            else
+               alfa = 0
             end if
-            !write(*,*) 'afla = ',alfa,T%SIM%TIME
-        else
-            alfa = 0
-        end if
-        
-        if (V_A .gt. 0) then
-            beta = asin(vaero/V_A)       !asin(V/Vinf)
-            wbdot = T%TOW%STATEDOT(10)
-            alfadot = wbdot/V_A
-            alfahat = alfadot * T%TOW%C_BAR / (2*V_A)
-            uhat = uaero/V_A
-            if (uaero .lt. 0) then 
-                uhat = -uaero/V_A
+            
+            if (V_A .gt. 0) then
+               beta = asin(vaero/V_A)       !asin(V/Vinf)
+               wbdot = T%TOW%STATEDOT(10)
+               alfadot = wbdot/V_A
+               alfahat = alfadot * T%TOW%C_BAR / (2*V_A)
+               uhat = uaero/V_A
+               if (uaero .lt. 0) then 
+                  uhat = -uaero/V_A
+               end if
+               phat = pb*T%TOW%B    /(2*V_A)
+               qhat = qb*T%TOW%C_BAR/(2*V_A)
+               rhat = rb*T%TOW%B    /(2*V_A)
+            else
+               beta = 0
+               alfahat = 0
+               uhat = 0
+               phat = 0
+               qhat = 0
+               rhat = 0
             end if
-            phat = pb*T%TOW%B    /(2*V_A)
-            qhat = qb*T%TOW%C_BAR/(2*V_A)
-            rhat = rb*T%TOW%B    /(2*V_A)
-        else
-            beta = 0
-            alfahat = 0
-            uhat = 0
-            phat = 0
-            qhat = 0
-            rhat = 0
-        end if
-        calfa = cos(alfa)
-        salfa = sin(alfa)
-        !!Aspect Ratio
-        T%TOW%AR = T%TOW%B**2/T%TOW%SAREA
+            calfa = cos(alfa)
+            salfa = sin(alfa)
+            !!Aspect Ratio
+            T%TOW%AR = T%TOW%B**2/T%TOW%SAREA
 
-        !!!Lift Drag and Side force
-        T%TOW%C_L = T%TOW%C_L_M*MACH + T%TOW%C_L_ALPHAHAT*alfahat + T%TOW%C_L_0 + T%TOW%C_L_ALPHA*alfa + T%TOW%C_L_UHAT*uhat + T%TOW%C_L_Q*qhat + T%TOW%C_L_DE*T%TOW%ELEVATOR + T%TOW%C_L_DF*T%TOW%FLAPS
-        C_Y = T%TOW%C_Y_BETA*beta + T%TOW%C_Y_P*phat + T%TOW%C_Y_R*rhat + T%TOW%C_Y_DR*T%TOW%RUDDER + T%TOW%C_Y_DA*T%TOW%AILERON
+            !!!Lift Drag and Side force
+            T%TOW%C_L = T%TOW%C_L_M*MACH + T%TOW%C_L_ALPHAHAT*alfahat + T%TOW%C_L_0 + T%TOW%C_L_ALPHA*alfa + T%TOW%C_L_UHAT*uhat + T%TOW%C_L_Q*qhat + T%TOW%C_L_DE*T%TOW%ELEVATOR + T%TOW%C_L_DF*T%TOW%FLAPS
+            C_Y = T%TOW%C_Y_BETA*beta + T%TOW%C_Y_P*phat + T%TOW%C_Y_R*rhat + T%TOW%C_Y_DR*T%TOW%RUDDER + T%TOW%C_Y_DA*T%TOW%AILERON
 
-        !!COMPUTE DRAG COEFFICIENT
-        T%TOW%C_D = T%TOW%C_D_M*MACH + T%TOW%C_D_ALPHAHAT*alfahat + T%TOW%C_D_0 + T%TOW%C_D_ALPHA2*alfa
-        !T%TOW%C_D = T%TOW%C_D_M*MACH + T%TOW%C_D_ALPHAHAT*alfahat + T%TOW%C_D_0 + T%TOW%C_D_ALPHA2*alfa + (T%TOW%C_L**2)/(PI*AR) + T%TOW%C_D_UHAT*uhat + T%TOW%C_D_DE*T%TOW%ELEVATOR + T%TOW%C_D_Q*qhat + T%TOW%C_D_DF*T%TOW%FLAPS
-                !all 3 combined C_D above
-        !write(*,*) "CD part 1= ",T%TOW%C_D
-        T%TOW%C_D = T%TOW%C_D + (T%TOW%C_L**2)/(PI*T%TOW%AR) + T%TOW%C_D_UHAT*uhat + T%TOW%C_D_DE*T%TOW%ELEVATOR
-        !write(*,*) 'Params = ',AR,uhat,T%TOW%ELEVATOR
-        !write(*,*) 'AR = ',T%TOW%AR
-        !write(*,*) "CD part 2=",T%TOW%C_D
-        T%TOW%C_D = T%TOW%C_D + T%TOW%C_D_Q*qhat + T%TOW%C_D_DF*T%TOW%FLAPS
-        !write(*,*) "CD = ",T%TOW%C_D
-        !PAUSE
+            !!COMPUTE DRAG COEFFICIENT
+            T%TOW%C_D = T%TOW%C_D_M*MACH + T%TOW%C_D_ALPHAHAT*alfahat + T%TOW%C_D_0 + T%TOW%C_D_ALPHA2*alfa
+            !T%TOW%C_D = T%TOW%C_D_M*MACH + T%TOW%C_D_ALPHAHAT*alfahat + T%TOW%C_D_0 + T%TOW%C_D_ALPHA2*alfa + (T%TOW%C_L**2)/(PI*AR) + T%TOW%C_D_UHAT*uhat + T%TOW%C_D_DE*T%TOW%ELEVATOR + T%TOW%C_D_Q*qhat + T%TOW%C_D_DF*T%TOW%FLAPS
+            !all 3 combined C_D above
+            !write(*,*) "CD part 1= ",T%TOW%C_D
+            T%TOW%C_D = T%TOW%C_D + (T%TOW%C_L**2)/(PI*T%TOW%AR) + T%TOW%C_D_UHAT*uhat + T%TOW%C_D_DE*T%TOW%ELEVATOR
+            !write(*,*) 'Params = ',AR,uhat,T%TOW%ELEVATOR
+            !write(*,*) 'AR = ',T%TOW%AR
+            !write(*,*) "CD part 2=",T%TOW%C_D
+            T%TOW%C_D = T%TOW%C_D + T%TOW%C_D_Q*qhat + T%TOW%C_D_DF*T%TOW%FLAPS
+            !write(*,*) "CD = ",T%TOW%C_D
+            !PAUSE
 
-        !!Roll,pitch and yaw coefficients
-        T%TOW%Cll = T%TOW%C_roll_ALPHA*alfa + T%TOW%C_L_BETA*beta + T%TOW%C_L_P*phat + T%TOW%C_L_R*rhat + T%TOW%C_L_DR*T%TOW%RUDDER + T%TOW%C_L_DA*T%TOW%AILERON
-        !write(*,*) T%TOW%C_L_DA,T%TOW%AILERON,T%TOW%Cll
-        T%TOW%Cm = T%TOW%C_M_BETA*beta + T%TOW%C_M_M*MACH + T%TOW%C_M_ALPHAHAT*alfahat + T%TOW%C_M_0 + T%TOW%C_M_ALPHA*alfa + T%TOW%C_M_UHAT*uhat + T%TOW%C_M_Q*qhat + T%TOW%C_M_DE*T%TOW%ELEVATOR + T%TOW%C_M_DF*T%TOW%FLAPS
-        T%TOW%Cm = sign(1.0,uaero)*T%TOW%Cm
-        T%TOW%Cn = T%TOW%C_N_ALPHA*alfa + T%TOW%C_N_BETA*beta + T%TOW%C_N_P*phat + T%TOW%C_N_R*rhat + T%TOW%C_N_DR*T%TOW%RUDDER + T%TOW%C_N_DA*T%TOW%AILERON
+            !!Roll,pitch and yaw coefficients
+            T%TOW%Cll = T%TOW%C_roll_ALPHA*alfa + T%TOW%C_L_BETA*beta + T%TOW%C_L_P*phat + T%TOW%C_L_R*rhat + T%TOW%C_L_DR*T%TOW%RUDDER + T%TOW%C_L_DA*T%TOW%AILERON
+            !write(*,*) T%TOW%C_L_DA,T%TOW%AILERON,T%TOW%Cll
+            T%TOW%Cm = T%TOW%C_M_BETA*beta + T%TOW%C_M_M*MACH + T%TOW%C_M_ALPHAHAT*alfahat + T%TOW%C_M_0 + T%TOW%C_M_ALPHA*alfa + T%TOW%C_M_UHAT*uhat + T%TOW%C_M_Q*qhat + T%TOW%C_M_DE*T%TOW%ELEVATOR + T%TOW%C_M_DF*T%TOW%FLAPS
+            T%TOW%Cm = sign(1.0,uaero)*T%TOW%Cm
+            T%TOW%Cn = T%TOW%C_N_ALPHA*alfa + T%TOW%C_N_BETA*beta + T%TOW%C_N_P*phat + T%TOW%C_N_R*rhat + T%TOW%C_N_DR*T%TOW%RUDDER + T%TOW%C_N_DA*T%TOW%AILERON
 
-        !write(*,*) "FXAERO BEFORE",T%TOW%FXAERO
-        !write(*,*) 'CD = ',T%TOW%C_D
-        !write(*,*) 'T%TOW%C_L = ',T%TOW%C_L
-        !write(*,*) 'CY = ',C_Y
-        !write(*,*) 'T%TOW%C_Y_DR = ',T%TOW%C_Y_DR
-        !write(*,*) 'T%TOW%C_Y_DA = ',T%TOW%C_Y_DA
-        !PAUSE
+            !write(*,*) "FXAERO BEFORE",T%TOW%FXAERO
+            !write(*,*) 'CD = ',T%TOW%C_D
+            !write(*,*) 'T%TOW%C_L = ',T%TOW%C_L
+            !write(*,*) 'CY = ',C_Y
+            !write(*,*) 'T%TOW%C_Y_DR = ',T%TOW%C_Y_DR
+            !write(*,*) 'T%TOW%C_Y_DA = ',T%TOW%C_Y_DA
+            !PAUSE
 
-        !Add thrust to the plane for when quad motors are off and no tether
-        !!THRUST MODEL
-        Prop_area = PI*T%TOW%RNEW**2
-        spin_slope = T%TOW%OMEGAMAX /(T%TOW%MS_MAX - T%TOW%MS_MIN)
+            !Add thrust to the plane for when quad motors are off and no tether
+            !!THRUST MODEL
+            Prop_area = PI*T%TOW%RNEW**2
+            spin_slope = T%TOW%OMEGAMAX /(T%TOW%MS_MAX - T%TOW%MS_MIN)
             !Saturation controller
-        if (T%TOW%DELTHRUST .gt. T%TOW%MS_MAX) then
-            T%TOW%DELTHRUST = T%TOW%MS_MAX
-        end if
-        if (T%TOW%DELTHRUST .lt. T%TOW%MS_MIN) then
-            T%TOW%DELTHRUST = T%TOW%MS_MIN
-        end if
-        omega = spin_slope * (T%TOW%DELTHRUST - T%TOW%MS_MIN)  ! omega jumps after 0.2 sec too, check delthrust
-        Thrust_AC = 0.5*T%ATM%DEN*Prop_area*T%TOW%C_T*(omega*T%TOW%RNEW)**2  
-        !write(*,*) 'T%TOW%DELTHRUST = ',T%TOW%DELTHRUST
-        !write(*,*) 'T%ATM%DEN = ',T%ATM%DEN
-        !write(*,*) 'omega = ',omega
-        !write(*,*) 'T%ATM%DEN = ',T%ATM%DEN
-        !write(*,*) 'Thrust_AC = ',Thrust_AC
-        !PAUSE
+            if (T%TOW%DELTHRUST .gt. T%TOW%MS_MAX) then
+               T%TOW%DELTHRUST = T%TOW%MS_MAX
+            end if
+            if (T%TOW%DELTHRUST .lt. T%TOW%MS_MIN) then
+               T%TOW%DELTHRUST = T%TOW%MS_MIN
+            end if
+            omega = spin_slope * (T%TOW%DELTHRUST - T%TOW%MS_MIN)  ! omega jumps after 0.2 sec too, check delthrust
+            Thrust_AC = 0.5*T%ATM%DEN*Prop_area*T%TOW%C_T*(omega*T%TOW%RNEW)**2  
+            !write(*,*) 'T%TOW%DELTHRUST = ',T%TOW%DELTHRUST
+            !write(*,*) 'T%ATM%DEN = ',T%ATM%DEN
+            !write(*,*) 'omega = ',omega
+            !write(*,*) 'T%ATM%DEN = ',T%ATM%DEN
+            !write(*,*) 'Thrust_AC = ',Thrust_AC
+            !PAUSE
 
 
-        T%TOW%FXAEROAC = -q_inf_S*(calfa*(T%TOW%C_D) - salfa*T%TOW%C_L) !+ Thrust_AC 
-        T%TOW%FYAEROAC = q_inf_S*C_Y 
-        T%TOW%FZAEROAC = -q_inf_S*(salfa*(T%TOW%C_D) + calfa*T%TOW%C_L)               
-        T%TOW%MXAEROAC = q_inf_S*T%TOW%B*T%TOW%Cll                             !was not here before - Zach
-        T%TOW%MYAEROAC = q_inf_S*T%TOW%C_BAR*T%TOW%Cm                     
-        T%TOW%MZAEROAC = q_inf_S*T%TOW%B*T%TOW%Cn
+            T%TOW%FXAEROAC = -q_inf_S*(calfa*(T%TOW%C_D) - salfa*T%TOW%C_L) !+ Thrust_AC 
+            T%TOW%FYAEROAC = q_inf_S*C_Y 
+            T%TOW%FZAEROAC = -q_inf_S*(salfa*(T%TOW%C_D) + calfa*T%TOW%C_L)               
+            T%TOW%MXAEROAC = q_inf_S*T%TOW%B*T%TOW%Cll                             !was not here before - Zach
+            T%TOW%MYAEROAC = q_inf_S*T%TOW%C_BAR*T%TOW%Cm                     
+            T%TOW%MZAEROAC = q_inf_S*T%TOW%B*T%TOW%Cn
 
-        !write(*,*) 'FXAEROAC = ',T%TOW%FXAEROAC
-        !write(*,*) 'FYAEROAC = ',T%TOW%FYAEROAC
-        !write(*,*) 'T%TOW%MXAEROAC = ',T%TOW%MXAEROAC
-        !write(*,*) 'T%TOW%MYAEROAC = ',T%TOW%MYAEROAC
-        !write(*,*) 'T%TOW%MZAEROAC = ',T%TOW%MZAEROAC
-        !PAUSE
-        !write(*,*) 'uaero = ',uaero       
-        !write(*,*) 'vaero = ',vaero
-        !write(*,*) 'waero = ',waero
-        !PAUSE
-        !write(*,*) 'FX = ',T%TOW%FXAEROAC,T%TOW%FXAEROQUAD
-        !write(*,*) 'FY = ',T%TOW%FYAEROAC,T%TOW%FYAEROQUAD
-        !write(*,*) 'FZ = ',T%TOW%FZAEROAC,T%TOW%FZAEROQUAD
-        !PAUSE
-     end if
+            !write(*,*) 'FXAEROAC = ',T%TOW%FXAEROAC
+            !write(*,*) 'FYAEROAC = ',T%TOW%FYAEROAC
+            !write(*,*) 'T%TOW%MXAEROAC = ',T%TOW%MXAEROAC
+            !write(*,*) 'T%TOW%MYAEROAC = ',T%TOW%MYAEROAC
+            !write(*,*) 'T%TOW%MZAEROAC = ',T%TOW%MZAEROAC
+            !PAUSE
+            !write(*,*) 'uaero = ',uaero       
+            !write(*,*) 'vaero = ',vaero
+            !write(*,*) 'waero = ',waero
+            !PAUSE
+            !write(*,*) 'FX = ',T%TOW%FXAEROAC,T%TOW%FXAEROQUAD
+            !write(*,*) 'FY = ',T%TOW%FYAEROAC,T%TOW%FYAEROQUAD
+            !write(*,*) 'FZ = ',T%TOW%FZAEROAC,T%TOW%FZAEROQUAD
+            !PAUSE
+         end if
 
-     if (T%TOW%AEROFLAG .eq. 4) then
-        !!Put the dynamics of the ball in here and then
-        !!add it to the summation below
-        T%TOW%FXBALL = 0.0
+         if (T%TOW%AEROFLAG .eq. 4) then
+            !!Put the dynamics of the ball in here and then
+            !!add it to the summation below
+            T%TOW%FXAERO = -0.5*T%ATM%DEN*V_A*T%TOW%C_D_0*ub
+            T%TOW%FYAERO = -0.5*T%ATM%DEN*V_A*T%TOW%C_D_0*vb
+            T%TOW%FZAERO = -0.5*T%ATM%DEN*V_A*T%TOW%C_D_0*wb
+         end if
 
-     end if
+         T%TOW%FXAERO = T%TOW%FXAEROQUAD + T%TOW%FXAEROAC
+         T%TOW%FYAERO = T%TOW%FYAEROQUAD + T%TOW%FYAEROAC
+         T%TOW%FZAERO = T%TOW%FZAEROQUAD + T%TOW%FZAEROAC
+         T%TOW%MXAERO = T%TOW%MXAEROQUAD + T%TOW%MXAEROAC
+         T%TOW%MYAERO = T%TOW%MYAEROQUAD + T%TOW%MYAEROAC
+         T%TOW%MZAERO = T%TOW%MZAEROQUAD + T%TOW%MZAEROAC
 
-    T%TOW%FXAERO = T%TOW%FXAEROQUAD + T%TOW%FXAEROAC
-    T%TOW%FYAERO = T%TOW%FYAEROQUAD + T%TOW%FYAEROAC
-    T%TOW%FZAERO = T%TOW%FZAEROQUAD + T%TOW%FZAEROAC
-    T%TOW%MXAERO = T%TOW%MXAEROQUAD + T%TOW%MXAEROAC
-    T%TOW%MYAERO = T%TOW%MYAEROQUAD + T%TOW%MYAEROAC
-    T%TOW%MZAERO = T%TOW%MZAEROQUAD + T%TOW%MZAEROAC
+         !write(*,*) "FXAERO AFTER",T%TOW%FXAERO
+         !PAUSE
+      end if !AEROFORCES
 
-    !write(*,*) "FXAERO AFTER",T%TOW%FXAERO
-    !PAUSE
+      ! Tether Forces and Moments
 
-  end if !AEROFORCES
-
-  ! Tether Forces and Moments
-
-  T%TOW%MXCONT = 0.0; T%TOW%MYCONT = 0.0; T%TOW%MZCONT = 0.0;
-  T%TOW%FXCONT = 0.0; T%TOW%FYCONT = 0.0; T%TOW%FZCONT = 0.0;          
-  if ((T%THR%DYNOFFON .eq. 1) .and. (T%THR%ELASOFFON .eq. 1)) then
-     if (isnan(T%THR%FXTETHER) .or. isnan(T%THR%FZTETHER)) then
-        T%TOW%FXCONT = 0.0; T%TOW%FYCONT = 0.0; T%TOW%FZCONT = 0.0;          
-        T%TOW%MXCONT = 0.0; T%TOW%MYCONT = 0.0; T%TOW%MZCONT = 0.0;
-     else
-        C_Ftether_I(1,1) = T%THR%FXTETHER
-        C_Ftether_I(2,1) = T%THR%FYTETHER
-        C_Ftether_I(3,1) = T%THR%FZTETHER
-        C_Ftether_B = matmul(T%TOW%TAI,C_Ftether_I)
-        T%TOW%FXCONT = C_Ftether_B(1,1)
-        T%TOW%FYCONT = C_Ftether_B(2,1)
-        T%TOW%FZCONT = C_Ftether_B(3,1)
+      T%TOW%MXCONT = 0.0; T%TOW%MYCONT = 0.0; T%TOW%MZCONT = 0.0;
+      T%TOW%FXCONT = 0.0; T%TOW%FYCONT = 0.0; T%TOW%FZCONT = 0.0;          
+      if ((T%THR%DYNOFFON .eq. 1) .and. (T%THR%ELASOFFON .eq. 1)) then
+         if (isnan(T%THR%FXTETHER) .or. isnan(T%THR%FZTETHER)) then
+            T%TOW%FXCONT = 0.0; T%TOW%FYCONT = 0.0; T%TOW%FZCONT = 0.0;          
+            T%TOW%MXCONT = 0.0; T%TOW%MYCONT = 0.0; T%TOW%MZCONT = 0.0;
+         else
+            C_Ftether_I(1,1) = T%THR%FXTETHER
+            C_Ftether_I(2,1) = T%THR%FYTETHER
+            C_Ftether_I(3,1) = T%THR%FZTETHER
+            C_Ftether_B = matmul(T%TOW%TAI,C_Ftether_I)
+            T%TOW%FXCONT = C_Ftether_B(1,1)
+            T%TOW%FYCONT = C_Ftether_B(2,1)
+            T%TOW%FZCONT = C_Ftether_B(3,1)
         
-        !Skew symmetric operator on quadcopter cg to tether connection point
+            !Skew symmetric operator on quadcopter cg to tether connection point
     
-        S_rCF_B(1,1) = 0.0
-        S_rCF_B(1,2) = -rCF_B(3,1)
-        S_rCF_B(1,3) = rCF_B(2,1)
-        S_rCF_B(2,1) = rCF_B(3,1)
-        S_rCF_B(2,2) = 0.0
-        S_rCF_B(2,3) = -rCF_B(1,1)
-        S_rCF_B(3,1) = -rCF_B(2,1)
-        S_rCF_B(3,2) = rCF_B(1,1)
-        S_rCF_B(3,3) = 0.0
+            S_rCF_B(1,1) = 0.0
+            S_rCF_B(1,2) = -rCF_B(3,1)
+            S_rCF_B(1,3) = rCF_B(2,1)
+            S_rCF_B(2,1) = rCF_B(3,1)
+            S_rCF_B(2,2) = 0.0
+            S_rCF_B(2,3) = -rCF_B(1,1)
+            S_rCF_B(3,1) = -rCF_B(2,1)
+            S_rCF_B(3,2) = rCF_B(1,1)
+            S_rCF_B(3,3) = 0.0
 
-        C_Mtether_B = matmul(S_rCF_B,C_Ftether_B)
+            C_Mtether_B = matmul(S_rCF_B,C_Ftether_B)
         
-        T%TOW%MXCONT = C_Mtether_B(1,1)
-        T%TOW%MYCONT = C_Mtether_B(2,1)
-        T%TOW%MZCONT = C_Mtether_B(3,1)
+            T%TOW%MXCONT = C_Mtether_B(1,1)
+            T%TOW%MYCONT = C_Mtether_B(2,1)
+            T%TOW%MZCONT = C_Mtether_B(3,1)
 
-        !Add Torsional Stiffness of Tether
-        T%TOW%MXCONT = T%TOW%MXCONT - T%THR%KP*(T%TOW%PHI) - T%THR%KD*pb
+            !Add Torsional Stiffness of Tether
+            T%TOW%MXCONT = T%TOW%MXCONT - T%THR%KP*(T%TOW%PHI) - T%THR%KD*pb
+         end if
+      endif
+      ! write(*,*) T%TOW%PHI,pb,T%TOW%MXCONT,T%TOW%MYCONT,T%TOW%MZCONT
+      ! write(*,*) T%TOW%FXAERO,T%TOW%FYAERO,T%TOW%FZAERO
 
-     end if
-  endif
+      ! Total Forces and Moments
 
-  ! write(*,*) T%TOW%PHI,pb,T%TOW%MXCONT,T%TOW%MYCONT,T%TOW%MZCONT
-  ! write(*,*) T%TOW%FXAERO,T%TOW%FYAERO,T%TOW%FZAERO
+      T%TOW%FXTOTAL = T%TOW%FXGRAV + T%TOW%FXAERO + T%TOW%FXCONT         !T%DRIVER%XDOT maybe
+      T%TOW%FYTOTAL = T%TOW%FYGRAV + T%TOW%FYAERO + T%TOW%FYCONT 
+      T%TOW%FZTOTAL = T%TOW%FZGRAV + T%TOW%FZAERO + T%TOW%FZCONT
+      T%TOW%MXTOTAL = T%TOW%MXGRAV + T%TOW%MXAERO + T%TOW%MXCONT
+      T%TOW%MYTOTAL = T%TOW%MYGRAV + T%TOW%MYAERO + T%TOW%MYCONT
+      T%TOW%MZTOTAL = T%TOW%MZGRAV + T%TOW%MZAERO + T%TOW%MZCONT
 
-  ! Total Forces and Moments
-
-  T%TOW%FXTOTAL = T%TOW%FXGRAV + T%TOW%FXAERO + T%TOW%FXCONT         !T%DRIVER%XDOT maybe
-  T%TOW%FYTOTAL = T%TOW%FYGRAV + T%TOW%FYAERO + T%TOW%FYCONT 
-  T%TOW%FZTOTAL = T%TOW%FZGRAV + T%TOW%FZAERO + T%TOW%FZCONT
-  T%TOW%MXTOTAL = T%TOW%MXGRAV + T%TOW%MXAERO + T%TOW%MXCONT
-  T%TOW%MYTOTAL = T%TOW%MYGRAV + T%TOW%MYAERO + T%TOW%MYCONT
-  T%TOW%MZTOTAL = T%TOW%MZGRAV + T%TOW%MZAERO + T%TOW%MZCONT
-
-  !write(*,*) 'F = ',T%TOW%FXTOTAL,T%TOW%FYTOTAL,T%TOW%FZTOTAL
-  !write(*,*) 'M = ',T%TOW%MXTOTAL,T%TOW%MYTOTAL,T%TOW%MZTOTAL
-  !write(*,*) 'F detail = ',T%TOW%FXGRAV,T%TOW%FXAERO,T%TOW%FXCONT
-  !PAUSE
+      !write(*,*) 'F = ',T%TOW%FXTOTAL,T%TOW%FYTOTAL,T%TOW%FZTOTAL
+      !write(*,*) 'M = ',T%TOW%MXTOTAL,T%TOW%MYTOTAL,T%TOW%MZTOTAL
+      !write(*,*) 'F detail = ',T%TOW%FXGRAV,T%TOW%FXAERO,T%TOW%FXCONT
+      !PAUSE
   
-  ! State Derivatives
+      ! State Derivatives
   
-  xcgdot = T%TOW%TIA(1,1)*ub + T%TOW%TIA(1,2)*vb + T%TOW%TIA(1,3)*wb
-  ycgdot = T%TOW%TIA(2,1)*ub + T%TOW%TIA(2,2)*vb + T%TOW%TIA(2,3)*wb
-  zcgdot = T%TOW%TIA(3,1)*ub + T%TOW%TIA(3,2)*vb + T%TOW%TIA(3,3)*wb  
+      xcgdot = T%TOW%TIA(1,1)*ub + T%TOW%TIA(1,2)*vb + T%TOW%TIA(1,3)*wb
+      ycgdot = T%TOW%TIA(2,1)*ub + T%TOW%TIA(2,2)*vb + T%TOW%TIA(2,3)*wb
+      zcgdot = T%TOW%TIA(3,1)*ub + T%TOW%TIA(3,2)*vb + T%TOW%TIA(3,3)*wb  
 
-  !Velocity of Tether Connection point
-  vC_I(1,1) = xcgdot
-  vC_I(2,1) = ycgdot
-  vC_I(3,1) = zcgdot
+      !Velocity of Tether Connection point
+      vC_I(1,1) = xcgdot
+      vC_I(2,1) = ycgdot
+      vC_I(3,1) = zcgdot
 
-  ! Skew symmetric of towed angular velocity
+      ! Skew symmetric of towed angular velocity
+      S_wt_B(1,1) = 0.0
+      S_wt_B(1,2) = -rb
+      S_wt_B(1,3) = qb
+      S_wt_B(2,1) = rb
+      S_wt_B(2,2) = 0.0
+      S_wt_B(2,3) = -pb
+      S_wt_B(3,1) = -qb
+      S_wt_B(3,2) = pb
+      S_wt_B(3,3) = 0.0
+      vF_I = vC_I + matmul(T%TOW%TIA,matmul(S_wt_B,rCF_B))
 
-  S_wt_B(1,1) = 0.0
-  S_wt_B(1,2) = -rb
-  S_wt_B(1,3) = qb
-  S_wt_B(2,1) = rb
-  S_wt_B(2,2) = 0.0
-  S_wt_B(2,3) = -pb
-  S_wt_B(3,1) = -qb
-  S_wt_B(3,2) = pb
-  S_wt_B(3,3) = 0.0
+      T%THR%XTETHERDOT = vF_I(1,1)
+      T%THR%YTETHERDOT = vF_I(2,1)
+      T%THR%ZTETHERDOT = vF_I(3,1)
 
-  vF_I = vC_I + matmul(T%TOW%TIA,matmul(S_wt_B,rCF_B))
-
-  T%THR%XTETHERDOT = vF_I(1,1)
-  T%THR%YTETHERDOT = vF_I(2,1)
-  T%THR%ZTETHERDOT = vF_I(3,1)
-
-  q0dot = (- q1*pb - q2*qb - q3*rb)/2.0
-  q1dot = (  q0*pb - q3*qb + q2*rb)/2.0
-  q2dot = (  q3*pb + q0*qb - q1*rb)/2.0
-  q3dot = (- q2*pb + q1*qb + q0*rb)/2.0
-  ubdot = T%TOW%FXTOTAL/T%TOW%MASS + rb*vb - qb*wb
-  vbdot = T%TOW%FYTOTAL/T%TOW%MASS + pb*wb - rb*ub 
-  wbdot = T%TOW%FZTOTAL/T%TOW%MASS + qb*ub - pb*vb 
-  c1 = T%TOW%MXTOTAL - pb*(qb*T%TOW%IXZ-rb*T%TOW%IXY) - qb*(qb*T%TOW%IYZ-rb*T%TOW%IYY) - rb*(qb*T%TOW%IZZ-rb*T%TOW%IYZ)
-  c2 = T%TOW%MYTOTAL - pb*(rb*T%TOW%IXX-pb*T%TOW%IXZ) - qb*(rb*T%TOW%IXY-pb*T%TOW%IYZ) - rb*(rb*T%TOW%IXZ-pb*T%TOW%IZZ)
-  c3 = T%TOW%MZTOTAL - pb*(pb*T%TOW%IXY-qb*T%TOW%IXX) - qb*(pb*T%TOW%IYY-qb*T%TOW%IXY) - rb*(pb*T%TOW%IYZ-qb*T%TOW%IXZ)
-  pbdot = T%TOW%IXXI*c1 + T%TOW%IXYI*c2 + T%TOW%IXZI*c3
-  qbdot = T%TOW%IXYI*c1 + T%TOW%IYYI*c2 + T%TOW%IYZI*c3
-  rbdot = T%TOW%IXZI*c1 + T%TOW%IYZI*c2 + T%TOW%IZZI*c3
+      q0dot = (- q1*pb - q2*qb - q3*rb)/2.0
+      q1dot = (  q0*pb - q3*qb + q2*rb)/2.0
+      q2dot = (  q3*pb + q0*qb - q1*rb)/2.0
+      q3dot = (- q2*pb + q1*qb + q0*rb)/2.0
+      ubdot = T%TOW%FXTOTAL/T%TOW%MASS + rb*vb - qb*wb
+      vbdot = T%TOW%FYTOTAL/T%TOW%MASS + pb*wb - rb*ub 
+      wbdot = T%TOW%FZTOTAL/T%TOW%MASS + qb*ub - pb*vb 
+      c1 = T%TOW%MXTOTAL - pb*(qb*T%TOW%IXZ-rb*T%TOW%IXY) - qb*(qb*T%TOW%IYZ-rb*T%TOW%IYY) - rb*(qb*T%TOW%IZZ-rb*T%TOW%IYZ)
+      c2 = T%TOW%MYTOTAL - pb*(rb*T%TOW%IXX-pb*T%TOW%IXZ) - qb*(rb*T%TOW%IXY-pb*T%TOW%IYZ) - rb*(rb*T%TOW%IXZ-pb*T%TOW%IZZ)
+      c3 = T%TOW%MZTOTAL - pb*(pb*T%TOW%IXY-qb*T%TOW%IXX) - qb*(pb*T%TOW%IYY-qb*T%TOW%IXY) - rb*(pb*T%TOW%IYZ-qb*T%TOW%IXZ)
+      pbdot = T%TOW%IXXI*c1 + T%TOW%IXYI*c2 + T%TOW%IXZI*c3
+      qbdot = T%TOW%IXYI*c1 + T%TOW%IYYI*c2 + T%TOW%IYZI*c3
+      rbdot = T%TOW%IXZI*c1 + T%TOW%IYZI*c2 + T%TOW%IZZI*c3
   
-  ! Wrap State Derivatives
-  
-  T%TOW%STATEDOT(1) = xcgdot
-  T%TOW%STATEDOT(2) = ycgdot
-  T%TOW%STATEDOT(2) = ycgdot
-  T%TOW%STATEDOT(3) = zcgdot
-  T%TOW%STATEDOT(4) = q0dot 
-  T%TOW%STATEDOT(5) = q1dot
-  T%TOW%STATEDOT(6) = q2dot
-  T%TOW%STATEDOT(7) = q3dot
-  T%TOW%STATEDOT(8) = ubdot
-  T%TOW%STATEDOT(9) = vbdot
-  T%TOW%STATEDOT(10) = wbdot
-  T%TOW%STATEDOT(11) = pbdot 
-  T%TOW%STATEDOT(12) = qbdot
-  T%TOW%STATEDOT(13) = rbdot
-  T%TOW%STATEDOT(14) = TDOTVEC(1)
-  T%TOW%STATEDOT(15) = TDBLDOTVEC(1)
-  T%TOW%STATEDOT(16) = TDOTVEC(2)
-  T%TOW%STATEDOT(17) = TDBLDOTVEC(2)
-  T%TOW%STATEDOT(18) = TDOTVEC(3)
-  T%TOW%STATEDOT(19) = TDBLDOTVEC(3)
-  T%TOW%STATEDOT(20) = TDOTVEC(4)
-  T%TOW%STATEDOT(21) = TDBLDOTVEC(4)
-
-  !write(*,*) T%TOW%STATEDOT
-  !write(*,*) T%TOW%FXTOTAL,T%TOW%FYTOTAL,T%TOW%FZTOTAL
-  !PAUSE
-  
-  RETURN
-  
- end if !!For the compute flag
+      ! Wrap State Derivatives
+      T%TOW%STATEDOT(1) = xcgdot
+      T%TOW%STATEDOT(2) = ycgdot
+      T%TOW%STATEDOT(2) = ycgdot
+      T%TOW%STATEDOT(3) = zcgdot
+      T%TOW%STATEDOT(4) = q0dot 
+      T%TOW%STATEDOT(5) = q1dot
+      T%TOW%STATEDOT(6) = q2dot
+      T%TOW%STATEDOT(7) = q3dot
+      T%TOW%STATEDOT(8) = ubdot
+      T%TOW%STATEDOT(9) = vbdot
+      T%TOW%STATEDOT(10) = wbdot
+      T%TOW%STATEDOT(11) = pbdot 
+      T%TOW%STATEDOT(12) = qbdot
+      T%TOW%STATEDOT(13) = rbdot
+      T%TOW%STATEDOT(14) = TDOTVEC(1)
+      T%TOW%STATEDOT(15) = TDBLDOTVEC(1)
+      T%TOW%STATEDOT(16) = TDOTVEC(2)
+      T%TOW%STATEDOT(17) = TDBLDOTVEC(2)
+      T%TOW%STATEDOT(18) = TDOTVEC(3)
+      T%TOW%STATEDOT(19) = TDBLDOTVEC(3)
+      T%TOW%STATEDOT(20) = TDOTVEC(4)
+      T%TOW%STATEDOT(21) = TDBLDOTVEC(4)
+      !write(*,*) T%TOW%STATEDOT
+      !write(*,*) T%TOW%FXTOTAL,T%TOW%FYTOTAL,T%TOW%FZTOTAL
+      !PAUSE
+      RETURN
+   end if !!For the compute flag
   
 !!!!!!!!!!!!!!!!!!!!!!!!!! LOAD DATA iflag = 1 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
