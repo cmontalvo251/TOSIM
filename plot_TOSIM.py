@@ -24,7 +24,8 @@ if SIMULATE > 0:
     #os.system('./LinuxRun.exe Input_Files/Forward_Flight_Steady/TOMAD.ifiles')
     #os.system('./LinuxRun.exe Input_Files/Hovering/TOMAD.ifiles')
     #os.system('./Simulation.exe Input_Files/Hovering/TOSIM.ifiles')
-    os.system('./Simulation.exe Input_Files/Forward_Truck/TOSIM.ifiles')
+    #os.system('./Simulation.exe Input_Files/Forward_Truck/TOSIM.ifiles')
+    os.system('./Simulation.exe Input_Files/Helicopter_Towing_Ball/TOSIM.ifiles')
 
     if SIMULATE > 1:
         sys.exit()

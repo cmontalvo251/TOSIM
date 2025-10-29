@@ -53,19 +53,65 @@ skip = 100
 def figparams(x,y,z):
     fx = 20
     fy = 20
-    fzl = -2
+    fzl = -40
     fzu = 40
     ax.set_xlim([x-fx,x+fx])
     ax.set_ylim([y-fy,y+fy])
     ax.set_zlim([z+fzl,z+fzu])
     plt.grid()
-def draw_cube(x,y,z,phi,theta,psi,l,w,h,axin,color):
-    #Bottom Face
-    x = np.array([-0.5,0.5,0.5,-0.5])*l + x
-    y = np.array([-0.5,-0.5,0.5,0.5])*w + y
-    z = (np.array([0,0,0,0])-0.5)*h/2.0 - z
-    verts = [list(zip(x,y,z))]
-    ax.add_collection3d(Poly3DCollection(verts))
+def draw_cube(x_center, y_center, z_center, phi, theta, psi, l, w, h, axin, color='b'):
+    # Define the 8 vertices of the cube relative to the center (x_center, y_center, z_center)
+    # The current parameters phi, theta, psi suggest rotation might be needed,
+    # but for simplicity, we'll plot the unrotated cube first.
+
+    # Vertices (relative coordinates from the center)
+    # v[0] to v[7]
+    
+    # x goes from -l/2 to +l/2
+    # y goes from -w/2 to +w/2
+    # z goes from -h/2 to +h/2
+
+    # Corners for an unrotated cube:
+    v = np.array([
+        [-l/2, -w/2, -h/2], # 0: bottom-back-left
+        [ l/2, -w/2, -h/2], # 1: bottom-back-right
+        [ l/2,  w/2, -h/2], # 2: bottom-front-right
+        [-l/2,  w/2, -h/2], # 3: bottom-front-left
+        [-l/2, -w/2,  h/2], # 4: top-back-left
+        [ l/2, -w/2,  h/2], # 5: top-back-right
+        [ l/2,  w/2,  h/2], # 6: top-front-right
+        [-l/2,  w/2,  h/2]  # 7: top-front-left
+    ])
+
+    # Rotation (optional, but necessary if phi, theta, psi are used)
+    # A full rotation implementation is complex. For now, we'll skip it, 
+    # but if implemented, 'v' would be modified by the rotation matrices here.
+
+    # Translate the vertices to the center coordinates
+    center_offset = np.array([x_center, y_center, z_center])
+    v = v + center_offset
+
+    # Define the six faces using the vertex indices
+    # Each face is a list of 4 vertex indices (must be in cyclic order)
+    faces = [
+        [v[0], v[1], v[2], v[3]], # Bottom face (already done)
+        [v[4], v[5], v[6], v[7]], # Top face
+        [v[0], v[1], v[5], v[4]], # Back face
+        [v[2], v[3], v[7], v[6]], # Front face
+        [v[1], v[2], v[6], v[5]], # Right face
+        [v[0], v[3], v[7], v[4]]  # Left face
+    ]
+
+    # Create the Poly3DCollection
+    axin.add_collection3d(
+        Poly3DCollection(
+            faces, 
+            facecolors=color, 
+            linewidths=1, 
+            edgecolors='k', 
+            alpha=0.6 # Use alpha for transparency to see all faces
+        )
+    )
 def draw_line(x1,y1,z1,x2,y2,z2):
     plt.plot([x1,x2],[y1,y2],[z1,z2])
 def decimal(x,n):
@@ -84,13 +130,13 @@ for i in range(0,len(time)):
         xd = driver_state[i,0]
         yd = driver_state[i,1]
         zd = driver_state[i,2]
-        figparams(xd,yd,zd)
-        draw_cube(xd,yd,zd,0,0,0,10,10,0.1,ax,[1,0,0])
+        figparams(xd,yd,-zd)
+        draw_cube(xd,yd,-zd,0,0,0,10,10,10,ax,[1,0,0])
         ###NOW DRAW THE TOWED
         xt = towed_state[i,0]
         yt = towed_state[i,1]
         zt = towed_state[i,2]
-        draw_cube(xt,yt,zt,0,0,0,2,2,0.1,ax,[0,1,0])
+        draw_cube(xt,yt,-zt,0,0,0,2,2,2,ax,[0,1,0])
         ##NOW DRAW THE BEADS
         for n in range(0,NBEADS):
             xb = tether_state[i,6*n+0]
@@ -113,4 +159,6 @@ for i in range(0,len(time)):
         print(i,' out of ',len(time))
         filename = getfilename(i,5)
         plt.savefig(filename,format='png')
+#os.system('mencoder -ovc lavc -mf fps=10:type=png mf://Frames/*.png -o out.mpg')
+
         

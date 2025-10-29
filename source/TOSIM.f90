@@ -2318,7 +2318,7 @@ SUBROUTINE DRIVER(T,iflag)
  real*8 Gammavec(3,1),bquad,C_Ftether_I(3,1),C_Ftether_B(3,1),S_rCF_B(3,3),C_Mtether_B(3,1)
  real*8 xcgdot,ycgdot,zcgdot,phidot,thetadot,psidot,ubdot,vbdot,wbdot,c1,c2,c3,pbdot,qbdot,rbdot
  real*8 rReel_I(3,1),rCG_I(3,1),v_CG_I(3,1),S_wt_B(3,3),v_Reel_I(3,1),deti
- real*8 S,q_inf_S,q_inf,groundforce
+ real*8 S,q_inf_S,q_inf,groundforce,rampFactor
  real*8 sigmaF,omegaF,zetaF,C1F(4),C2F(4),C3F(4),idx,W2Tpwm(4,1),W0,j,terrain_amplitude,terrain_frequency,zcg_terrain,zcg1
  character*256 xgridname,ygridname,zgridname
  character*1 letter
@@ -2622,7 +2622,13 @@ SUBROUTINE DRIVER(T,iflag)
 
     if (T%DRIVER%MODNO .eq. 1) then
 
-     T%DRIVER%SPEED = T%DRIVER%FINALSPEED
+     !Ramp in speed
+      if (T%SIM%TIME .gt. 0) then
+         rampFactor = 1.0D0 - exp(-0.1*(T%SIM%TIME-0))
+      else
+         rampFactor = 0.0D0
+      end if
+      T%DRIVER%SPEED = T%DRIVER%FINALSPEED*rampFactor
         
      ! if (T%SIM%TIME .gt. 1000) then
      !    T%DRIVER%XCG = T%DRIVER%XCGINITIAL + T%DRIVER%SPEED*1000 + (T%DRIVER%SPEED+5)*(T%SIM%TIME-1000)
@@ -2632,10 +2638,13 @@ SUBROUTINE DRIVER(T,iflag)
      T%DRIVER%YDOT = T%DRIVER%SPEED*sin(T%DRIVER%PSI) !!!DO NOT FORGET TO FIX THIS TOO
      T%DRIVER%ZDOT = 0.0
 
-     !!Compute CG location -- This assumes that speed is constant
+     !!Compute CG location -- Psuedo integration for non-constant speed. Note that divide by 5 because the main
+     !!loop does 5 function calls. 4 for the integration and 1 more for a check.
 
-     T%DRIVER%XCG = T%DRIVER%XCGINITIAL + T%DRIVER%SPEED*cos(T%DRIVER%PSI)*T%SIM%TIME
-     T%DRIVER%YCG = T%DRIVER%YCGINITIAL + T%DRIVER%SPEED*sin(T%DRIVER%PSI)*T%SIM%TIME
+     !T%DRIVER%XCG = T%DRIVER%XCGINITIAL + T%DRIVER%SPEED*cos(T%DRIVER%PSI)*T%SIM%TIME
+     T%DRIVER%XCG = T%DRIVER%STATE(1) + T%DRIVER%XDOT*T%SIM%DELTATIME/5.0
+     !T%DRIVER%YCG = T%DRIVER%YCGINITIAL + T%DRIVER%SPEED*sin(T%DRIVER%PSI)*T%SIM%TIME
+     T%DRIVER%YCG = T%DRIVER%STATE(2) + T%DRIVER%YDOT*T%SIM%DELTATIME/5.0
      T%DRIVER%ZCG = T%DRIVER%ZCGINITIAL
 
      !Compute Reel locations
@@ -2947,6 +2956,9 @@ end if
      read(unit=94,fmt=*,iostat=readflag) T%DRIVER%XDDOTNOISE
      read(unit=94,fmt=*,iostat=readflag) T%DRIVER%YDDOTSCALE
      read(unit=94,fmt=*,iostat=readflag) T%DRIVER%YDDOTPERIOD
+     T%DRIVER%XCG = T%DRIVER%XCGINITIAL
+     T%DRIVER%YCG = T%DRIVER%YCGINITIAL
+     T%DRIVER%ZCG = T%DRIVER%ZCGINITIAL
   end if
   if (T%DRIVER%MODNO .eq. 2) then
    read(unit=94,fmt=*,iostat=readflag) readreal; T%DRIVER%TABSIZE = int(readreal)
