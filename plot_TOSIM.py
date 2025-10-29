@@ -46,10 +46,13 @@ fontSize = 10
 time = state_data[:,0]
 #The rest is state and statedot
 #The number of states is 12 + 21 + 7*NBEADS + 1
+#The first 12 are the driver states
+#The next 21 are the quad states including T and Tdots
+#the final ones are the beads
 
 #The next 13:33 is the copter states
 towed_state = state_data[:,13:34] #again remember you add one
-ylabelT = ['x (ft)','y (ft)','z (ft)','q0','q1','q2','q3','u (ft/s)','v (ft/s)','w (ft/s)','p (rad/s)','q (rad/s)','r (rad/s)','T1 (N)','T1 dot (N/s)','T2 (N)','T2 dot (N/s)','T3 (N)','T3 dot (N/s)','T4 (N)','T4 (N/s)']
+ylabelT = ['x (ft)','y (ft)','z (ft)','q0','q1','q2','q3','u (ft/s)','v (ft/s)','w (ft/s)','p (rad/s)','q (rad/s)','r (rad/s)','T1 (N)','T1 dot (N/s)','T2 (N)','T2 dot (N/s)','T3 (N)','T3 dot (N/s)','T4 (N)','T4 dot (N/s)']
 for idx in range(0,21):
     print('Plotting Towed State = ',ylabelT[idx])
     plti = P.plottool(fontSize,'Time(sec)',ylabelT[idx],'Towed')

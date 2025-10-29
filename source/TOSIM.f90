@@ -2318,7 +2318,7 @@ SUBROUTINE DRIVER(T,iflag)
  real*8 Gammavec(3,1),bquad,C_Ftether_I(3,1),C_Ftether_B(3,1),S_rCF_B(3,3),C_Mtether_B(3,1)
  real*8 xcgdot,ycgdot,zcgdot,phidot,thetadot,psidot,ubdot,vbdot,wbdot,c1,c2,c3,pbdot,qbdot,rbdot
  real*8 rReel_I(3,1),rCG_I(3,1),v_CG_I(3,1),S_wt_B(3,3),v_Reel_I(3,1),deti
- real*8 S,q_inf_S,q_inf,groundforce,rampFactor
+ real*8 S,q_inf_S,q_inf,groundforce,rampFactor,Ts,ramp_time_offset,lambda
  real*8 sigmaF,omegaF,zetaF,C1F(4),C2F(4),C3F(4),idx,W2Tpwm(4,1),W0,j,terrain_amplitude,terrain_frequency,zcg_terrain,zcg1
  character*256 xgridname,ygridname,zgridname
  character*1 letter
@@ -2622,9 +2622,13 @@ SUBROUTINE DRIVER(T,iflag)
 
     if (T%DRIVER%MODNO .eq. 1) then
 
-     !Ramp in speed
-      if (T%SIM%TIME .gt. 0) then
-         rampFactor = 1.0D0 - exp(-0.1*(T%SIM%TIME-0))
+      !Ramp in speed
+      ramp_time_offset = 0.0
+      if (T%SIM%TIME .gt. ramp_time_offset) then
+         !Set the settling time
+         Ts = 10.0D0
+         lambda = 4.0D0/Ts
+         rampFactor = 1.0D0 - exp(-lambda*(T%SIM%TIME-ramp_time_offset))
       else
          rampFactor = 0.0D0
       end if
@@ -3509,6 +3513,12 @@ SUBROUTINE TOWED(T,iflag)
       TDOTVEC(3) = T%TOW%STATE(19)
       TVEC(4)    = T%TOW%STATE(20)
       TDOTVEC(4) = T%TOW%STATE(21)
+
+      ! initialize thrust model of quad
+      do idx = 1,4
+         TDBLDOTVEC(idx) = 0.0
+         T%TOW%THRUSTVEC(idx,1) = 0.0
+      end do
 
       !Compute phi,theta,psi
       !REVISIT - I've got a function for that -DK 8/18/2015 - It even checks for gimbal lock state
