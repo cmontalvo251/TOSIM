@@ -1,7 +1,7 @@
 1		!Turn Dynamic module off(0) or on(1)                                 
 1		!Gravity on(1) or off(0)
 4		!Aerodynamics 0(off),1(quad only),2(airplane only),3(both),4(ball)
-3	!Weight (lbf)
+1.0	!Weight (lbf)
 32.2	!Gravity (ft/s^2)  
 0.0		!Stationline center of mass(m)
 0.0		!buttline center of mass(m) 
@@ -29,10 +29,10 @@
 0.4265020	! ltheta34 (ft) , we are assuming these two distances are the same for symmetry.
 1472		!OMEGAMAX (rad/s) ; 950kV *12.6V (full 3cell) = 11970 RPM based battery specs (14.8V gives 14,060 RPM and 1472 rad/s   using 1250)
 0.00006491284467800415	!Ir OR 8.801e-5 (kg*m^2)
-3.65625		            !Reference area (ft^2) [wing area]                         
+1.0		            !Reference area (ft^2) [wing area]                         
 4.875		            !Lateral reference length (ft) [wing span]                            
 0.75	                !Longitudinal reference length (ft) [wing chord]                         
-0.34            		!Zero Lift Drag (CD0)             
+0.5            		!Zero Lift Drag (CD0)             
 -0.07636788929236879    !Reference CL,0    
 0.3441029736813229      !Reference CM,0  
 0.0000		            !Reference CL,M          (Not used)        could be used in CL       

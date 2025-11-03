@@ -2626,7 +2626,7 @@ SUBROUTINE DRIVER(T,iflag)
       ramp_time_offset = 0.0
       if (T%SIM%TIME .gt. ramp_time_offset) then
          !Set the settling time
-         Ts = 10.0D0
+         Ts = 50.0D0
          lambda = 4.0D0/Ts
          rampFactor = 1.0D0 - exp(-lambda*(T%SIM%TIME-ramp_time_offset))
       else
@@ -3840,19 +3840,23 @@ SUBROUTINE TOWED(T,iflag)
          end if
 
          if (T%TOW%AEROFLAG .eq. 4) then
+            !write(*,*) 'Simulating Drag',T%TOW%C_D_0,T%TOW%SAREA
             !!Put the dynamics of the ball in here and then
             !!add it to the summation below
-            T%TOW%FXAERO = -0.5*T%ATM%DEN*V_A*T%TOW%C_D_0*ub
-            T%TOW%FYAERO = -0.5*T%ATM%DEN*V_A*T%TOW%C_D_0*vb
-            T%TOW%FZAERO = -0.5*T%ATM%DEN*V_A*T%TOW%C_D_0*wb
+            T%TOW%FXAEROBALL = -0.5*T%ATM%DEN*V_A*T%TOW%C_D_0*ub*T%TOW%SAREA  
+            T%TOW%FYAEROBALL = -0.5*T%ATM%DEN*V_A*T%TOW%C_D_0*vb*T%TOW%SAREA  
+            T%TOW%FZAEROBALL = -0.5*T%ATM%DEN*V_A*T%TOW%C_D_0*wb*T%TOW%SAREA  
+            T%TOW%MXAEROBALL = 0.0D0
+            T%TOW%MYAEROBALL = 0.0D0
+            T%TOW%MZAEROBALL = 0.0D0
          end if
 
-         T%TOW%FXAERO = T%TOW%FXAEROQUAD + T%TOW%FXAEROAC
-         T%TOW%FYAERO = T%TOW%FYAEROQUAD + T%TOW%FYAEROAC
-         T%TOW%FZAERO = T%TOW%FZAEROQUAD + T%TOW%FZAEROAC
-         T%TOW%MXAERO = T%TOW%MXAEROQUAD + T%TOW%MXAEROAC
-         T%TOW%MYAERO = T%TOW%MYAEROQUAD + T%TOW%MYAEROAC
-         T%TOW%MZAERO = T%TOW%MZAEROQUAD + T%TOW%MZAEROAC
+         T%TOW%FXAERO = T%TOW%FXAEROQUAD + T%TOW%FXAEROAC + T%TOW%FXAEROBALL
+         T%TOW%FYAERO = T%TOW%FYAEROQUAD + T%TOW%FYAEROAC + T%TOW%FYAEROBALL
+         T%TOW%FZAERO = T%TOW%FZAEROQUAD + T%TOW%FZAEROAC + T%TOW%FZAEROBALL
+         T%TOW%MXAERO = T%TOW%MXAEROQUAD + T%TOW%MXAEROAC + T%TOW%MXAEROBALL
+         T%TOW%MYAERO = T%TOW%MYAEROQUAD + T%TOW%MYAEROAC + T%TOW%MYAEROBALL
+         T%TOW%MZAERO = T%TOW%MZAEROQUAD + T%TOW%MZAEROAC + T%TOW%MZAEROBALL
 
          !write(*,*) "FXAERO AFTER",T%TOW%FXAERO
          !PAUSE

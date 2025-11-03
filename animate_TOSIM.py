@@ -41,14 +41,14 @@ ylabelEULER = ['Roll Angle (deg)','Pitch Angle (deg)','Yaw Angle (deg)']
 #is at the end
 tether_state = state_data[:,34:]
 ylabelTHR = ['X','Y','Z','XDOT','YDOT','ZDOT']
-NBEADS = 1
+NBEADS = 10
 
 ##ANIMATION ROUTINE
 fig = plt.figure('3-D')
 camera = Camera(fig)
 ax = fig.add_subplot(111,projection='3d')
 ##So no we need the skip parameter
-skip = 100
+skip = 1000
 
 def figparams(x,y,z):
     fx = 20
@@ -122,6 +122,7 @@ def getfilename(i,L):
     filename = 'Frames/'+numdx[0:L-len(istr)]+istr+'.png'
     return filename
 iplot = 0
+os.system('rm Frames/*.png')
 for i in range(0,len(time)):
     if i >= iplot:
         plt.pause(0.01)
@@ -130,7 +131,6 @@ for i in range(0,len(time)):
         xd = driver_state[i,0]
         yd = driver_state[i,1]
         zd = driver_state[i,2]
-        figparams(xd,yd,-zd)
         draw_cube(xd,yd,-zd,0,0,0,10,10,10,ax,[1,0,0])
         ###NOW DRAW THE TOWED
         xt = towed_state[i,0]
@@ -153,12 +153,15 @@ for i in range(0,len(time)):
         draw_line(xd,yd,-zd,tether_state[i,0],tether_state[i,1],-tether_state[i,2])
         #Then draw a line from the last bead to the towed system
         draw_line(xt,yt,-zt,tether_state[i,6*(NBEADS-1)+0],tether_state[i,6*(NBEADS-1)+1],-tether_state[i,6*(NBEADS-1)+2])
-        #Then clean up some shit
+        #Then clean up 
+        # Set the viewing angle
+        figparams(xd,yd,-zd)
+        ax.view_init(elev=0, azim=-90)
         ax.set_title(decimal(time[i],1))
         iplot+=skip
         print(i,' out of ',len(time))
         filename = getfilename(i,5)
         plt.savefig(filename,format='png')
-#os.system('mencoder -ovc lavc -mf fps=10:type=png mf://Frames/*.png -o out.mpg')
+os.system('mencoder -ovc lavc -mf fps=10:type=png mf://Frames/*.png -o out.mpg')
 
         

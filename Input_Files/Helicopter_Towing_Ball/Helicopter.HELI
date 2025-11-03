@@ -11,7 +11,7 @@
 0.0		!XCG Initial (ft)
 0.0		!YCG Initial (ft)
 -100		!ZCG Initial (ft)
-40.0		!Final speed (ft/s)
+220.0		!Final speed (ft/s)
 0.0		!Psi (deg)
 0.0		!Xddot noise
 0.0		!Yddot scale
