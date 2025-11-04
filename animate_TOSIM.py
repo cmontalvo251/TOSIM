@@ -51,7 +51,7 @@ ax = fig.add_subplot(111,projection='3d')
 skip = 1000
 
 def figparams(x,y,z):
-    fx = 20
+    fx = 50
     fy = 20
     fzl = -40
     fzu = 40
@@ -123,6 +123,7 @@ def getfilename(i,L):
     return filename
 iplot = 0
 os.system('rm Frames/*.png')
+frame_counter = 0
 for i in range(0,len(time)):
     if i >= iplot:
         plt.pause(0.01)
@@ -160,7 +161,8 @@ for i in range(0,len(time)):
         ax.set_title(decimal(time[i],1))
         iplot+=skip
         print(i,' out of ',len(time))
-        filename = getfilename(i,5)
+        filename = getfilename(frame_counter,5)
+        frame_counter+=1
         plt.savefig(filename,format='png')
 os.system('mencoder -ovc lavc -mf fps=10:type=png mf://Frames/*.png -o out.mpg')
 
