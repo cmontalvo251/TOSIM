@@ -129,6 +129,7 @@ type ATMOSPHERESTRUCTURE
      integer :: COMMANDFLAG(MAXWP) = 1           ! 0 or 1 to advance waypoint command     real*8 :: COMMANDFLAG(MAXWP) =
      real*8 :: DXD = 0                                ! Driver aero parameter
      real*8 :: C_T = 0                                ! Driver aero parameter
+     real*8 :: SREF = 0                              ! Driver aero parameter
      real*8 :: MINWAYPOINT = 1.0D0
      real*8 :: MS_MIN = 0.0                           ! Maximum PWM signal (microseconds)
      real*8 :: MS_MAX = 0.0                           ! Minimum PWM signal (microseconds)
@@ -806,7 +807,7 @@ SUBROUTINE SIMULATION(T,iflag)
  real*8 zint
  type(TOSIMSTRUCTURE) T
 
- !!!!!!!!!!!!!!! COMPUTE iflag = 3 !!!!!!!!!!!!!!!!!!!!!!1
+ !!!!!!!!!!!!!!! COMPUTE iflag = 2 !!!!!!!!!!!!!!!!!!!!!!1
 
  if (iflag .eq. 2) then  
 
@@ -1206,6 +1207,9 @@ SUBROUTINE SIMULATION(T,iflag)
      !write(*,*) 'Towed Initial States after converting to quats = ',T%TOW%INITIALSTATE(1:21)
      !PAUSE;STOP
 
+     !!!Call the control system to set initial control states
+     call CONTROL(T,2)
+
      !!!!!! Compute initial Tether points !!!!!!!!!!
      call DRIVER(T,2) ! Compute location of reel !!!!!Reel Location = T%DRIVER%(XYZ)REEL
      !!Place Driver states in initial state vector
@@ -1382,6 +1386,8 @@ SUBROUTINE CONTROL(T,iflag)
  
 !!!!!!!!!!!!!!!!!!!!!!! COMPUTE iflag = 2 !!!!!!!!!!!!!!!!!!!!!!!!!!
  if (iflag .eq. 2) then
+
+   !write(*,*) 'CONTROL SYSTEM COMPUTE'
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !!!!!!!!!!!!!! TETHER !!!!!!!!!!!!!!!!!
@@ -1862,6 +1868,7 @@ SUBROUTINE CONTROL(T,iflag)
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     !!!!!!!!!!!!!!DRIVER CONTROLLER!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!TRUCK CONTROL, Truck Controller, Controller for Truck
     if (T%DRIVER%CONTROLOFFON .gt. 0) then
 
         !holding still
@@ -1905,14 +1912,15 @@ SUBROUTINE CONTROL(T,iflag)
         if (T%DRIVER%MUTHROTTLE .lt. 50.0) then
           T%DRIVER%MUTHROTTLE = 0.0
         end if
-
-       end if
+      end if
        
 
-
-       !write(*,*) "T%DRIVER%MUTHROTTLE",T%DRIVER%MUTHROTTLE
-       !write(*,*) "T%SIM%TIME",T%SIM%TIME
-       !PAUSE
+   else
+      !Set Muthrottle to MS_MIN when no controller
+      T%DRIVER%MUTHROTTLE = T%DRIVER%MS_MIN
+      !write(*,*) "T%DRIVER%MUTHROTTLE",T%DRIVER%MUTHROTTLE
+      !write(*,*) "T%SIM%TIME",T%SIM%TIME
+      !PAUSE
 
     end if
 end if
@@ -2318,7 +2326,7 @@ SUBROUTINE DRIVER(T,iflag)
  real*8 Gammavec(3,1),bquad,C_Ftether_I(3,1),C_Ftether_B(3,1),S_rCF_B(3,3),C_Mtether_B(3,1)
  real*8 xcgdot,ycgdot,zcgdot,phidot,thetadot,psidot,ubdot,vbdot,wbdot,c1,c2,c3,pbdot,qbdot,rbdot
  real*8 rReel_I(3,1),rCG_I(3,1),v_CG_I(3,1),S_wt_B(3,3),v_Reel_I(3,1),deti
- real*8 S,q_inf_S,q_inf,groundforce,rampFactor,Ts,ramp_time_offset,lambda
+ real*8 S,q_inf_S,q_inf,groundforce,rampFactor,Ts,ramp_time_offset,lambda,output
  real*8 sigmaF,omegaF,zetaF,C1F(4),C2F(4),C3F(4),idx,W2Tpwm(4,1),W0,j,terrain_amplitude,terrain_frequency,zcg_terrain,zcg1
  character*256 xgridname,ygridname,zgridname
  character*1 letter
@@ -2420,9 +2428,17 @@ SUBROUTINE DRIVER(T,iflag)
 
        ! We're just going to put a thrust force here in the Aero model
        ! even if it's off
+       !write(*,*) 'FXAERO 1 = ',T%DRIVER%FXAERO
+       !write(*,*) 'MUTHROTTLE = ',T%DRIVER%MUTHROTTLE,T%DRIVER%MS_MIN,T%DRIVER%C_T
        if (T%DRIVER%CONTROLOFFON .gt. 0) then
           T%DRIVER%FXAERO = T%DRIVER%C_T*(T%DRIVER%MUTHROTTLE - T%DRIVER%MS_MIN)
        end if
+       !write(*,*) 'FXAERO 2 = ',T%DRIVER%FXAERO
+
+       !!!FRICTION FOR THE TRUCK FROM THE GROUND
+       call Saturation(ub,0.01,1.0,output)
+       T%DRIVER%FXAERO = T%DRIVER%FXAERO - T%DRIVER%WEIGHT*0.1*output
+       !write(*,*) 'FXAERO 3 = ',T%DRIVER%FXAERO
        
        if (T%DRIVER%AEROOFFON .eq. 1) then
           vATM_I(1,1) = T%DRIVER%VXWIND
@@ -2435,17 +2451,22 @@ SUBROUTINE DRIVER(T,iflag)
           uaero = ub - vATM_A(1,1)
           vaero = vb - vATM_A(2,1)
           waero = wb - vATM_A(3,1)
+
+          !write(*,*) 'uaero,vaero,waero = ',uaero,vaero,waero
+          !write(*,*) ub,vb,wb
+          !write(*,*) vATM_A(1,1),vATM_A(2,1),vATM_A(3,1)
           
           !Compute total velocity
 
           V_A = sqrt(uaero**2 + vaero**2 + waero**2)
-          q_inf = 0.5*T%DRIVER%DEN*(V_A**2) !This assumes the reference area is 1
-          S = 10.0
-          q_inf_S = q_inf*S
+          q_inf = 0.5*T%DRIVER%DEN*V_A 
+          !S = 10.0 !Yikes. Hardcoded reference area. Ick. Add this to the Truck.TCK file
+          q_inf_S = q_inf*T%DRIVER%SREF
 
-          T%DRIVER%FXAERO = T%DRIVER%FXAERO - q_inf_S*T%DRIVER%DXD
+          T%DRIVER%FXAERO = T%DRIVER%FXAERO - q_inf_S*T%DRIVER%DXD*uaero
 
        end if !Aerodynamic forces
+       !write(*,*) 'FXAERO 4 = ',T%DRIVER%FXAERO
 
        !At this point we should have F(XYZ)AERO and M(XYZ)AERO populated
        T%DRIVER%FXCONT = 0.0; T%DRIVER%FYCONT = 0.0; T%DRIVER%FZCONT = 0.0;          
@@ -2498,6 +2519,8 @@ SUBROUTINE DRIVER(T,iflag)
        T%DRIVER%MYTOTAL = T%DRIVER%MYGRAV + T%DRIVER%MYAERO + T%DRIVER%MYCONT
        T%DRIVER%MZTOTAL = T%DRIVER%MZGRAV + T%DRIVER%MZAERO + T%DRIVER%MZCONT
 
+       !write(*,*) T%DRIVER%FXTOTAL,T%DRIVER%FYTOTAL,T%DRIVER%FZTOTAL
+       !write(*,*) T%DRIVER%FXGRAV,T%DRIVER%FXAERO,T%DRIVER%FXCONT
        !write(*,*) 'T%DRIVER%FYTOTAL = ',T%DRIVER%FYTOTAL
        !write(*,*) 'T%DRIVER%MZTOTAL = ',T%DRIVER%MZTOTAL
        !write(*,*) 'T%DRIVER%FYGRAV , T%DRIVER%FYAERO , T%DRIVER%FYCONT = ',T%DRIVER%FYGRAV, T%DRIVER%FYAERO, T%DRIVER%FYCONT
@@ -2860,7 +2883,7 @@ end if
      read(unit=94,fmt=*,iostat=readflag) T%DRIVER%IXY
      read(unit=94,fmt=*,iostat=readflag) T%DRIVER%IXZ
      read(unit=94,fmt=*,iostat=readflag) T%DRIVER%IYZ
-     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%TURNRADIUS
+     read(unit=94,fmt=*,iostat=readflag) T%DRIVER%SREF
      read(unit=94,fmt=*,iostat=readflag) T%DRIVER%DXD
      read(unit=94,fmt=*,iostat=readflag) T%DRIVER%C_T
      read(unit=94,fmt=*,iostat=readflag) T%DRIVER%MS_MIN
@@ -4701,6 +4724,24 @@ SUBROUTINE TETHERPROPERTIES(T)
   !GD => lbf-s/(ft^2-rad)
 
 END SUBROUTINE TETHERPROPERTIES
+
+SUBROUTINE Saturation(input,epsilon,scalefactor,output)
+   implicit none
+   real*8 input,epsilon,scalefactor,output
+
+   if (input .gt. epsilon) then
+    !//Right side of graph
+    output = scalefactor;
+  else if (input .lt. -epsilon) then
+    !//left side of graph
+    output = -scalefactor;
+  else
+    !//Inside the boundary so interpolate
+    output = scalefactor*input/epsilon;
+  end if
+
+  RETURN
+END SUBROUTINE Saturation
 
 SUBROUTINE RandGaussian(xg)
   implicit none

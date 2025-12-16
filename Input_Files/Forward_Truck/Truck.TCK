@@ -16,12 +16,12 @@
 0.000		!Ixy
 0.000		!Ixz
 0.000		!Iyz (lb*ft^2) OR 2.428e-4 (kg*m^2)
-13.7			!Turn_Radius(ft) (The turn radius of a quad is super small so I just set it to 1)
+10.0			!Aerodynamic reference area
 1.0	    !dxD - Longitudinal drag factor   
 2000.0	!C_T Thrust factor
 1100		! PWM_min (microseconds)
 1900		! PWM_max (microseconds)
-1			!Controller on (1) off (0)
+0			!Controller on (1) off (0)
 7.0		!kpx (truck)  2.5?
 0.001		!kix (truck) - used for forward velocity   0.01
 0.0      	!kdx  (truck)
