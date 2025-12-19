@@ -783,9 +783,7 @@ PROGRAM TOSIM
 
  call SIMULATION(T,2)
 
-!!!!!!!!!!!!!!!!! Close Output Files !!!!!!!!!!!!!!!!!!!!!!!
-
- close(25)
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
  STOP
 END PROGRAM TOSIM
@@ -1002,17 +1000,38 @@ SUBROUTINE SIMULATION(T,iflag)
 
    call STATELIMITS(T)
 
-  !Check for Creating a Restart point
+   !Create a Restart point by default
+   !Always make a restart point at the end of the simulation
 
+   !!!CREATERESTART variable is set to 1 in the load routine.
+   !!!RESTARTTIME variable is set to the FINALTIME in the load routine which means that these
+   !!two if statements are always valid and the restart file is created
    if ((T%SIM%CREATERESTART .eq. 1) .and. (T%SIM%RESTARTTIME .le. T%SIM%TIME+T%SIM%DELTATIME)) then
-      write(98,*) T%SIM%TIME-T%DRIVER%TIMEON, ' !Restart Time offset'
+      open(unit=98,file='Output_Files/Default.RESTART',iostat=openflag)
+      if (openflag .ne. 0) then
+         open(unit=98,file='Default.RESTART',iostat=openflag)
+         if (openflag .ne. 0) then
+            write(*,*) 'Error Opening Restart Input File: ','Default.RESTART'; PAUSE; STOP
+         end if
+      end if   
+      write(98,*) T%SIM%TIME-T%DRIVER%TIMEON, ' !Restart Time offset' !I'm not sure why it says T%DRIVER%TIMEON
       write(98,*) T%THR%NBEADS, ' !Number of Beads'
+      !!!21 = quadcopter !!Alright there are 13 states for the towed system
+      !(12 states + 1 for quaternions + 8 = thrust and thrustdot for quadcopter rotors)
+      !!12 states for the driver 12 = Driver
+      !!6 states + 1 for tension * the number of beads => 7*T%TH%NBEADS + 1 = tether
+      !!This is set on line 1084 in the LOAD routine for SIMULATION
+
+      !!This is how it works
+      !! 1:12 - Driver States
+      !! 13:33 - Towed States
+      !! 34:NOSTATES - Tether States
       do k=1,T%SIM%NOSTATES
          if (k .lt. 14) then
-            write(98,*) T%SIM%STATE(k),' !Towed States'
-         else if (k .lt. 26) then
             write(98,*) T%SIM%STATE(k),' !Driver States'
-         else if (k .ge. 26) then
+         else if (k .lt. 34) then
+            write(98,*) T%SIM%STATE(k),' !Towed States'
+         else if (k .ge. 34) then
             write(98,*) T%SIM%STATE(k),' !Tether States'
          end if
       end do
@@ -1021,7 +1040,7 @@ SUBROUTINE SIMULATION(T,iflag)
       write(98,*) T%TOW%AILERON, ' !Aileron'
       write(98,*) T%TOW%RUDDER, ' !Rudder'
       write(98,*) T%TOW%INITIALSTATE(8), ' !Velocity Command'
-      !close(98)
+      close(98)
       write(*,*) 'Restart point created'
       T%SIM%CREATERESTART = 0
    end if
@@ -1056,6 +1075,7 @@ SUBROUTINE SIMULATION(T,iflag)
   close(96)
   close(91)
   close(83)
+  close(25)
 
   RETURN
   
@@ -1087,17 +1107,8 @@ SUBROUTINE SIMULATION(T,iflag)
   read(unit=90,fmt=*,iostat=readflag) readreal; T%SIM%RESTART = int(readreal)
   read(unit=90,fmt=*,iostat=readflag) T%SIM%RESTARTFILE
   
-  T%SIM%CREATERESTART = 1
+  T%SIM%CREATERESTART = 1  !!!Create restart is hardcoded to 1 in the beginning of the simulation 
   T%SIM%RESTARTTIME = T%SIM%FINALTIME
-
-  !Always make a restart point at the end of the simulation
-  open(unit=98,file='Output_Files/Default.RESTART',iostat=openflag)
-  if (openflag .ne. 0) then
-     open(unit=98,file='Default.RESTART',iostat=openflag)
-     if (openflag .ne. 0) then
-        write(*,*) 'Error Opening Restart Input File: ','Default.RESTART'; PAUSE; STOP
-     end if
-  end if
 
   if (T%SIM%RESTART .eq. 1)  then
      close(90)
@@ -1266,6 +1277,9 @@ SUBROUTINE SIMULATION(T,iflag)
   call STATELIMITS(T)
 
   T%SIM%DQFLAG = 1
+
+  !Close the sim or restart file
+  close(90)
 
   write(*,*) 'SIMULATION Load Complete'
 

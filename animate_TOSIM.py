@@ -41,14 +41,13 @@ ylabelEULER = ['Roll Angle (deg)','Pitch Angle (deg)','Yaw Angle (deg)']
 #is at the end
 tether_state = state_data[:,34:]
 ylabelTHR = ['X','Y','Z','XDOT','YDOT','ZDOT']
-NBEADS = 10
+NBEADS = 1
 
 ##ANIMATION ROUTINE
 fig = plt.figure('3-D')
 camera = Camera(fig)
 ax = fig.add_subplot(111,projection='3d')
-##So no we need the skip parameter
-skip = 1000
+skip = 100
 
 def figparams(x,y,z):
     fx = 50
