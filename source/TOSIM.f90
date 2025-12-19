@@ -1019,7 +1019,7 @@ SUBROUTINE SIMULATION(T,iflag)
       !!!21 = quadcopter !!Alright there are 13 states for the towed system
       !(12 states + 1 for quaternions + 8 = thrust and thrustdot for quadcopter rotors)
       !!12 states for the driver 12 = Driver
-      !!6 states + 1 for tension * the number of beads => 7*T%TH%NBEADS + 1 = tether
+      !!6 states + 1 for tension * the number of beads => 7*T%THR%NBEADS + 1 = tether
       !!This is set on line 1084 in the LOAD routine for SIMULATION
 
       !!This is how it works
@@ -1027,7 +1027,7 @@ SUBROUTINE SIMULATION(T,iflag)
       !! 13:33 - Towed States
       !! 34:NOSTATES - Tether States
       do k=1,T%SIM%NOSTATES
-         if (k .lt. 14) then
+         if (k .lt. 13) then
             write(98,*) T%SIM%STATE(k),' !Driver States'
          else if (k .lt. 34) then
             write(98,*) T%SIM%STATE(k),' !Towed States'
@@ -1138,29 +1138,37 @@ SUBROUTINE SIMULATION(T,iflag)
      do i = 1,T%SIM%NOSTATES
         read(unit=90,fmt=*,iostat=readflag) T%SIM%INITIALSTATE(i)
      end do
+     T%SIM%STATE = T%SIM%INITIALSTATE
 
      !Set initial location of Driver (x,y,z,p,t,p,u,v,w,p,q,r)
-     T%DRIVER%INITIALSTATE(1:12) = T%SIM%INITIALSTATE(14:25)
-     ! Added thrust initial conditions
-     T%DRIVER%INITIALSTATE(13:20) = T%SIM%INITIALSTATE((T%SIM%NOSTATES-7):T%SIM%NOSTATES)
-     T%DRIVER%XCGINITIAL = T%SIM%INITIALSTATE(14)
-     T%DRIVER%YCGINITIAL = T%SIM%INITIALSTATE(15)
-     T%DRIVER%ZCGINITIAL = T%SIM%INITIALSTATE(16)
+     T%DRIVER%INITIALSTATE(1:12) = T%SIM%INITIALSTATE(1:12)
+     T%DRIVER%STATE(1:12) = T%DRIVER%INITIALSTATE(1:12)
+     call DRIVER(T,2) ! Compute location of reel !!!!!Reel Location = T%DRIVER%(XYZ)REEL
+     !Added XYZ of DRIVER
+     T%DRIVER%XCGINITIAL = T%SIM%INITIALSTATE(1)
+     T%DRIVER%YCGINITIAL = T%SIM%INITIALSTATE(2)
+     T%DRIVER%ZCGINITIAL = T%SIM%INITIALSTATE(3)
      !Set restart speed of Driver
-     T%DRIVER%RESTARTSPEED = T%SIM%INITIALSTATE(20)
+     T%DRIVER%RESTARTSPEED = T%SIM%INITIALSTATE(7)
 
      !Read controls
-
      !call controls(T, 2)
-
      read(unit=90,fmt=*,iostat=readflag) T%TOW%DELTHRUST
      read(unit=90,fmt=*,iostat=readflag) T%TOW%ELEVATOR
      read(unit=90,fmt=*,iostat=readflag) T%TOW%AILERON
      read(unit=90,fmt=*,iostat=readflag) T%TOW%RUDDER
 
      !Read Towed Velocity Command
+     read(unit=90,fmt=*,iostat=readflag) T%TOW%INITIALSTATE(8)
 
-     read(unit=90,fmt=*,iostat=readflag) T%TOW%INITIALSTATE(8) 
+     !pass towed state to global state
+     T%TOW%INITIALSTATE(1:21) = T%SIM%INITIALSTATE(13:33)
+     T%TOW%STATE(1:21) = T%TOW%INITIALSTATE(1:21)
+     call TOWED(T,2) !tether connection point Location = T%THR%(XYZ)TETHER
+
+     !Set tether initial states
+     T%THR%INITIALSTATE(1:7*T%THR%NBEADS+1) = T%SIM%INITIALSTATE(34:T%SIM%NOSTATES)
+     
      write(*,*) '********Restart point loaded*******'
   else
 
