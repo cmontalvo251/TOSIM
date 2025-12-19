@@ -97,7 +97,7 @@ control_data = np.loadtxt('Output_Files/Controls.OUT')
 print('Rows,Cols = ',r,c)
 
 time_control = control_data[:,0]
-ylabelControl = ['Throttle','Aileron','Elevator (rad)','Rudder','Flaps','PWM_quad_1','PWM_quad_2','PWM_quad_3','PWM_quad_4', 'σ_p', 'σ_q'] #Ω ω - idk if you want these
+ylabelControl = ['Throttle','Elevator(rad)','Aileron (rad)','Rudder (rad)','Flaps','PWM_quad_1','PWM_quad_2','PWM_quad_3','PWM_quad_4', 'σ_p', 'σ_q'] #Ω ω - idk if you want these
 for n in range(0,11):
     print('Plotting Control STates = ',ylabelControl[n])
     plti = P.plottool(fontSize,'Time(sec)',ylabelControl[n],'Control')
@@ -116,3 +116,24 @@ for idx in range(0,12):
     pp.savefig()
 
 pp.close()
+
+##Let's have plot_TOSIM.py create a RESTART file so that you can generate an extra one on the off chance you
+##accidentally deleted it or something
+print('Creating RESTART file from final time step...')
+file = open('Output_Files/Last_Simulation_PY.RESTART','w')
+file.write(str(time[-1]) + ' !Restart Time offset\n')
+file.write(str(NBEADS) + ' !Number of Beads\n')
+for k in range(0,12+21+7*NBEADS+1):
+    if (k < 12):
+        file.write(str(state_data[-1,k+1]) + ' !Driver States\n')
+    elif (k < 33):
+        file.write(str(state_data[-1,k+1]) + ' !Towed States\n')
+    else:
+        file.write(str(state_data[-1,k+1]) + ' !Tether States\n')
+file.write(str(control_data[-1,1]) + ' !Thrust\n')
+file.write(str(control_data[-1,2]) + ' !Elevator\n')
+file.write(str(control_data[-1,3]) + ' !Aileron\n')
+file.write(str(control_data[-1,4]) + ' !Rudder\n')
+file.write(str(towed_state[0,7]) + ' !Velocity Command\n')
+file.close()
+print('Restart file created')
