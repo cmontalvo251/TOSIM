@@ -8,8 +8,8 @@ IMPLICIT NONE
  integer,parameter :: MAXNAOA = 100                ! Units: 'nd', Desc: 'Maximum Number of Aerodynamic Angle of Attack Table Points'
  integer,parameter :: MAXX = 1000                  ! Units: 'nd', Desc: 'Maximum Number of System States'
  integer,parameter :: NOACTUATORS = 9              ! Units: 'nd', Desc: Number of Actuators
- integer,parameter :: FT2M = 0.3048                ! Conversion from Feet to Meters
- integer,parameter :: M2FT = 3.28084               ! Conversion from Meters to Feet
+ real*8,parameter :: FT2M = 0.3048                 ! Conversion from Feet to Meters
+ real*8,parameter :: M2FT = 3.28084                ! Conversion from Meters to Feet
  real*8,parameter  :: PI = 3.14159265358979323846  ! Units: 'nd', Desc: 'Pi'
 
 !!!!!!!!!!!!!!!!!!!!!!ATMOSPHERE STRUCTURE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1891,7 +1891,21 @@ SUBROUTINE CONTROL(T,iflag)
 
     !!!!!!!!!!!!!!DRIVER CONTROLLER!!!!!!!!!!!!!!!!!!!!!!!!
     !!!!TRUCK CONTROL, Truck Controller, Controller for Truck
-    if (T%DRIVER%CONTROLOFFON .gt. 0) then
+
+    !!!ACCELERATE, MAINTAIN SPEED
+   if (T%DRIVER%CONTROLOFFON .eq. 1 .or. T%DRIVER%CONTROLOFFON .eq. 2) then 
+      udriver = T%DRIVER%STATE(7)
+      if (T%DRIVER%CONTROLOFFON .eq. 1) then
+         lambda = 0.1D0                      ! Adjust this value for faster/slower ramp-up 
+         rampFactor = 1.0D0 - exp(-lambda*(T%SIM%TIME)) 
+      else
+         rampFactor = 1.0D0
+      end if
+      T%DRIVER%MUTHROTTLE = (T%DRIVER%KPXDRIVE*(T%DRIVER%UCOMMAND*rampFactor-udriver) + T%DRIVER%KIXDRIVE*T%DRIVER%UINTEGRAL) + T%DRIVER%MS_MIN
+   end if
+
+    !!!!ACCELERATE, MAINTAIN SPEED, DECELERATE
+   if (T%DRIVER%CONTROLOFFON .eq. 3) then 
 
         !holding still
         if (T%SIM%TIME .lt. 50.0D0) then
@@ -1908,13 +1922,6 @@ SUBROUTINE CONTROL(T,iflag)
         T%DRIVER%MUTHROTTLE = (T%DRIVER%KPXDRIVE*(T%DRIVER%UCOMMAND*rampFactor-udriver) + T%DRIVER%KIXDRIVE*T%DRIVER%UINTEGRAL) + T%DRIVER%MS_MIN
        end if
 
-       if (T%DRIVER%MUTHROTTLE .gt. T%DRIVER%MS_MAX) then
-          T%DRIVER%MUTHROTTLE = T%DRIVER%MS_MAX
-       end if
-       if (T%DRIVER%MUTHROTTLE .lt. T%DRIVER%MS_MIN) then
-          T%DRIVER%MUTHROTTLE = T%DRIVER%MS_MIN
-       end if
-
        !braking (slowing down)
        if (T%SIM%TIME .gt. 150.0D0 .and. T%SIM%TIME .lt. 250.0D0) then
         udriver = T%DRIVER%STATE(7)
@@ -1927,24 +1934,26 @@ SUBROUTINE CONTROL(T,iflag)
         end if
 
         T%DRIVER%MUTHROTTLE = ((T%DRIVER%KPXDRIVE)*(brake_command-udriver) ) + T%DRIVER%MS_MIN
-
-        if (T%DRIVER%MUTHROTTLE .gt. T%DRIVER%MS_MAX) then
-          T%DRIVER%MUTHROTTLE = T%DRIVER%MS_MAX
-        end if
-        if (T%DRIVER%MUTHROTTLE .lt. 50.0) then
-          T%DRIVER%MUTHROTTLE = 0.0
-        end if
       end if
-       
+   end if     
 
-   else
+   if (T%DRIVER%CONTROLOFFON .eq. 0) then
       !Set Muthrottle to MS_MIN when no controller
       T%DRIVER%MUTHROTTLE = T%DRIVER%MS_MIN
       !write(*,*) "T%DRIVER%MUTHROTTLE",T%DRIVER%MUTHROTTLE
       !write(*,*) "T%SIM%TIME",T%SIM%TIME
       !PAUSE
 
-    end if
+   end if
+   
+   !Saturate MUTHROTTLE
+   if (T%DRIVER%MUTHROTTLE .gt. T%DRIVER%MS_MAX) then
+      T%DRIVER%MUTHROTTLE = T%DRIVER%MS_MAX
+   end if
+   if (T%DRIVER%MUTHROTTLE .lt. T%DRIVER%MS_MIN) then
+      T%DRIVER%MUTHROTTLE = T%DRIVER%MS_MIN
+   end if
+
 end if
 
 RETURN

@@ -21,7 +21,7 @@
 2000.0	!C_T Thrust factor
 1100		! PWM_min (microseconds)
 1900		! PWM_max (microseconds)
-0			!Controller on (1) off (0)
+1			!Controller (0-off,1-accelerate, 2-maintain speed,3-accelerate,decelerate)
 7.0		!kpx (truck)  2.5?
 0.001		!kix (truck) - used for forward velocity   0.01
 0.0      	!kdx  (truck)
