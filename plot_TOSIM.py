@@ -120,7 +120,7 @@ pp.close()
 ##Let's have plot_TOSIM.py create a RESTART file so that you can generate an extra one on the off chance you
 ##accidentally deleted it or something
 print('Creating RESTART file from final time step...')
-file = open('Output_Files/Last_Simulation_PY.RESTART','w')
+file = open('RESTART_FILES/Last_Simulation_PY.RESTART','w')
 file.write(str(time[-1]) + ' !Restart Time offset\n')
 file.write(str(NBEADS) + ' !Number of Beads\n')
 for k in range(0,12+21+7*NBEADS+1):

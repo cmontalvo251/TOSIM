@@ -1,0 +1,48 @@
+49.9900000047 !Restart Time offset
+1 !Number of Beads
+2e-10 !Driver States
+0.0 !Driver States
+0.4 !Driver States
+0.0 !Driver States
+0.0 !Driver States
+0.0 !Driver States
+0.0 !Driver States
+0.0 !Driver States
+0.0 !Driver States
+0.0 !Driver States
+0.0 !Driver States
+0.0 !Driver States
+3.2270494369 !Towed States
+-3.721e-07 !Towed States
+-26.7004713769 !Towed States
+0.9999999992 !Towed States
+3.2e-08 !Towed States
+4.02999e-05 !Towed States
+-3e-10 !Towed States
+0.0053567365 !Towed States
+-3.676e-07 !Towed States
+-1.4805e-06 !Towed States
+-1.11e-08 !Towed States
+0.000313344 !Towed States
+0.0 !Towed States
+0.7507349946 !Towed States
+-9.1259e-06 !Towed States
+0.7507349954 !Towed States
+-9.1265e-06 !Towed States
+0.7507598249 !Towed States
+6.8079e-06 !Towed States
+0.7507598237 !Towed States
+6.8095e-06 !Towed States
+3.7117001828 !Tether States
+-2.47869e-05 !Tether States
+-6.4056546373 !Tether States
+0.2888686539 !Tether States
+3.25513e-05 !Tether States
+-0.0068719504 !Tether States
+0.0 !Tether States
+0.0029891903 !Tether States
+1100.0 !Thrust
+-4.68e-08 !Elevator
+-0.0 !Aileron
+0.0 !Rudder
+0.0 !Velocity Command

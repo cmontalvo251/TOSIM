@@ -11,6 +11,13 @@ import sixdof as SIX
 from mpl_toolkits.mplot3d import Axes3D
 from celluloid import Camera
 
+##Grab sys.argv to get NBEADS
+if len(sys.argv) > 1:
+    NBEADS = int(sys.argv[1])
+else:
+    print('Need number of NBEADS in sys.argv. Put in number of beads. Defaulting to 1')
+    NBEADS = 1
+
 state_data = np.loadtxt('Output_Files/State.OUT')
 [r,c] = np.shape(state_data)
 print('Rows,Cols = ',r,c)
@@ -41,7 +48,6 @@ ylabelEULER = ['Roll Angle (deg)','Pitch Angle (deg)','Yaw Angle (deg)']
 #is at the end
 tether_state = state_data[:,34:]
 ylabelTHR = ['X','Y','Z','XDOT','YDOT','ZDOT']
-NBEADS = 10
 
 ##ANIMATION ROUTINE
 fig = plt.figure('3-D')
