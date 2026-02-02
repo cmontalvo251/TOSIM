@@ -79,7 +79,7 @@ for idx in range(0,3):
 #is at the end
 tether_state = state_data[:,34:]
 ylabelTHR = ['X','Y','Z','XDOT (ft/s)','YDOT (ft/s)','ZDOT (ft/s)']
-NBEADS = 1
+NBEADS = 10
 for n in range(0,NBEADS):
     for idx in range(0,6): 
         print('Plotting Tether State = ',ylabelTHR[idx],' ',n)
