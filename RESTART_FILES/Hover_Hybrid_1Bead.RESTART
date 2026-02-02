@@ -1,48 +1,48 @@
-49.9900000047 !Restart Time offset
-1 !Number of Beads
-2e-10 !Driver States
-0.0 !Driver States
-0.4 !Driver States
-0.0 !Driver States
-0.0 !Driver States
-0.0 !Driver States
-0.0 !Driver States
-0.0 !Driver States
-0.0 !Driver States
-0.0 !Driver States
-0.0 !Driver States
-0.0 !Driver States
-3.2270494369 !Towed States
--3.721e-07 !Towed States
--26.7004713769 !Towed States
-0.9999999992 !Towed States
-3.2e-08 !Towed States
-4.02999e-05 !Towed States
--3e-10 !Towed States
-0.0053567365 !Towed States
--3.676e-07 !Towed States
--1.4805e-06 !Towed States
--1.11e-08 !Towed States
-0.000313344 !Towed States
-0.0 !Towed States
-0.7507349946 !Towed States
--9.1259e-06 !Towed States
-0.7507349954 !Towed States
--9.1265e-06 !Towed States
-0.7507598249 !Towed States
-6.8079e-06 !Towed States
-0.7507598237 !Towed States
-6.8095e-06 !Towed States
-3.7117001828 !Tether States
--2.47869e-05 !Tether States
--6.4056546373 !Tether States
-0.2888686539 !Tether States
-3.25513e-05 !Tether States
--0.0068719504 !Tether States
-0.0 !Tether States
-0.0029891903 !Tether States
-1100.0 !Thrust
--4.68e-08 !Elevator
--0.0 !Aileron
-0.0 !Rudder
-0.0 !Velocity Command
+   149.98999002524184       !Restart Time offset
+           1  !Number of Beads
+   2.0000000000000001E-010  !Driver States
+   0.0000000000000000       !Driver States
+  0.40000000000000002       !Driver States
+   0.0000000000000000       !Driver States
+   0.0000000000000000       !Driver States
+   0.0000000000000000       !Driver States
+   0.0000000000000000       !Driver States
+   0.0000000000000000       !Driver States
+   0.0000000000000000       !Driver States
+   0.0000000000000000       !Driver States
+   0.0000000000000000       !Driver States
+   0.0000000000000000       !Driver States
+   3.2337799940892333       !Towed States
+  -3.9379725984475035E-008  !Towed States
+  -26.700474138560200       !Towed States
+  0.99999999992158117       !Towed States
+   1.3411658398398096E-009  !Towed States
+   1.2523486394017136E-005  !Towed States
+  -8.9849790218080560E-013  !Towed States
+   1.2462560228320625E-004  !Towed States
+   1.0474249278922877E-008  !Towed States
+  -4.9085176196224516E-007  !Towed States
+  -6.1348981293779578E-009  !Towed States
+   5.0064928795145771E-006  !Towed States
+   3.2094816154996541E-012  !Towed States
+  0.75074626108727627       !Towed States
+   1.1035955965532783E-006  !Towed States
+  0.75074626101073749       !Towed States
+   1.1034251088555047E-006  !Towed States
+  0.75074850179603514       !Towed States
+  -8.9772144188137066E-007  !Towed States
+  0.75074850187372277       !Towed States
+  -8.9755036881533099E-007  !Towed States
+   3.3890972698662485       !Tether States
+   1.0259285284659423E-005  !Tether States
+  -6.6203881046399067       !Tether States
+ -0.15148218336694966       !Tether States
+   1.7140006692254876E-005  !Tether States
+   1.1769772969300728E-003  !Tether States
+   0.0000000000000000       !Tether States
+   2.9897764975061799E-003  !Tether States
+   1100.0000000000000       !Thrust
+  -2.5349141582989791E-011  !Elevator
+  -1.1109279158986240E-020  !Aileron
+   4.8153147158880430E-023  !Rudder
+   5.3567364999999997E-003  !Velocity Command
