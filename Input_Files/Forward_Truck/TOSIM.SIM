@@ -6,7 +6,7 @@
 0		!Model Actuators on(1) or off(0)                        
 1		!Debug ouputs on(1) or off(0)                        
 10		!Feedback Update Rate(Hz)
-0		!Use a restart point on(1) or off(0)                        
+1		!Use a restart point on(1) or off(0)                        
 'RESTART_FILES/Hover_Hybrid_10Bead.RESTART' !Restart point filename 
 0.0		!X_driver(ft)
 0.0		!Y_driver(ft) 
