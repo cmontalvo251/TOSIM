@@ -11,12 +11,15 @@ import sixdof as SIX
 from mpl_toolkits.mplot3d import Axes3D
 from celluloid import Camera
 
-##Grab sys.argv to get NBEADS
-if len(sys.argv) > 1:
-    NBEADS = int(sys.argv[1])
-else:
-    print('Need number of NBEADS in sys.argv. Put in number of beads. Defaulting to 1')
-    NBEADS = 1
+#Extract NBEADS from Input File
+input_path = 'Input_Files/Forward_Truck/'   
+input_file = input_path + 'TOSIM.THR'
+file = open(input_file,'rb')
+for i in range(0,5):
+    line = file.readline().decode('utf-8')
+    #print('Line ',i+1,' is ',line)
+NBEADS = int(line.split()[0])
+print('NBEADS = ',NBEADS)
 
 state_data = np.loadtxt('Output_Files/State.OUT')
 [r,c] = np.shape(state_data)

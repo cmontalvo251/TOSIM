@@ -15,6 +15,7 @@ else:
     print('Need SIMULATE flag. Put a 0 or 1 if you want to simulate or not. Defaulting to 0')
     SIMULATE = 0
     
+input_path = 'Input_Files/Forward_Truck/'
 if SIMULATE > 0:
     ##Compile the code
     os.system('make')
@@ -24,7 +25,7 @@ if SIMULATE > 0:
     #os.system('./LinuxRun.exe Input_Files/Forward_Flight_Steady/TOMAD.ifiles')
     #os.system('./LinuxRun.exe Input_Files/Hovering/TOMAD.ifiles')
     #os.system('./Simulation.exe Input_Files/Hovering/TOSIM.ifiles')
-    os.system('./Simulation.exe Input_Files/Forward_Truck/TOSIM.ifiles')
+    os.system('./Simulation.exe ' + input_path + 'TOSIM.ifiles')
     #os.system('./Simulation.exe Input_Files/Helicopter_Towing_Ball/TOSIM.ifiles')
 
     if SIMULATE > 1:
@@ -79,7 +80,16 @@ for idx in range(0,3):
 #is at the end
 tether_state = state_data[:,34:]
 ylabelTHR = ['X','Y','Z','XDOT (ft/s)','YDOT (ft/s)','ZDOT (ft/s)']
-NBEADS = 10
+
+#Extract NBEADS from Input File
+input_file = input_path + 'TOSIM.THR'
+file = open(input_file,'rb')
+for i in range(0,5):
+    line = file.readline().decode('utf-8')
+    #print('Line ',i+1,' is ',line)
+NBEADS = int(line.split()[0])
+print('NBEADS = ',NBEADS)
+
 for n in range(0,NBEADS):
     for idx in range(0,6): 
         print('Plotting Tether State = ',ylabelTHR[idx],' ',n)
