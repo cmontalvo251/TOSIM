@@ -1,13 +1,13 @@
 0.0	 	!Initial Time(sec)                        
 100.0	 	!Final Time(sec)  
-0.00001 		!Timestep(sec) (0.000005 for tether beads >=2)   0.00001 for 1 bead               
+0.000005 		!Timestep(sec) (0.000005 for tether beads >=2)   0.00001 for 1 bead               
 1000		!Output skip (10000)                        
 1		!Control system on(1) or off(0)                        
 0		!Model Actuators on(1) or off(0)                        
 1		!Debug ouputs on(1) or off(0)                        
 10		!Feedback Update Rate(Hz)
 1		!Use a restart point on(1) or off(0)                        
-'RESTART_FILES/Hover_Hybrid_1Bead.RESTART' !Restart point filename 
+'RESTART_FILES/Hover_Hybrid_10Beads.RESTART' !Restart point filename 
 0.0		!X_driver(ft)
 0.0		!Y_driver(ft) 
 0.0		!Z_driver(ft)
