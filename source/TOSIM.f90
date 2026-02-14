@@ -1,6 +1,7 @@
 !!!!!!!!!!!!!!! MODULE TOSIMDATATYPES!!!!!!!!!!!!!!!!!!!!!!!!!!
 module TOSIMDATATYPES 
-IMPLICIT NONE 
+IMPLICIT NONE
+ logical :: debug_flag = .FALSE.
  integer,parameter :: MAXNBEADS = 100              ! Units: 'nd', Desc: 'Maximum Number of Tether Beads'
  integer,parameter :: MAXNALT = 200                ! Units: 'nd', Desc: 'Maximum Number of Atmosphere Altitude Table Points'
  integer,parameter :: MAXNLSE = 20                 ! Units: 'nd', Desc: 'Maximum Number of Lifting Surface Elements'
@@ -1392,7 +1393,7 @@ SUBROUTINE CONTROL(T,iflag)
  real*8 delx,delz,phi,theta,psi,p,q,r,xdot,ydot,zdot,omegaNot,addpitch,addroll,addyaw
  real*8 domegaLeft,omegaRight,domegaFront,omegaBack,domegaDiag,omegaOpp,omegaDiag,omegaFront, k_blend, baseThrottle
  real*8 xwaypoint(nwp,1),ywaypoint(nwp,1),zwaypoint(nwp,1),Dwaypoint, sigma_p, sigma_q, dmu, u_bar
- real*8 delmu(4),munominal,MAXANGLE,z,udriver,u_plane, z_command,roll_command 
+ real*8 delmu(4),munominal,MAXANGLE,z,udriver,u_plane, z_command,roll_command
  real*8 KDPHI, KDPSI, KDTHETA, KPPHI, KPPSI, KPTHETA,PSICOMMAND, THETAINTEGRAL, PHIINTEGRAL,PSIINTEGRAL, lambda,timeSinceStart,rampFactor,brake_command
  real*8 KP_a,KD_a,KP_e,KD_e,KP_r,KD_r,KI_a,KI_e,KI_r,KP_p,KD_p,KI_p,Kr,delta_y, KP_y,KD_y
  real*8 control_aileron,control_elevator,control_rudder,control_flaps,control_altitude, ub, ub_2, KP_roll,KD_roll,KD_thrust
@@ -1835,17 +1836,41 @@ SUBROUTINE CONTROL(T,iflag)
 
         !write(*,*)"V_A_H 2",V_A_H
 
-        T%TOW%sigma_p = (V_A_H/40.05D0)**2     !this allows for a scalar to be made based off of the speed
-        T%TOW%sigma_q = 1 - T%TOW%sigma_p  
+        T%TOW%sigma_p = (V_A_H/32.0D0)**2     !this allows for a scalar to be made based off of the speed
+        !This value above was initially 40 ft/s because the truck was set to hit 40 ft/s
+        !However the stall speed of the currnt aircraft is 26 ft/s so in order to fully transition
+        !To forward flight, this value is being set to 32 so that once the truck travels at
+        !40 ft/s the plane is fully in forward flight and not transitioning anymore. 
 
+        !Need a saturation filter on this
+         if (T%TOW%sigma_p .gt. 1.0D0) then
+            T%TOW%sigma_p = 1.0D0
+         end if
+         if (T%TOW%sigma_p .lt. 0.0D0) then
+            T%TOW%sigma_p = 0.0D0
+         end if
+
+        T%TOW%sigma_q = 1 - T%TOW%sigma_p  
 
         !T%TOW%sigma_q = 0.50D0        !for testing
         !T%TOW%sigma_p = 0.50D0
 
+        if (T%TOW%sigma_q .eq. 0.0D0) then
+            debug_flag = .TRUE.
+            !write(*,*) "Sigma_q is zero. Check the code."
+            !PAUSE; STOP;
+        end if
+
         do i = 1,4
-            dmu = T%TOW%MUVEC(i,1) - T%TOW%MS_MIN    
+            !if (debug_flag) then
+            !    write(*,*) T%TOW%MUVEC, T%TOW%MS_MIN, T%TOW%MS_MAX
+            !end if
+            dmu = T%TOW%MUVEC(i,1) - T%TOW%MS_MIN
             dmu = dmu*T%TOW%sigma_q
             T%TOW%MUVEC(i,1) = T%TOW%MS_MIN + dmu
+            !if (debug_flag) then
+            !    write(*,*) T%TOW%MUVEC, T%TOW%MS_MIN, T%TOW%MS_MAX
+            !end if
         end do
 
         T%TOW%ELEVATOR = T%TOW%sigma_p * control_elevator
@@ -3700,7 +3725,19 @@ SUBROUTINE TOWED(T,iflag)
                !T%TOW%MUVEC(idx,1)
                TDBLDOTVEC(idx) = -2*zetaF*TDOTVEC(idx)*omegaF + omegaF*omegaF*((T%TOW%MUVEC(idx,1)-T%TOW%MS_MIN)*2.375*sigmaF - TVEC(idx))
                T%TOW%THRUSTVEC(idx,1) = TVEC(idx)
+               if (TVEC(idx) .lt. 0.0) then
+                  TVEC(idx) = 0.0
+                  TDBLDOTVEC(idx) = 0.0
+                  T%TOW%THRUSTVEC(idx,1) = 0.0
+               end if
             end do
+            !I see what's happening here. Once MUVEC == 1100 the thrust needs to drop to zero
+            !But....unfortunately TDBLDOT can cause the thrust to go negative, which is not possible. 
+            !So we need to add a constraint that if TVEC < 0 then TVEC = 0 and TDBLDOT = 0. This is a bit of a band-aid but it should work for now.
+            !if (debug_flag) then
+            !   write(*,*) T%TOW%MUVEC,TDBLDOTVEC,T%TOW%THRUSTVEC
+            !end if   
+
             !write(*,*) 'MUvec = ',T%TOW%MUVEC
 
             !Recompute KT

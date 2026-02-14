@@ -1,0 +1,48 @@
+   249.98998004578368       !Restart Time offset
+           1  !Number of Beads
+   3599.9362096081704       !Driver States
+   0.0000000000000000       !Driver States
+  0.40000000000000002       !Driver States
+   0.0000000000000000       !Driver States
+   0.0000000000000000       !Driver States
+   0.0000000000000000       !Driver States
+   40.004289292596184       !Driver States
+   0.0000000000000000       !Driver States
+   0.0000000000000000       !Driver States
+   0.0000000000000000       !Driver States
+   0.0000000000000000       !Driver States
+   0.0000000000000000       !Driver States
+   3569.3881796281612       !Towed States
+  -1.5544996352980152E-026  !Towed States
+  -29.657548215912978       !Towed States
+  0.99376725876348482       !Towed States
+  -1.7993762371474371E-027  !Towed States
+  0.11147481962178313       !Towed States
+   4.0646081055393644E-027  !Towed States
+   39.010036410432576       !Towed States
+  -2.3373841302298259E-025  !Towed States
+   8.8633458289575291       !Towed States
+  -3.2003474912972916E-026  !Towed States
+  -1.5139177624697446E-006  !Towed States
+  -3.4511896426254869E-027  !Towed States
+  -1.5310248837241910E-002  !Towed States
+  -1.8117020898987906E-004  !Towed States
+  -1.5310718302868136E-002  !Towed States
+  -1.8117576478982224E-004  !Towed States
+  -1.5818642849466314E-002  !Towed States
+  -1.8718612369456411E-004  !Towed States
+  -1.5819158389457313E-002  !Towed States
+  -1.8719222472126106E-004  !Towed States
+   3584.6384928702710       !Tether States
+  -7.6171102669973783E-027  !Tether States
+  -14.556321023759725       !Tether States
+   40.004280867335709       !Tether States
+   5.4805708222724898E-026  !Tether States
+  -1.3614600257187769E-006  !Tether States
+   6.0489989200812122       !Tether States
+   6.0507305064623838       !Tether States
+   1100.0000000000000       !Thrust
+  -8.1509799148815690E-002  !Elevator
+  -3.8328885508154541E-027  !Aileron
+  -1.1324239305105759E-026  !Rudder
+   1.2462560228320625E-004  !Velocity Command
